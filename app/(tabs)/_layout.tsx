@@ -1,7 +1,7 @@
 import { Redirect, Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
-
+import { icons } from "@/constants/imports";
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
@@ -29,13 +29,33 @@ export default function TabLayout() {
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            position: 'absolute',
+        tabBarStyle:
+        {
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
+          height: 80,
+          paddingBottom: 10,
+          paddingTop: 10,
+          
+         
+          elevation: 0,
+          shadowColor: 'transparent',
+          shadowOpacity: 0,
+          shadowRadius: 0,
+          shadowOffset: {
+            width: 0,
+            height: -2,
           },
-          default: {},
-        }),
-      }}>
+          borderBottomWidth: 0,
+          borderRadius: 20,
+          marginHorizontal: 15,
+          marginBottom: 10,
+          borderBlockColor:"transparent",
+          borderBlockEndColor:"red",
+          position: 'absolute',
+        }
+      }}
+     >
       <Tabs.Screen
         name="index"
         options={{
@@ -48,10 +68,33 @@ export default function TabLayout() {
       <Tabs.Screen
         name="training"
         options={{
-          title: 'Training',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+          title: 'Explore',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="search" color={color} />,
         }}
       />
+      <Tabs.Screen
+      name='cart'
+      options={{
+        title:'Cart',
+        tabBarIcon: ({ color }) => <IconSymbol size={28} name="Plus" color={color} />
+      }}
+      />
+       
+      <Tabs.Screen
+      name='shop'
+      options={{
+        title:'Shop',
+        tabBarIcon: ({ color }) => <IconSymbol size={28} name="Store" color={color} />
+      }}
+      />
+       <Tabs.Screen
+      name='profile'
+      options={{
+        title:'Profile',
+        tabBarIcon: ({ color }) => <IconSymbol size={28} name="User" color={color} />
+      }}
+      />
+
     </Tabs>
   );
 }

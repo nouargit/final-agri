@@ -1,4 +1,4 @@
-import HomeScreenCards from '@/app/(tabs)/home';
+import HomeScreenCards from '@/app/home';
 import cn from 'clsx';
 import { FlatList, Image, Pressable, Text, View, TouchableOpacity } from 'react-native';
 import CartButton from '@/components/CartButton';
@@ -9,7 +9,7 @@ export default function HomeScreen() {
   const {user} = useAuthStore();
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1">
       <View className='flex-between flex-row my-5 px-5 w-full '>
         <View className='flex-start'>
           <Text className='small-bold text-primary'>

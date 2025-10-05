@@ -25,15 +25,15 @@ export const avatars = new Avatars(client);
 // Sign In
 export const signIn = async ({ email, password }: { email: string; password: string }) => {
   try {
-    // Make sure there are no active sessions
-    //await account.deleteSessions();
-
     // Create a new session
     const session = await account.createEmailPasswordSession(email, password);
     
     if (!session) {
       throw new Error("Failed to create session");
     }
+    
+    // Verify the session was created successfully
+    await account.get();
     
     return session;
   } catch (error) {
@@ -93,20 +93,42 @@ export const getCurrentUser = async () => {
     if (!currentAccount) {
       throw new Error("User not found");
     }
-    const currentUser = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.userCollectionId,
-      [
-        Query.equal("accountId", currentAccount.$id)
-
-      ]
-    );
-    if (!currentUser || currentUser.documents.length === 0) {
-      throw new Error("User not found");
+    
+    try {
+      const currentUser = await databases.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.userCollectionId,
+        [
+          Query.equal("accountId", currentAccount.$id)
+        ]
+      );
+      
+      if (!currentUser || currentUser.documents.length === 0) {
+        // If user document not found, create one based on account info
+        const avatarUrl = `${appwriteConfig.endpoint}/avatars/initials?project=${appwriteConfig.projectId}&name=${encodeURIComponent(currentAccount.name)}`;
+        
+        const newUser = await databases.createDocument(
+          appwriteConfig.databaseId,
+          appwriteConfig.userCollectionId,
+          ID.unique(),
+          {
+            accountId: currentAccount.$id,
+            Email: currentAccount.email,
+            name: currentAccount.name,
+            avatar: avatarUrl,
+          }
+        );
+        
+        return newUser;
+      }
+      
+      return currentUser.documents[0];
+    } catch (error) {
+      console.error("Database query error:", error);
+      throw new Error("Failed to retrieve user data");
     }
-    return currentUser.documents[0];
   } catch (error) {
     console.error("Get current user error:", error);
-    throw error; // Re-throw the error so it can be caught by the caller
+    throw error;
   }
 }

@@ -13,8 +13,11 @@ export interface MenuItem extends Models.Document {
 }
 
 export interface Category extends Models.Document {
+    id: number;
     name: string;
-    description: string;
+    image: ImageSourcePropType;
+   
+    bgColor: string;
 }
 
 export interface User extends Models.Document {

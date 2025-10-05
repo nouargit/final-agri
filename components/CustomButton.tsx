@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native'
-import React from 'react'
+
 import cn from 'clsx'
 
 interface CustomButtonProps {
