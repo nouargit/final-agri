@@ -4,7 +4,10 @@ import { FlatList, Image, Pressable, Text, View, TouchableOpacity } from 'react-
 import CartButton from '@/components/CartButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {icons} from '@/constants/imports';
+import useAuthStore from '@/stors/Auth';
 export default function HomeScreen() {
+  const {user} = useAuthStore();
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className='flex-between flex-row my-5 px-5 w-full '>

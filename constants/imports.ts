@@ -7,3 +7,7 @@ downArrow,
 cart,
 
 }
+export const images={
+    loginGraphic:require("../assets/images/login-graphic.png"),
+   
+}

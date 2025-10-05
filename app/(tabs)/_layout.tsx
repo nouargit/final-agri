@@ -7,11 +7,20 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useAuth } from '@/stors/Auth';
 
 export default function TabLayout() {
+  const {isAuthenticated} = useAuth();
   const colorScheme = useColorScheme();
-const isAuthenticated = false;
-if (!isAuthenticated) return <Redirect href={"/sign-in" as any} />
+  
+  console.log('TabLayout - Auth state:', isAuthenticated);
+  
+  if (!isAuthenticated) {
+    console.log('TabLayout - not authenticated, redirecting to sign-in');
+    return <Redirect href="/(auth)/sign-in" />;
+  }
+  
+  console.log('TabLayout - authenticated, showing tabs');
   return (
     <Tabs
       initialRouteName="index"
