@@ -5,14 +5,16 @@ export type Item = {
   image: any;
   price: number;
   category: string;
+  desc: string;
 }
 const items = [
     {
         id:1,
         name:"Cake",
-        image:require("../assets/images/macrot.jpg"),
+        image:require("../assets/images/baklawa.jpg"),
         price:100,
         category:"Traditional",
+        desc:"the best cake ever",
     },
     {
         id:2,
@@ -20,6 +22,7 @@ const items = [
         image:require("../assets/images/panCake (Custom) (1).jpg"),
         price:100,
         category:"Cake",
+        desc:"the best cake ever",
     },
     {
         id:3,
@@ -27,6 +30,7 @@ const items = [
         image:require("../assets/images/patesry.jpg"),
         price:100,
         category:"Cake",
+        desc:"the best cake ever",
     },
     {
         id:4,
@@ -34,6 +38,7 @@ const items = [
         image:require("../assets/images/jr-r-90HdOlGbjck-unsplash.jpg"),
         price:100, 
         category:"Cake",
+        desc:"the best cake ever",
     },
     {
         id:5,
@@ -41,13 +46,15 @@ const items = [
         image:require("../assets/images/download.jpg"),
         price:100, 
         category:"Cake",
+        desc:"the best cake ever",
     },
      {
         id:6,
         name:"Cake2",
-        image:require("../assets/images/pushpak-dsilva-2UeBOL7UD34-unsplash.jpg"),
+        image:require("../assets/images/beghrir.jpg"),
         price:100, 
         category:"Cake",
+        desc:"the best cake ever",
     },
      {
         id:7,
@@ -55,6 +62,7 @@ const items = [
         image:require("../assets/images/pexels-pixabay-461431.jpg"),
         price:100, 
         category:"Cake",
+        desc:"the best cake ever",
     },
      {
         id:8,
@@ -62,13 +70,15 @@ const items = [
         image:require("../assets/images/20220224_220743.jpg"),
         price:100, 
         category:"Cake",
+        desc:"the best cake ever",
     },
      {
         id:9,
         name:"Cake2",
-        image:require("../assets/images/pexels-suzyhazelwood-1126359.jpg"),
+        image:require("../assets/images/zamel.jpg"),
         price:100, 
         category:"Cake",
+        desc:"the best cake ever",
     },
      {
         id:10,
@@ -76,6 +86,7 @@ const items = [
         image:require("../assets/images/koraibia.jpg"),
         price:100, 
         category:"Traditional",
+        desc:"the best cake ever",
     },
     {
         id:11,
@@ -83,6 +94,7 @@ const items = [
         image:require("../assets/images/simpel.jpg"),
         price:100, 
         category:"Traditional",
+        desc:"the best cake ever",
     },
      {
         id:12,
@@ -90,6 +102,7 @@ const items = [
         image:require("../assets/images/chrek.jpg"),
         price:100, 
         category:"Traditional",
+        desc:"the best cake ever",
     },
     
 ]

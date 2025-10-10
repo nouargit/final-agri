@@ -19,4 +19,8 @@ export const images={
    cake:require("../assets/images/c1.jpg"),
    cake2:require("../assets/images/c3.jpg"),
    shopAvatar:require("../assets/images/shopAvatar.jpg"),
+   logo:require("../assets/images/textLogo.webp"),
+   baklawa:require("../assets/images/baklawa.jpg"),
+   beghrir:require("../assets/images/beghrir.jpg"),
+   
 }

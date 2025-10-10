@@ -1,4 +1,4 @@
-/** @type {import('tailwindcss').Config} */
+// Add this to your existing tailwind.config.js
 module.exports = {
   content: ["./App.tsx", "./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
@@ -14,6 +14,7 @@ module.exports = {
         'dark-100': '#020f10', // used in globals.css (e.g., .cart-btn)
       },
       fontFamily: {
+        'malika': ['Malika'],
         'quicksand': ['Quicksand-Regular'],
         'quicksand-medium': ['Quicksand-Medium'],
         'quicksand-semibold': ['Quicksand-SemiBold'],

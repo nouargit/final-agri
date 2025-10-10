@@ -23,7 +23,7 @@ export default function TabLayout() {
   console.log('TabLayout - authenticated, showing tabs');
   return (
     <Tabs
-      initialRouteName="index"
+      initialRouteName="training"
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
@@ -38,7 +38,7 @@ export default function TabLayout() {
           paddingTop: 10,
           
          
-          elevation: 0,
+          elevation: 0, 
           shadowColor: 'transparent',
           shadowOpacity: 0,
           shadowRadius: 0,
@@ -49,7 +49,7 @@ export default function TabLayout() {
           borderBottomWidth: 0,
           borderRadius: 20,
           marginHorizontal: 15,
-          marginBottom: 10,
+          marginBottom: 0,
           borderBlockColor:"transparent",
           borderBlockEndColor:"red",
           position: 'absolute',

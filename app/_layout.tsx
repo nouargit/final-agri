@@ -10,7 +10,6 @@ import { useEffect } from 'react';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  // Move these hooks inside the component
   const { isLoading, fetchAuthenticatedUser } = useAuthStore();
   
   useEffect(() => {
@@ -24,6 +23,7 @@ export default function RootLayout() {
     'Quicksand-SemiBold': require('../assets/fonts/Quicksand-SemiBold.ttf'),
     'Quicksand-Bold': require('../assets/fonts/Quicksand-Bold.ttf'),
     'Quicksand-Light': require('../assets/fonts/Quicksand-Light.ttf'),
+    'Malika': require('../assets/fonts/malika.ttf'),
   });
 
   if (!loaded || isLoading) {

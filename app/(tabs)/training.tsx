@@ -1,4 +1,4 @@
-import { View, Text, StatusBar, ScrollView } from 'react-native'
+import { View, Text, StatusBar, ScrollView, Image } from 'react-native'
 import ItemCard from '@/components/ItemCard'
 import React from 'react'
 import MasonryList from "@react-native-seoul/masonry-list";
@@ -10,19 +10,18 @@ import categoriesEN from '@/constants/categories'
 import CategoryCard from '@/components/CategorysCard'
 import { Item } from '@/constants/items'
 import { FlatList, Dimensions } from 'react-native'
+import { Search } from 'lucide-react-native'
 const Training = () => {
   return (
     <SafeAreaView className="flex-1 bg-neutral-50 dark:bg-neutral-900">
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       
       {/* Header */}
-      <View className="px-6 pt-4 pb-2">
-        <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
-          Training
-        </Text>
-        <Text className="text-base text-neutral-500 dark:text-neutral-400 mt-1">
-          Discover our products
-        </Text>
+      <View className="flex-row justify-between px-6 pt-5 pb-4 rounded-b-3xl  dark:bg-neutral-800 ">
+        <Text className="text-4xl font-malika text-primary dark:text-red-300">Mysweet.</Text>
+        <View className="justify-end w-10 h-10 bg-slate-200 dark:bg-neutral-700 rounded-full p-2 items-center">
+          <Search size={24} color="#ff6370" strokeWidth={2} />
+        </View>
       </View>
 
       <MasonryList
@@ -73,6 +72,7 @@ const Training = () => {
           </View>
         }
       />
+      
     </SafeAreaView>
   )
 }

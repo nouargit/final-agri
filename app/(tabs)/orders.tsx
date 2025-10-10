@@ -46,7 +46,7 @@ const orders = [
     status: "Delivered",
     total: "$42.00",
     thumbnail:
-      images.cake2,
+      images.baklawa,
   },
   {
     id: "ORD-1003",
@@ -57,6 +57,16 @@ const orders = [
     thumbnail:
       images.panCake,
   },
+  {
+    id: "ORD-1004",
+    bakery: "Delightful Bakes",
+    date: "2025-09-22",
+    status: "Cancelled",
+    total: "$30.00",
+    thumbnail:
+      images.beghrir,
+  },
+  
 ];
 
 const statusColors: Record<string, string> = {

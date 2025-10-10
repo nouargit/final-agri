@@ -25,11 +25,11 @@ const ItemCard = ({ item }: ItemCardProps) => {
     >
       <View className="bg-white dark:bg-neutral-800 rounded-3xl shadow-lg dark:shadow-neutral-900/30 overflow-hidden border border-neutral-100 dark:border-neutral-700">
         {/* Image Container with Gradient Overlay */}
-        <View className="relative max-h-[350px]">
+        <View className="relative max-h-[300px]">
           <Image
             
             source={item.image}
-  style={{ width: "100%", maxHeight: 350, alignSelf: "center" }} // try 3/4 or 4/5
+  style={{ width: "100%", maxHeight: 300, alignSelf: "center" }} // try 3/4 or 4/5
   className="rounded-t-3xl"
   resizeMode='cover'
           />
