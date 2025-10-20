@@ -109,3 +109,41 @@ interface GetMenuParams {
     category: string;
     query: string;
 }
+
+// Add these interfaces to your existing type.ts file
+
+export type OrderStatus = 'Pending' | 'Preparing' | 'On the way' | 'Delivered' | 'Cancelled';
+
+export interface Order {
+  id: string;
+  name: string;
+  date: string;
+  status: OrderStatus;
+  price: number;
+  thumbnail: ImageSourcePropType;
+  quantity?: number;
+}
+
+export interface OrderFilter {
+  label: string;
+  value: string;
+}
+
+export interface OrderCardProps {
+  order: Order;
+}
+
+export interface BagOrder {
+  id: number;
+  ShopName: string;
+  price: number;
+  ItemsNumber: number;
+  ShopImage: ImageSourcePropType;
+  date: string;
+  total: string;
+  status: OrderStatus;
+}
+
+export interface BagProps {
+  bag: BagOrder;
+}

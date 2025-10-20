@@ -1,6 +1,6 @@
-import { View, Text, ImageSourcePropType, Image, TouchableOpacity } from 'react-native'
-import React from 'react'
+import { BlurView } from 'expo-blur'
 import { router } from 'expo-router'
+import { Image, ImageSourcePropType, Text, TouchableOpacity, View } from 'react-native'
 
 interface Item {
   price: number
@@ -26,6 +26,7 @@ const ItemCard = ({ item }: ItemCardProps) => {
       <View className="bg-white dark:bg-neutral-800 rounded-3xl shadow-lg dark:shadow-neutral-900/30 overflow-hidden border border-neutral-100 dark:border-neutral-700">
         {/* Image Container with Gradient Overlay */}
         <View className="relative max-h-[300px]">
+        
           <Image
             
             source={item.image}

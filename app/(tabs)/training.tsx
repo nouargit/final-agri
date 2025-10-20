@@ -1,16 +1,13 @@
-import { View, Text, StatusBar, ScrollView, Image } from 'react-native'
-import ItemCard from '@/components/ItemCard'
-import React from 'react'
+import AddsCard from '@/components/AddsCard';
+import CategoryCard from '@/components/CategorysCard';
+import ItemCard from '@/components/ItemCard';
+import categoriesEN from '@/constants/categories';
+import { images } from '@/constants/imports';
+import items, { Item } from '@/constants/items';
 import MasonryList from "@react-native-seoul/masonry-list";
-import { images } from '@/constants/imports'
-import AddsCard from '@/components/AddsCard'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import items from '@/constants/items'
-import categoriesEN from '@/constants/categories'
-import CategoryCard from '@/components/CategorysCard'
-import { Item } from '@/constants/items'
-import { FlatList, Dimensions } from 'react-native'
-import { Search } from 'lucide-react-native'
+import { Search } from 'lucide-react-native';
+import { Dimensions, FlatList, ScrollView, StatusBar, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 const Training = () => {
   return (
     <SafeAreaView className="flex-1 bg-neutral-50 dark:bg-neutral-900">
@@ -23,7 +20,8 @@ const Training = () => {
           <Search size={24} color="#ff6370" strokeWidth={2} />
         </View>
       </View>
-
+      
+     
       <MasonryList
         data={items as Item[]}
         keyExtractor={(item) => item.id.toString()}
