@@ -4,7 +4,7 @@ import { FlatList, Image, Pressable, Text, View, TouchableOpacity } from 'react-
 import CartButton from '@/components/CartButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {icons} from '@/constants/imports';
-
+import {router} from 'expo-router';
 export default function HomeScreen() {
 
   return (
@@ -31,7 +31,8 @@ export default function HomeScreen() {
           const isEven = index % 2 === 0;
 
           return (
-            <Pressable
+            <Pressable 
+              onPress={()=>router.push('/shopOrdersScreen')}
               className={cn(
                 "offer-card",
                 isEven ? "flex-row" : "flex-row-reverse"

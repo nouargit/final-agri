@@ -1,5 +1,5 @@
-import { Redirect, Tabs } from 'expo-router';
-import React from 'react';
+import { Redirect, Tabs, useFocusEffect } from 'expo-router';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Platform } from 'react-native';
 import { icons } from "@/constants/imports";
 import { HapticTab } from '@/components/HapticTab';
@@ -7,20 +7,43 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { useAuth } from '@/stors/Auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function TabLayout() {
-  const {isAuthenticated} = useAuth();
   const colorScheme = useColorScheme();
-  
-  console.log('TabLayout - Auth state:', isAuthenticated);
-  
-  if (!isAuthenticated) {
-    console.log('TabLayout - not authenticated, redirecting to sign-in');
-    return <Redirect href="/(auth)/sign-in" />;
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const checkAuthStatus = async () => {
+    try {
+      const token = await AsyncStorage.getItem('auth_token');
+      console.log('Checking auth status, token:', token ? 'exists' : 'not found');
+      setIsAuthenticated(!!token);
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  // Re-check authentication when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      checkAuthStatus();
+    }, [])
+  );
+
+  if (isLoading) {
+    return null; // or a loading spinner
   }
+
+  if (!isAuthenticated) return <Redirect href="/(auth)/sign-in" />;
   
-  console.log('TabLayout - authenticated, showing tabs');
   return (
     <Tabs
       initialRouteName="training"

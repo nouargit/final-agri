@@ -2,11 +2,33 @@ import { Redirect, Stack } from 'expo-router';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { ScrollView } from 'react-native';
 import { TouchableWithoutFeedback, Keyboard } from 'react-native';
-import React from 'react';
-import { useAuth } from '@/stors/Auth';
+import React, { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function AuthLayout() {
-  const {isAuthenticated} = useAuth();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const token = await AsyncStorage.getItem('auth_token');
+      setIsAuthenticated(!!token);
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return null; // or a loading spinner
+  }
+
   if (isAuthenticated) return <Redirect href="/(tabs)" />;
 
 

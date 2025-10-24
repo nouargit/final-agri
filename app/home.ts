@@ -9,6 +9,7 @@
 
             image: require('../assets/images/delisios.png'),
             color: '#FF69B4',
+            
            
 
         },

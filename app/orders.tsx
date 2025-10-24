@@ -1,11 +1,11 @@
 import { images } from '@/constants/imports';
 import { Order, OrderFilter } from '@/type';
+import { ActionSheetProvider, useActionSheet } from '@expo/react-native-action-sheet';
 import { Minus, Plus, Search, X } from "lucide-react-native";
 import { useState } from "react";
 import { FlatList, Image, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
-import { ActionSheetProvider, useActionSheet } from '@expo/react-native-action-sheet';
-import {SafeAreaView} from "react-native-safe-area-context"
+import { SafeAreaView } from "react-native-safe-area-context";
 // Sample orders data
 
 const orders: Order[] = [
@@ -307,10 +307,10 @@ const OrdersList = () => {
         )}
       </View>
       <View className='flex-2 rounded-2xl w-full h-1/5 bg-white dark:bg-neutral-800 p-4 shadow-sm border border-gray-100 dark:border-neutral-700'>
-        <Text className='text-lg font-bold text-gray-900 dark:text-white mt-4'>
+        <Text className='text-lg font-bold text-gray-900 dark:text-white '>
           Total: ${filteredOrders.reduce((sum, o) => sum + o.price, 0).toFixed(2)}
         </Text>
-        <TouchableOpacity className='flex w-full p-4 items-center justify-center bg-primary rounded-2xl mt-10 '  >
+        <TouchableOpacity className='flex w-full p-4 items-center justify-center bg-primary rounded-2xl my-10 '  >
           <Text className='text-white font-bold text-lg'>
             place order
           </Text>

@@ -68,11 +68,11 @@ const orders = [
 ];
 
 const statusColors: Record<string, string> = {
-  Pending: "bg-yellow-100 text-yellow-800",
-  Preparing: "bg-orange-100 text-orange-800",
-  "On the way": "bg-blue-100 text-blue-800",
-  Delivered: "bg-green-100 text-green-800",
-  Cancelled: "bg-red-100 text-red-800",
+  Pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+  Preparing: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
+  "On the way": "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+  Delivered: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+  Cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
 };
 interface BagProps {
   bag: {
@@ -95,10 +95,12 @@ const Bag = ({ bag }: BagProps) => {
   {/* Shadow container - outside the touchable */}
  
   
-  <TouchableOpacity className="bg-white dark:bg-neutral-800 rounded-2xl p-4 flex-row items-center " onPress={() => {
+  <TouchableOpacity className="bg-white dark:bg-neutral-800 rounded-2xl p-4  " onPress={() => {
     router.navigate(`/orders`)
   }}>
-    {/* Thumbnail */}
+ 
+    <View className="flex-row items-center">  
+       {/* Thumbnail */}
     <Image
       source={bag.ShopImage}
       className="w-16 h-16 rounded-full mr-4"
@@ -112,16 +114,33 @@ const Bag = ({ bag }: BagProps) => {
       <View className="flex-row items-center mt-1">
         <Text className="text-gray-500 dark:text-neutral-500 text-sm">{bag.date}</Text>
 
-        <View className={`ml-2 px-2 py-0.5 rounded-full ${bg}`}>
+       
+        
+      </View>
+       <View className={`ml-2 px-2 py-0.5 rounded-full ${bg}`}>
           <Text className={`text-xs font-medium ${text}`}>
             {bag.status}
           </Text>
         </View>
-      </View>
+      <View className="absolute right-0 top-0 ml-auto p-2   rounded-xl bg-primary">
+          <Text className="font-bold m-auto text-neutral-100 ">{bag.total}</Text>
+        </View>
+    </View>
     </View>
 
-    {/* Price */}
-    <Text className="text-gray-800 dark:text-white font-bold">{bag.total}</Text>
+    <View className="flex-row items-center h-16 w-full mt-3 rounded-2xl bg-neutral-100 dark:bg-neutral-700">
+     {orders.map((order) => (
+     
+        <Image
+          source={order.thumbnail}
+          className="w-12 h-12 rounded-xl ml-3"
+        />
+      
+     
+     ))}
+    
+    </View>
   </TouchableOpacity>
-</View>)}
+</View>
+)}
 export default Bag;

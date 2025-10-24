@@ -1,94 +1,169 @@
-import { View, Text, TouchableOpacity,Platform } from "react-native";
-import { Link } from 'expo-router';
+import { View, Text, TouchableOpacity, Platform } from "react-native";
+import { Link, useRouter } from 'expo-router';
+import { KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import CustomButton from "@/components/CustomButton";
 import CustomInput from "@/components/CustomInput";
-import { KeyboardAvoidingView } from "react-native";
-import { TouchableWithoutFeedback, Keyboard } from 'react-native';
-
-
-import { createUser } from "@/lib/appwrite";
 import { useState } from "react";
-import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SignUpScreen() {
   const router = useRouter();
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const[form,setForm] = useState({
-    name:"",
-    email:"",
-    password:"",
-    confirmPassword:"",
-  })
+
+  // Manual authentication configuration
+  const baseUrl = 'http://10.142.232.194:8000';
+  const csrfTokenUrl = `${baseUrl}/sanctum/csrf-cookie`;
+  const loginUrl = `${baseUrl}/api/auth/login`;
+  const userUrl = `${baseUrl}/api/user`;
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
   const submit = async () => {
-    setIsSubmitting(true);
-    console.log("hello");
-   
-    try {
-      await createUser(form.email, form.password, form.name);
-      router.push("/");
-    } catch (error) {
-      setError("faild to create user");
+    if (!form.name || !form.email || !form.password || !form.confirmPassword) {
+      setError("All fields are required");
+      return;
     }
-    setIsSubmitting(false);
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError("");
+
+    try {
+      // 🌐 Register user manually via Laravel API
+      const response = await fetch("http://10.142.232.194:8000/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          password_confirmation: form.confirmPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error(data);
+        setError(data.message || "Registration failed");
+        return;
+      }
+
+      // ✅ Automatically log in after successful registration
+      console.log('Registration successful, attempting login...');
+      
+      // Step 1: Get CSRF token
+      await fetch(csrfTokenUrl, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      
+      // Step 2: Login
+      const loginResponse = await fetch(loginUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+          device_name: 'Test-Device',
+        }),
+      });
+
+      const loginData = await loginResponse.json();
+      console.log('Login response:', loginData);
+
+      if (loginResponse.ok && loginData.data && loginData.data.token) {
+        // Step 3: Store token and get user data
+        await AsyncStorage.setItem('auth_token', loginData.data.token);
+        
+        const userResponse = await fetch(userUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${loginData.data.token}`,
+            'Accept': 'application/json',
+          },
+        });
+
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          await AsyncStorage.setItem('user_data', JSON.stringify(userData));
+          console.log('User data stored:', userData);
+          
+          router.replace('/(tabs)'); // Redirect to tabs
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong during registration.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-
-  
   return (
-     <KeyboardAvoidingView
+    <KeyboardAvoidingView
       className="flex-1 bg-white"
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0} // adjust if you have a header
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View className="flex-1 bg-white justify-center px-6">
+          <Text className="text-2xl font-bold mb-10 text-center">Create Account</Text>
 
-    <View className="flex-1 bg-white justify-center px-6">
-      {/* Title */}
-      <Text className=" h1-bold mb-10">Create Account</Text>
+          {error ? <Text className="text-red-500 text-center mb-3">{error}</Text> : null}
 
+          <CustomInput
+            placeholder="Full Name"
+            value={form.name}
+            onChangeText={(text) => setForm((prev) => ({ ...prev, name: text }))}
+          />
+          <CustomInput
+            placeholder="Email"
+            value={form.email}
+            onChangeText={(text) => setForm((prev) => ({ ...prev, email: text }))}
+            keyboardType="email-address"
+          />
+          <CustomInput
+            placeholder="Password"
+            value={form.password}
+            onChangeText={(text) => setForm((prev) => ({ ...prev, password: text }))}
+            secureTextEntry
+          />
+          <CustomInput
+            placeholder="Confirm Password"
+            value={form.confirmPassword}
+            onChangeText={(text) => setForm((prev) => ({ ...prev, confirmPassword: text }))}
+            secureTextEntry
+          />
 
-      {/* Input fields */}
-       <CustomInput
-                placeholder="Enter your full name"
-                value={form.name}
-                onChangeText={(text) => setForm((prev) => ({ ...prev, name: text }))}
-               
-            />
-            <CustomInput
-                placeholder="Enter your email"
-                value={form.email}
-                onChangeText={(text) => setForm((prev) => ({ ...prev, email: text }))}
-               
-                keyboardType="email-address"
-            />
-            <CustomInput
-                placeholder="Enter your password"
-                value={form.password}
-                onChangeText={(text) => setForm((prev) => ({ ...prev, password: text }))}
-               
-                secureTextEntry={true}
-            />
+          <CustomButton title="Sign Up" isLoading={isSubmitting} onPress={submit} />
 
-            <CustomButton
-                title="Sign Up"
-                isLoading={isSubmitting}
-                onPress={submit}
-            />
-
-      {/* Secondary Button */}
-      <View className="flex-row justify-center">
-        <Text className="text-gray-600">Already have an account? </Text>
-        <Link href="/sign-in" asChild>
-          <TouchableOpacity>
-            <Text className="text-primary font-semibold">Sign In</Text>
-          </TouchableOpacity>
-        </Link>
-      </View>
-    </View>
-    </TouchableWithoutFeedback>
-
+          <View className="flex-row justify-center mt-4">
+            <Text className="text-gray-600">Already have an account? </Text>
+            <Link href="/sign-in" asChild>
+              <TouchableOpacity>
+                <Text className="text-[#ff6370] font-semibold">Sign In</Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
+        </View>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }
