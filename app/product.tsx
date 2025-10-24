@@ -131,7 +131,7 @@ const ProductScreen = () => {
             />
             
             {/* Discount Badge */}
-            <View className="absolute top-4 right-4 bg-red-500 px-3 py-1 rounded-full">
+            <View className="absolute top-4 right-4 bg-primary px-3 py-1 rounded-full">
               <Text className="text-white text-sm font-medium">20% OFF</Text>
             </View>
             
@@ -150,7 +150,7 @@ const ProductScreen = () => {
             </TouchableOpacity>
 
             {/* Image Indicators */}
-            <View className="absolute bottom-4 left-0 right-0 flex-row justify-center gap-2 dark:bg-neutral-800">
+            <View className="absolute bottom-4 left-0 right-0 flex-row justify-center gap-2 ">
               {product.images.map((_, index) => (
                 <TouchableOpacity
                   key={index}
@@ -199,7 +199,7 @@ const ProductScreen = () => {
           </View>
 
           <View className="flex-row items-center mb-6">
-            <Text className="text-4xl font-bold text-orange-600">${product.price}</Text>
+            <Text className="text-5xl font-bold text-primary">${product.price}</Text>
             <Text className="text-xl text-gray-400 dark:text-neutral-500 line-through ml-3">
               ${product.originalPrice}
             </Text>

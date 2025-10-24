@@ -96,7 +96,7 @@ const handleAddCategory = () => {
           <>
             {/* Header & Profile */}
             <Animated.View
-              className="px-4 pt-12 pb-6 bg-white dark:bg-neutral-950 border-b border-gray-200 dark:border-gray-700"
+              className="px-4 pt-12 pb-6 bg-white dark:bg-neutral-950  border-gray-200 dark:border-gray-700"
               style={profileAnimatedStyle}
             >
               <View className="flex-row items-center justify-between mb-4">
@@ -141,7 +141,7 @@ const handleAddCategory = () => {
 
             {/* Search & Tabs */}
             <View className="bg-white dark:bg-neutral-950 px-4 pt-2 pb-2 border-b border-gray-200 dark:border-gray-700 mb-5">
-              <View className="flex-row items-center bg-gray-100 dark:bg-neutral-800 rounded-full px-3 my-2">
+              <View className="flex-row items-center bg-gray-100 dark:bg-neutral-800 rounded-full px-3 my-3">
                 <Search size={15} color="#9CA3AF" />
                 <TextInput
                   className="flex-1 ml-2 text-gray-900 dark:text-white py-2"

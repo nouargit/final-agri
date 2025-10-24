@@ -103,7 +103,7 @@ const OrderCard = ({ order }: { order: Order }) => {
   };
   return (
 
-    <View className="mb-4">
+    <View className="mb-2">
       <TouchableOpacity className="bg-white dark:bg-neutral-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-neutral-700">
         <View className="flex-row items-center">
           {/* Product Image */}
@@ -150,9 +150,9 @@ const OrderCard = ({ order }: { order: Order }) => {
                 
                 <TouchableOpacity
                   onPress={() => updateQuantity(1)}
-                  className="w-8 h-8 bg-blue-50 dark:bg-blue-900/30 rounded-full items-center justify-center ml-3"
+                  className="w-8 h-8 bg-blue-50 dark:bg-primary/40 rounded-full items-center justify-center ml-3"
                 >
-                  <Plus size={16} color="#3B82F6" />
+                  <Plus size={16} color="#ff6370" />
                 </TouchableOpacity>
               </View>
 

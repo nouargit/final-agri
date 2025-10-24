@@ -7,11 +7,17 @@ import './globals.css';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import useAuthStore from '@/stors/Auth';
 import { useEffect } from 'react';
+import { AuthProvider } from 'react-native-laravel-sanctum';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const { isLoading, fetchAuthenticatedUser } = useAuthStore();
-  
+  const config = {
+    loginUrl: 'http://10.0.2.2:8000/sanctum/token',
+    logoutUrl: 'http://10.0.2.2:8000/logout',
+    userUrl: 'http://10.0.2.2:8000/api/user',
+    csrfTokenUrl: 'http://10.0.2.2:8000/sanctum/csrf-cookie',
+  };
   useEffect(() => {
     fetchAuthenticatedUser();
   }, []);
@@ -31,6 +37,9 @@ export default function RootLayout() {
   }
 
   return (
+     <AuthProvider
+      config={config}
+    >
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -40,5 +49,6 @@ export default function RootLayout() {
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
+    </AuthProvider>
   );
 }

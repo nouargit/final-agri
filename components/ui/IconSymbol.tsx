@@ -1,6 +1,6 @@
 import React from "react";
 import { SvgProps } from "react-native-svg";
-import { Home, Send, Code, ChevronRight,Search,Plus,User,List,Store } from "lucide-react-native";
+import { Home, Send, Code, ChevronRight,Search,Plus,User,List,Store,Handbag } from "lucide-react-native"; 
 
 // Map SF-like names → Lucide icons
 const MAPPING = {
@@ -12,7 +12,8 @@ const MAPPING = {
   Plus,
   User,
   List,
-  Store
+  Store,
+  Handbag,
 
 } as const;
 

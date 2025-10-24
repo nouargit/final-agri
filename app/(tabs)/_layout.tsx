@@ -48,7 +48,7 @@ export default function TabLayout() {
           },
           borderBottomWidth: 0,
           borderRadius: 20,
-          marginHorizontal: 15,
+          marginHorizontal: 0,
           marginBottom: 0,
           borderBlockColor:"transparent",
           borderBlockEndColor:"red",
@@ -76,7 +76,7 @@ export default function TabLayout() {
       name='cart'
       options={{
         title:'Cart',
-        tabBarIcon: ({ color }) => <IconSymbol size={28} name="Plus" color={color} />
+        tabBarIcon: ({ color }) => <IconSymbol size={28} name="Handbag" color={color} />
       }}
       />
        
