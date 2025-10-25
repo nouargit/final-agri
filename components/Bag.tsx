@@ -130,15 +130,12 @@ const Bag = ({ bag }: BagProps) => {
 
     <View className="flex-row items-center h-16 w-full mt-3 rounded-2xl bg-neutral-100 dark:bg-neutral-700">
      {orders.map((order) => (
-     
         <Image
+          key={order.id}
           source={order.thumbnail}
           className="w-12 h-12 rounded-xl ml-3"
         />
-      
-     
      ))}
-    
     </View>
   </TouchableOpacity>
 </View>

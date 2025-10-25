@@ -70,13 +70,14 @@ const {data}=useQuery({
 
   const menuItems = [
     { icon: 'person.circle', title: 'Edit Profile', subtitle: 'Update your personal information' },
-    { icon: 'heart', title: 'Favorites', subtitle: 'Your saved items' },
+    { icon: 'heart', title: 'Favorites', subtitle: 'Your saved items', onPress: () => router.push('../shopCreationForm') },
     { icon: 'bag', title: 'Order History', subtitle: 'View past orders' },
     { icon: 'creditcard', title: 'Payment Methods', subtitle: 'Manage your cards' },
     { icon: 'location', title: 'Addresses', subtitle: 'Delivery addresses' },
     { icon: 'bell', title: 'Notifications', subtitle: 'Manage notifications' },
     { icon: 'questionmark.circle', title: 'Help & Support', subtitle: 'Get help when you need it' },
     { icon: 'info.circle', title: 'About', subtitle: 'App version and info' },
+    { icon: 'info.circle', title: 'my shop', subtitle: 'my shop',onPress:()=>router.push('/shop') },
   ];
 
   if (isLoading) {
@@ -163,6 +164,7 @@ const {data}=useQuery({
               key={index}
               className="bg-white dark:bg-neutral-800 rounded-2xl p-4 mb-3 flex-row items-center shadow-sm"
               activeOpacity={0.7}
+              onPress={item.onPress}
             >
               <View className="bg-neutral-100 dark:bg-neutral-700 p-3 rounded-full mr-4">
                 <IconSymbol name={item.icon as any} size={20} color="#6b7280" />

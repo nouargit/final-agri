@@ -22,5 +22,6 @@ export const images={
    logo:require("../assets/images/textLogo.webp"),
    baklawa:require("../assets/images/baklawa.jpg"),
    beghrir:require("../assets/images/beghrir.jpg"),
+   shopBg:require("../assets/images/shopBg.png"),
    
 }

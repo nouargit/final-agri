@@ -10,7 +10,7 @@ module.exports = {
         'l': '0 4px 6px rgba(0,0,0,0.19), 0 6px 10px rgba(0,0,0,0.08)',
       },
       colors: {
-        primary: '#ff6370',    // used in globals.css (e.g., .cart-badge, etc.)
+        primary: '#FF6F61',    // used in globals.css (e.g., .cart-badge, etc.)#ff6370
         'dark-100': '#020f10', // used in globals.css (e.g., .cart-btn)
       },
       fontFamily: {
