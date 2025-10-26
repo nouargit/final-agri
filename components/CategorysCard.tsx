@@ -16,22 +16,18 @@ type CategoryCardProps = {
 const CategoryCard = ({ category }: CategoryCardProps) => {
   return (
     <View
-      className="w-28 h-36 rounded-3xl items-center justify-between mx-2 p-3 overflow-hidden "
-      style={{ backgroundColor: category.bgColor }}
+      className="w-28  dark:border   rounded-3xl items-center justify-between mx-2 overflow-hidden "
+      style={{  backgroundColor:`${category.bgColor}33`,
+    borderColor: category.bgColor,
+    borderWidth: 4 }}
     > 
      {/* category Name */}
     
-    <Text className=" mt-4 paragraph-bold text-black">
+    <Text className=" p-3 paragraph-bold text-black dark:text-white">
         {category.name}
       </Text> 
       {/* category Image */}
-      <Image
-        source={category.image}
-        className="absolute w-32 h-32 "
-        resizeMode="contain"
-        style={{ bottom: category.pp }}
-        
-      />
+     
 
      
      

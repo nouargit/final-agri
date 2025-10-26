@@ -10,11 +10,11 @@ import { Dimensions, FlatList, ScrollView, StatusBar, Text, View } from 'react-n
 import { SafeAreaView } from 'react-native-safe-area-context';
 const Training = () => {
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50 dark:bg-neutral-900">
+    <View className="flex-1 bg-neutral-50 dark:bg-neutral-950">
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       
       {/* Header */}
-      <View className="flex-row justify-between px-6 pt-5 pb-4 rounded-b-3xl  dark:bg-neutral-800 ">
+      <View className="flex-row justify-between px-6 pt-5 pb-4 rounded-b-3xl  dark:bg-neutral-900 ">
         <Text className="text-4xl font-malika text-primary dark:text-red-300">Mysweet.</Text>
         <View className="justify-end w-10 h-10 bg-slate-200 dark:bg-neutral-700 rounded-full p-2 items-center">
           <Search size={24} color="#ff6370" strokeWidth={2} />
@@ -31,9 +31,9 @@ const Training = () => {
         style={{ gap: 10 }}
         renderItem={({ item }) => <ItemCard item={item as Item} />}
         ListHeaderComponent={
-          <View className="px-1 py-3 mb-5">
+          <View className="px-1 py-3 mb-3">
             {/* Paginated horizontal promo cards */}
-            <FlatList
+           {/* <FlatList
               data={promoImages}
               horizontal
               pagingEnabled
@@ -47,9 +47,9 @@ const Training = () => {
                   <AddsCard image={item} />
                 </View>
               )}
-            />
+            />*/}
             {/* Categories Section */}
-            <View className="mt-6 mb-1">
+            <View className="mt-3 mb-1">
               <Text className="text-lg font-bold text-neutral-900 dark:text-white mb-3">
                 Categories
               </Text>
@@ -71,7 +71,7 @@ const Training = () => {
         }
       />
       
-    </SafeAreaView>
+    </View>
   )
 }
 

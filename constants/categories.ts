@@ -13,28 +13,28 @@ const categoriesEN: Category[] = [
     id: 1,
     name: 'Cakes',
     image: require('@/assets/images/pngwing.com (1).png'),
-    bgColor: '#ece0d9',
+    bgColor: '#ba6545',
     pp:-35
   },
   {
     id: 2,
     name: 'Gatou',
     image: require('@/assets/images/bakion.png'),
-    bgColor: '#fce0be',
+    bgColor: '#f1d44d',
     pp:-20
   },
   {
     id: 3,
     name: 'Macaron',
     image: require('@/assets/images/macaron.png'),
-    bgColor: '#f7deee',
+    bgColor: '#c23dba',
     pp:-35
   },
   {
     id: 4,
     name: 'Snacks',
     image: require('@/assets/images/pngwing.com.png'),
-    bgColor: '#E2FCE2',
+    bgColor: '#3bc465',
     pp:-40
   },
 ]

@@ -2,12 +2,13 @@ import ProfileItemCard from '@/components/ProfileItemCard';
 import { images } from '@/constants/imports';
 import items from '@/constants/items';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DarkTheme } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { ChevronDown, Plus, Search, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-
-import { Alert, Dimensions, Image, Modal, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Modal, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native';
 import Animated, {
   Extrapolate,
   interpolate,
@@ -22,17 +23,21 @@ const config = {
   shopsUrl: '/api/shops',
 };
 
+const HEADER_IMAGE_HEIGHT = 250;
+const AVATAR_SIZE = 120;
+const PROFILE_OVERLAP = 100; // How much the profile section overlaps the image
+
 export default function ShopScreen() {
   const [activeTab, setActiveTab] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [newCategory, setNewCategory] = useState('');
-  const [tabs, setTabs] = useState<string[]>([]);
+  const [tabs, setTabs] = useState<string[]>(['All']);
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
   const [shopSelectionVisible, setShopSelectionVisible] = useState(false);
   const scrollY = useSharedValue(0);
-  const screenHeight = Dimensions.get('window').height;
   const [shopItems] = useState([...items]);
+  const theme = useColorScheme();
 
   const getShopCategories = async () => {
     const token = await AsyncStorage.getItem('auth_token');
@@ -65,7 +70,7 @@ export default function ShopScreen() {
           id: category.id
         }));
 
-        setTabs(categories.data.map((category: { name: string }) => category.name));
+        setTabs(['All', ...categories.data.map((category: { name: string }) => category.name)]);
         return mappedCategories;
       }
       return [];
@@ -108,14 +113,14 @@ export default function ShopScreen() {
     }
   };
 
-  const { data: shopData, error, isLoading, isError } = useQuery({
+  const { data: shopData } = useQuery({
     queryKey: ['shop'],
     queryFn: getShopData,
     retry: 1,
     retryDelay: 1000,
   });
 
-  const { data: categories, error: categoriesError, isLoading: categoriesLoading, isError: categoriesIsError, refetch: refetchCategories } = useQuery({
+  const { refetch: refetchCategories } = useQuery({
     queryKey: ['categories', selectedShopId],
     queryFn: getShopCategories,
     retry: 1,
@@ -127,7 +132,7 @@ export default function ShopScreen() {
     if (selectedShopId) {
       refetchCategories();
     } else {
-      setTabs([]);
+      setTabs(['All']);
     }
   }, [selectedShopId, refetchCategories]);
 
@@ -137,14 +142,39 @@ export default function ShopScreen() {
     return matchesSearch && matchesTab;
   });
 
-  const profileAnimatedStyle = useAnimatedStyle(() => {
+  // Animated styles for the entire header section
+  const headerAnimatedStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      scrollY.value,
+      [0, 200, 300],
+      [1, 0.5, 0],
+      Extrapolate.CLAMP
+    );
+
+    const translateY = interpolate(
+      scrollY.value,
+      [0, 300],
+      [0, -100],
+      Extrapolate.CLAMP
+    );
+
     return {
-      opacity: interpolate(scrollY.value, [0, 120], [1, 0], Extrapolate.CLAMP),
-      transform: [
-        {
-          translateY: interpolate(scrollY.value, [0, 120], [0, 1], Extrapolate.CLAMP),
-        },
-      ],
+      opacity,
+      transform: [{ translateY }],
+    };
+  });
+
+  // Animated styles for the header image (parallax effect)
+  const imageAnimatedStyle = useAnimatedStyle(() => {
+    const scale = interpolate(
+      scrollY.value,
+      [-100, 0],
+      [1.5, 1],
+      Extrapolate.CLAMP
+    );
+
+    return {
+      transform: [{ scale }],
     };
   });
 
@@ -153,6 +183,7 @@ export default function ShopScreen() {
       scrollY.value = event.contentOffset.y;
     },
   });
+
   const handleAddCategory = async () => {
     if (newCategory.trim() && !tabs.includes(newCategory.trim())) {
       if (!selectedShopId) {
@@ -181,8 +212,7 @@ export default function ShopScreen() {
         });
 
         if (response.ok) {
-          const result = await response.json();
-          setTabs([...tabs, newCategory.trim()]);
+          await refetchCategories();
           setNewCategory('');
           setModalVisible(false);
           Alert.alert('Success', 'Category added successfully!');
@@ -197,15 +227,14 @@ export default function ShopScreen() {
   };
 
   return (
-    
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-white dark:bg-neutral-950">
+      <StatusBar barStyle="light-content" />
 
       <Animated.FlatList
         data={filteredItems}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <View className="flex-1 px-2 pb-4">
+          <View className="flex-1 px-2 pb-4 mt-3">
             <ProfileItemCard item={item} />
           </View>
         )}
@@ -213,8 +242,7 @@ export default function ShopScreen() {
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-        stickyHeaderIndices={[-1]}
-        ListHeaderComponentStyle={{ zIndex: 10 }}
+        contentContainerStyle={{ paddingTop: 0 }}
         ListEmptyComponent={
           <View className="items-center justify-center py-20">
             <Text className="text-gray-500 dark:text-gray-400 text-center">
@@ -224,87 +252,113 @@ export default function ShopScreen() {
         }
         ListHeaderComponent={
           <>
-            {/* Header & Profile */}
-           <View className="w-full h-64">
-            <Image
-              source={images.shopBg}
-              className="w-full h-64 object-cover"
-              style={{borderBottomLeftRadius: 20, borderBottomRightRadius: 20}}
-            />
-            <Animated.View
-              className="px-4 pt-12 pb-6 bg-white dark:bg-neutral-950  border-gray-200 dark:border-gray-700 rounded-t-3xl"
-              style={profileAnimatedStyle}
-            >
-              <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-2xl font-bold text-neutral-950 dark:text-white">Shop</Text>
-                
-                {/* Shop Selection Dropdown */}
-                <TouchableOpacity
-                  onPress={() => setShopSelectionVisible(true)}
-                  className="bg-gray-100 dark:bg-neutral-700 px-3 py-2 rounded-full flex-row items-center mr-2"
-                >
-                  <Text className="text-sm text-gray-700 dark:text-gray-300 mr-1">
-                    {selectedShopId 
-                      ? (Array.isArray(shopData) 
-                          ? shopData.find(shop => shop.id === selectedShopId)?.name || 'Select Shop'
-                          : shopData?.name || 'Select Shop')
-                      : 'Select Shop'
-                    }
-                  </Text>
-                  <ChevronDown size={16} color="#6B7280" />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => setModalVisible(true)}
-                  className="bg-gray-100 dark:bg-neutral-700 p-2 rounded-full"
-                >
-                  <Plus size={24} color="#6B7280" />
-                </TouchableOpacity>
-                 <TouchableOpacity
-                  onPress={() => router.push('/addProduct')}
-                  className="bg-gray-100 dark:bg-neutral-700 p-2 rounded-full"
-                >
-                  <Plus size={24} color="#6B7280" />
-                </TouchableOpacity>
+            {/* Header Container with Image and Overlapping Profile */}
+            <Animated.View style={headerAnimatedStyle} >
+              {/* Background Image */}
+              
+               <View style={{ height: HEADER_IMAGE_HEIGHT, overflow: 'hidden', }}>
+                <Animated.View style={[{ width: '100%', height: '100%' }, imageAnimatedStyle]}>
+                  <Image
+                       source={theme === 'dark' ? images.shopBgBlue : images.shopBgPink}
+                    className="w-full h-full opacity-60"
+                  />
+                </Animated.View>
               </View>
+              
              
-              <View className="items-center">
-                
-                <Image
-                  source={images.shopAvatar}
-                  className="w-24 h-24 rounded-full border-2 border-neutral-200 dark:border-neutral-700"
-                />
-                <Text className="text-lg font-bold text-neutral-900 dark:text-white mt-2">
+
+              {/* Profile Section - Overlapping the image */}
+              <View 
+                className="bg-white dark:bg-neutral-950 rounded-t-3xl px-4 pt-16 pb-4"
+                style={{ marginTop: -PROFILE_OVERLAP }}
+              >
+                {/* Avatar - Positioned to overlap both sections */}
+                <View 
+                  className="absolute mx-5 left-1/2 items-center"
+                  style={{ 
+                    top: -(AVATAR_SIZE / 2),
+                    transform: [{ translateX: -AVATAR_SIZE / 2 }]
+                  }}
+                >
+                  <Image
+                    source={images.shopAvatar}
+                    style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
+                    className="rounded-full border-4 border-white dark:border-neutral-950"
+                  />
+                </View>
+
+               
+             
+                {/* Shop Name */}
+                <View className="items-center mb-4">
+                  <Text className="text-lg font-bold text-neutral-900 dark:text-white mt-2">
+                    {Array.isArray(shopData)
+                      ? shopData[0]?.name || 'No Shop Name'
+                      : shopData?.name || 'No Shop Name'}
+                  </Text>
+                </View>
+
+                {/* Stats */}
+                <View className="flex-row justify-around mb-4">
+                  <View className="items-center">
+                    <Text className="text-lg font-bold text-neutral-900 dark:text-white">128</Text>
+                    <Text className="text-sm text-neutral-500 dark:text-neutral-400">Following</Text>
+                  </View>
+                  <View className="items-center">
+                    <Text className="text-lg font-bold text-neutral-900 dark:text-white">10.5k</Text>
+                    <Text className="text-sm text-neutral-500 dark:text-neutral-400">Followers</Text>
+                  </View>
+                  <View className="items-center">
+                    <Text className="text-lg font-bold text-neutral-900 dark:text-white">89</Text>
+                    <Text className="text-sm text-neutral-500 dark:text-neutral-400">Likes</Text>
+                  </View>
+                </View>
+
+                {/* Description */}
+                <Text className="text-center text-neutral-600 dark:text-neutral-400 px-8">
                   {Array.isArray(shopData)
-    ? shopData[0]?.name || 'No Shop Name'
-    : shopData?.name || 'No Shop Name'}
+                    ? shopData[0]?.description || 'No Shop Description'
+                    : shopData?.description || 'No Shop Description'}
                 </Text>
               </View>
-
-              <View className="flex-row justify-around mt-4">
-                <View className="items-center">
-                  <Text className="text-lg font-bold text-neutral-900 dark:text-white">128</Text>
-                  <Text className="text-sm text-neutral-500 dark:text-neutral-400">Following</Text>
-                </View>
-                <View className="items-center">
-                  <Text className="text-lg font-bold text-neutral-900 dark:text-white">10.5k</Text>
-                  <Text className="text-sm text-neutral-500 dark:text-neutral-400">Followers</Text>
-                </View>
-                <View className="items-center">
-                  <Text className="text-lg font-bold text-neutral-900 dark:text-white">89</Text>
-                  <Text className="text-sm text-neutral-500 dark:text-neutral-400">Likes</Text>
-                </View>
-              </View>
-
-              <Text className="text-center text-neutral-600 dark:text-neutral-400 mt-3 px-8">
-                {Array.isArray(shopData)
-    ? shopData[0]?.description || 'No Shop Description'
-    : shopData?.description || 'No Shop Description'}
-              </Text>
             </Animated.View>
 
-            {/* Search & Tabs */}
-            <View className="bg-white dark:bg-neutral-950 px-4 pt-2 pb-2 border-b border-gray-200 dark:border-gray-700 mb-5">
+               {/* Top Action Bar */}
+                <View className="flex-row items-center justify-between mx-4">
+                  <Text className="text-2xl font-bold text-neutral-950 dark:text-white"></Text>
+                  
+                  <View className="flex-row items-center gap-2">
+                    {/* Shop Selection Dropdown */}
+                    <TouchableOpacity
+                      onPress={() => setShopSelectionVisible(true)}
+                      className="bg-gray-100 dark:bg-neutral-700 px-3 py-2 rounded-full flex-row items-center"
+                    >
+                      <Text className="text-sm text-gray-700 dark:text-gray-300 mr-1">
+                        {selectedShopId 
+                          ? (Array.isArray(shopData) 
+                              ? shopData.find(shop => shop.id === selectedShopId)?.name || 'Select Shop'
+                              : shopData?.name || 'Select Shop')
+                          : 'Select Shop'
+                        }
+                      </Text>
+                      <ChevronDown size={16} color="#6B7280" />
+                    </TouchableOpacity>
+
+                    {/* Add Category Button */}
+                   
+
+                    {/* Add Product Button */}
+                    <TouchableOpacity
+                      onPress={() => router.push('/addProduct')}
+                      className="bg-gray-100 dark:bg-neutral-700 p-2 rounded-full"
+                    >
+                      <Plus size={24} color="#6B7280" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+            {/* Search & Tabs - This stays visible when scrolling */}
+            <View className="bg-white dark:bg-neutral-950 px-4 pt-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+              {/* Search Bar */}
               <View className="flex-row items-center bg-gray-100 dark:bg-neutral-800 rounded-full px-3 my-3">
                 <Search size={15} color="#9CA3AF" />
                 <TextInput
@@ -321,35 +375,40 @@ export default function ShopScreen() {
                 )}
               </View>
 
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {/* Category Tabs */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="my-2">
                 {tabs.map((tab) => (
-                  <TouchableOpacity
-                    key={tab}
-                    onPress={() => setActiveTab(tab)}
-                    className={`px-6 py-2 mx-1 ${
-                      activeTab === tab ? 'border-b-2 border-gray-900 dark:border-white' : ''
-                    }`}
-                  >
-                    <Text
-                      className={`font-semibold ${
-                        activeTab === tab
-                          ? 'text-gray-900 dark:text-white'
-                          : 'text-gray-500 dark:text-gray-400'
-                      }`}
-                    >
-                      {tab}
-                    </Text>
-                  </TouchableOpacity>
+                 <TouchableOpacity
+                key={tab}
+                onPress={() => setActiveTab(tab)}
+                className={`px-6 py-2 mx-1 border  dark:border-white rounded-3xl mb-2 ${
+                 activeTab === tab ?  'border-2 border-primary dark:border-primary bg-primary/10' : 'border-gray-600 dark:border-gray-400'
+                }`}
+              >
+                <Text
+                  className={`text-sm font-medium ${
+                    activeTab === tab ? 'text-primary dark:text-primary' : 'text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  {tab}
+                </Text>
+                
+              </TouchableOpacity>
+              
                 ))}
+                 <TouchableOpacity
+                      onPress={() => setModalVisible(true)}
+                      className="  p-2 "
+                    >
+                      <Plus size={24} color="#6B7280" />
+                    </TouchableOpacity>
               </ScrollView>
-            </View>
             </View>
           </>
         }
-       // keep search + tabs sticky
       />
 
-      {/* Modal */}
+      {/* Add Category Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -383,7 +442,6 @@ export default function ShopScreen() {
             </TouchableOpacity>
           </View>
         </View>
-        
       </Modal>
 
       {/* Shop Selection Modal */}
@@ -416,7 +474,7 @@ export default function ShopScreen() {
                       : 'bg-gray-100 dark:bg-gray-700'
                   }`}
                 >
-                  <Text className={`font-semibold ${
+                  <Text className={`font-bold font-3xl m-5 ${
                     selectedShopId === shop.id 
                       ? 'text-white dark:text-gray-900' 
                       : 'text-gray-900 dark:text-white'
@@ -439,7 +497,5 @@ export default function ShopScreen() {
         </View>
       </Modal>
     </View>
-    
   );
 }
-

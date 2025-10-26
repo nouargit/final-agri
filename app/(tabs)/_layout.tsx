@@ -92,6 +92,7 @@ export default function TabLayout() {
         name="training"
         options={{
           title: 'Explore',
+          
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="search" color={color} />,
         }}
       />
