@@ -1,0 +1,16 @@
+export const config = {
+  baseUrl: 'http://10.56.221.194:8000',
+  shopsUrl: '/api/shops',
+  userUrl: '/api/user',
+    csrfTokenUrl: '/sanctum/csrf-cookie',
+  productsUrl: '/api/products',
+  loginUrl: '/api//auth/login',
+  registerUrl: '/api/auth/register',
+  logoutUrl: '/api/logout',
+  profileUrl: '/api/profile',
+  ordersUrl: '/api/orders',
+  orderUrl: '/api/order',
+  orderItemsUrl: '/api/order-items',
+  cartUrl: '/api/cart',
+  cartItemsUrl: '/api/cart-items',
+};

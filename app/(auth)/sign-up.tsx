@@ -1,19 +1,20 @@
-import { View, Text, TouchableOpacity, Platform } from "react-native";
-import { Link, useRouter } from 'expo-router';
-import { KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import CustomButton from "@/components/CustomButton";
 import CustomInput from "@/components/CustomInput";
-import { useState } from "react";
+import { config } from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Link, useRouter } from 'expo-router';
+import { useState } from "react";
+import { Keyboard, KeyboardAvoidingView, Platform, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+
 
 export default function SignUpScreen() {
   const router = useRouter();
 
   // Manual authentication configuration
-  const baseUrl = 'http://10.142.232.194:8000';
-  const csrfTokenUrl = `${baseUrl}/sanctum/csrf-cookie`;
-  const loginUrl = `${baseUrl}/api/auth/login`;
-  const userUrl = `${baseUrl}/api/user`;
+  const baseUrl = config.baseUrl;
+  const csrfTokenUrl = `${baseUrl}${config.csrfTokenUrl}`;
+  const loginUrl = `${baseUrl}${config.loginUrl}`;
+  const userUrl = `${baseUrl}${config.userUrl}`;
 
   const [form, setForm] = useState({
     name: "",

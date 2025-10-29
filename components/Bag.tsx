@@ -85,31 +85,35 @@ interface BagProps {
     total: string
     status: string
   }
+  shop: {
+    name: string
+    image: any
+  }
 }
 
-const Bag = ({ bag }: BagProps) => {
-  const [bg, text] = statusColors[bag.status].split(" ");
+const Bag = ({ bag, shop }: BagProps) => {
+  //const [bg, text] = statusColors[bag.status].split(" ");
 
   return (
-    <View className="mb-3 ">
+    <View className=" mt-4 rounded-2xl border border-neutral-100 dark:border-neutral-700 shadow-md shadow-neutral-300 dark:shadow-neutral-900 w-full">
   {/* Shadow container - outside the touchable */}
  
   
-  <TouchableOpacity className="bg-white dark:bg-neutral-800 rounded-2xl p-4  " onPress={() => {
+  <TouchableOpacity className="w-full bg-white  dark:bg-neutral-800 rounded-2xl p-4  " onPress={() => {
     router.navigate(`/orders`)
   }}>
  
     <View className="flex-row items-center">  
        {/* Thumbnail */}
     <Image
-      source={bag.ShopImage}
+      source={shop.image}
       className="w-16 h-16 rounded-full mr-4"
     />
 
     {/* Order Info */}
     <View className="flex-1">
      
-      <Text className="font-bold text-gray-800 dark:text-neutral-100">{bag.ShopName}</Text>
+      <Text className="font-bold text-gray-800 dark:text-neutral-100">{shop.name}</Text>
 
       <View className="flex-row items-center mt-1">
         <Text className="text-gray-500 dark:text-neutral-500 text-sm">{bag.date}</Text>
@@ -117,8 +121,8 @@ const Bag = ({ bag }: BagProps) => {
        
         
       </View>
-       <View className={`ml-2 px-2 py-0.5 rounded-full ${bg}`}>
-          <Text className={`text-xs font-medium ${text}`}>
+       <View className={`ml-2 px-2 py-0.5 rounded-full }`}>
+          <Text className={`text-xs font-medium `}>
             {bag.status}
           </Text>
         </View>

@@ -1,25 +1,26 @@
-import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native'
-import React, { useState } from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { router } from 'expo-router'
+import { config } from '@/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
+
 
 function shopCreationForm() {
 
     const [name, setName] = useState('');
     const [number, setNumber] = useState('');
     const [shopDiscreption, setShopDiscreption] = useState('');
+    const [wilaya, setWilaya] = useState('');
+    const [daira, setDaira] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Configuration - matching your Laravel setup
-    const config = {
-      baseUrl: 'http://10.142.232.194:8000',
-      csrfTokenUrl: '/sanctum/csrf-cookie',
-      shopsUrl: '/api/shops',
-    };
+    
 
     const createShop = async () => {
-      if (!name || !number || !shopDiscreption) {
-        Alert.alert("Error", "Please fill in all fields");
+      if (!name || !number || !shopDiscreption || !wilaya || !daira) {
+        Alert.alert("Error", "Please fill in all fields including Wilaya and Daira");
         return;
       }
 
@@ -53,9 +54,13 @@ function shopCreationForm() {
         // Step 3: Create shop
         const shopData = {
           name: name,
-          description: shopDiscreption, // Fixed typo: description instead of discreption
+          description: shopDiscreption, 
           phone: number,
+          wilaya: wilaya,
+          daira: daira,
         };
+
+        console.log("Shop data being sent:", shopData);
 
         const response = await fetch(`${config.baseUrl}${config.shopsUrl}`, {
           method: 'POST',
@@ -66,6 +71,10 @@ function shopCreationForm() {
           },
           body: JSON.stringify(shopData),
         });
+
+        console.log("Request sent to:", `${config.baseUrl}${config.shopsUrl}`);
+        console.log("Request body:", JSON.stringify(shopData));
+        console.log("Response status:", response.status);
 
         const responseData = await response.json();
         console.log("Shop creation response:", responseData);
@@ -82,6 +91,8 @@ function shopCreationForm() {
                   setName('');
                   setNumber('');
                   setShopDiscreption('');
+                  setWilaya('');
+                  setDaira('');
                   // Navigate back or to shop management
                   router.back();
                 }
@@ -130,6 +141,18 @@ function shopCreationForm() {
         value={number}
         onChangeText={setNumber}
         keyboardType="phone-pad"
+      />
+      <TextInput
+        placeholder="Wilaya"
+        className="bg-white dark:bg-neutral-800 dark:text-white rounded-2xl p-4 mb-3 shadow-sm"
+        value={wilaya}
+        onChangeText={setWilaya}
+      />
+      <TextInput
+        placeholder="Daira"
+        className="bg-white dark:bg-neutral-800  dark:text-white rounded-2xl p-4 mb-3 shadow-sm"
+        value={daira}
+        onChangeText={setDaira}
       />
     
     <TouchableOpacity 

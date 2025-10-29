@@ -19,7 +19,7 @@ const ProfileItemCard = ({ item }: ItemCardProps) => {
        style={{ width: "100%" }}
   className="mb-2"
       onPress={() => {
-        router.push(`../product`)
+        router.push(`../product?id=${item.id}`)
       }}
     >
       <View className="bg-white dark:bg-neutral-800 rounded-3xl shadow-lg dark:shadow-neutral-900/30 overflow-hidden border border-neutral-100 dark:border-neutral-700">

@@ -1,6 +1,7 @@
 import { images } from '@/constants/imports';
 import { Order, OrderFilter } from '@/type';
 import { ActionSheetProvider, useActionSheet } from '@expo/react-native-action-sheet';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Minus, Plus, Search, X } from "lucide-react-native";
 import { useState } from "react";
 import { FlatList, Image, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
@@ -67,6 +68,32 @@ const OrderCard = ({ order }: { order: Order }) => {
   const [quantity, setQuantity] = useState(1);
   const colorScheme = useColorScheme();
   const { showActionSheetWithOptions } = useActionSheet(); // Make sure this line is present
+
+  const getItems = async () => {
+    try{
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        throw new Error('No token found');
+      }
+      const response = await fetch(' ', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch orders: ${response.status} - ${response.statusText}`);
+      }
+      const data = await response.json();
+      console.log('Fetched orders data:', data.data[0].shop.name);
+      return data.data || data;
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      throw error;
+    }
+  }
 
   const updateQuantity = (change: number) => {
     setQuantity(prev => Math.max(1, prev + change));

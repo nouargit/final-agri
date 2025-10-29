@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigation } from "@react-navigation/native";
 import {
   View,
@@ -7,34 +7,87 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
-  SafeAreaView,
+  
   StatusBar,
 } from 'react-native';
 import { Heart, ArrowLeft, Star, Minus, Plus, ShoppingCart, ChevronLeft, ChevronRight, MapPin, Clock, Award } from 'lucide-react-native';
-
+import { useQuery } from '@tanstack/react-query';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { config } from '@/config';
+import { router, useLocalSearchParams } from 'expo-router';
+import {SafeAreaView} from 'react-native-safe-area-context';
 const { width } = Dimensions.get('window');
-
+ const temp={images: [
+      "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800&h=600&fit=crop"
+    ],
+    ingredients: ["Dark Chocolate", "Butter", "Eggs", "Sugar", "Flour", "Vanilla Ice Cream"],
+    sizes: ["Small", "Medium", "Large"],
+    allergens: ["Eggs", "Dairy", "Gluten"],}
 const ProductScreen = () => {
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedSize, setSelectedSize] = useState('Medium');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const navigation = useNavigation();
+  const { id } = useLocalSearchParams();
   const handleBack = () => {
     navigation.goBack();
   };
-  const product = {
-    id: 1,
-    name: "Chocolate Lava Cake",
-    price: 12.99,
-    originalPrice: 15.99,
-    rating: 4.8,
-    reviews: 124,
-    description:
+
+  const getProducts = useCallback(async () => {
+  try {
+     const token = await AsyncStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found. Please login first.');
+      }
+     
+    const response = await fetch(`${config.baseUrl}/api/products/${id}`,{
+      method:'GET',
+      headers:{
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      
+    });
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+  //console.log('fetching from')
+  const cart = await response.json();
+  //console.log('Raw API response:', cart);
+
+  // Return the actual product cart, not an array
+  return cart.cart || cart;
+
+  } catch (error) {
+    
+    throw error; // Throw the error instead of returning empty array
+  }
+  
+}, [id]);
+
+  const {data: productTemp, isLoading, error} = useQuery({
+  queryKey: ['products', id],
+  queryFn: getProducts,
+   enabled: !!id, // Only run query when id is available
+});
+const product = {
+    id: productTemp?.id || 1,
+    shop_id: productTemp?.shop_id || 1,
+    name: productTemp?.name || "chokolate cake" ,
+    price: productTemp?.price || 12.99,
+    originalPrice: productTemp?.originalPrice || 15.99,
+    rating: productTemp?.rating || 4.8,
+    reviews: productTemp?.reviews || 124,
+    description: productTemp?.description ||
       "Indulgent warm chocolate cake with a molten chocolate center. Served with vanilla ice cream and fresh berries. Perfect for chocolate lovers!",
-    preparationTime: "15-20 min",
-    calories: "580 cal",
-    images: [
+    preparationTime: productTemp?.preparationTime || "15-20 min",
+    calories: productTemp?.calories || "580 cal",
+    images: productTemp?.images || [
       "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=800&h=600&fit=crop",
       "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&h=600&fit=crop",
       "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=800&h=600&fit=crop",
@@ -46,7 +99,7 @@ const ProductScreen = () => {
   };
 
   const seller = {
-    name: "Sweet Delights Bakery",
+    name: productTemp?.shop?.name || "Sweet Delights Bakery",
     avatar: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=100&h=100&fit=crop",
     rating: 4.9,
     reviews: 2840,
@@ -85,6 +138,138 @@ const ProductScreen = () => {
       helpful: 12
     }
   ];
+  const addProductToCart = async () => {
+    try {
+      const token = await AsyncStorage.getItem('auth_token');
+      const user_data = await AsyncStorage.getItem('user_data');
+      const user_id = user_data ? JSON.parse(user_data).id : null;
+     // console.log('User ID:', user_id);
+      if (!token) {
+        throw new Error('No authentication token found. Please login first.');
+      }
+
+      // First, try to get existing cart
+      const cartResponse = await fetch(`${config.baseUrl}/api/carts/${product.shop_id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+
+      });
+
+      let cart;
+      
+      if (cartResponse.ok) {
+        const cartData = await cartResponse.json();
+        cart = cartData.data || cartData;
+       
+      }
+
+      // If no cart exists or cart is empty/null, create a new one
+      if (!cart || (Array.isArray(cart) && cart.length === 0)) {
+       
+       
+     
+        const newCartResponse = await fetch(`${config.baseUrl}/api/carts`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            
+            shop_id: product.shop_id,   
+            status: 'open' 
+          })
+        });
+
+        if (!newCartResponse.ok) {
+          throw new Error('Failed to create new cart');
+        }
+        
+        const newCartData = await newCartResponse.json();
+        cart = newCartData.data || newCartData;
+      
+      }
+
+      // Ensure cart has cart_items array
+      if (!cart.cart_items) {
+       
+        cart.cart_items = [];
+      }
+
+     
+
+      // Check if item already exists in cart
+      const existingItem = cart.cart_items.find((item: any) => 
+        item.product_id === parseInt(product.id || '0')
+      );
+      
+
+      if (existingItem) {
+        // Update existing item quantity
+        const updateResponse = await fetch(`${config.baseUrl}/api/carts/${cart.id}/items/${existingItem.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            quantity: existingItem.quantity + quantity,
+            note: '',
+            options: []
+          })
+        });
+
+        if (!updateResponse.ok) {
+          throw new Error('Failed to update cart item');
+        }
+
+        const result = await updateResponse.json();
+        
+        alert('Item quantity updated in cart!');
+      } else {
+        // Add new item to cart
+        
+        const addResponse = await fetch(`${config.baseUrl}/api/carts/${cart.id}/items`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            
+          },
+          body: JSON.stringify({
+            product_id: product.id,
+            quantity: quantity,
+            note: null,
+            options: []
+          })
+        });
+
+        if (!addResponse.ok) {
+          const errorText = await addResponse.text();
+         
+          throw new Error(`Failed to add item to cart: ${addResponse.status} - ${errorText}`);
+        }
+
+        const result = await addResponse.json();
+      
+        alert('Item added to cart successfully!');
+      }
+
+    } catch (error) {
+     
+      alert('Failed to add item to cart. Please try again.');
+    }
+  };
+
+
+
+  
 
   const incrementQuantity = () => setQuantity((prev) => prev + 1);
   const decrementQuantity = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
@@ -97,8 +282,29 @@ const ProductScreen = () => {
     setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
   };
 
+  // Add loading and error states
+  if (isLoading) {
+    return (
+      <SafeAreaView className="bg-gray-50 flex-1 dark:bg-neutral-900 pt-7 justify-center items-center">
+        <Text className="text-gray-600 dark:text-gray-400">Loading product...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView className="bg-gray-50 flex-1 dark:bg-neutral-900 pt-7 justify-center items-center">
+        <Text className="text-red-600 dark:text-red-400">Error loading product</Text>
+        <Text className="text-gray-600 dark:text-gray-400 mt-2">{error.message}</Text>
+      </SafeAreaView>
+    );
+  }
+
+
+  
+
   return (
-    <SafeAreaView className="bg-gray-50 flex-1 dark:bg-neutral-900 pt-7">
+    <View className="bg-gray-50 flex-1 dark:bg-neutral-900 pt-3">
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       {/* Header */}
       <View className="bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-700">
@@ -151,7 +357,7 @@ const ProductScreen = () => {
 
             {/* Image Indicators */}
             <View className="absolute bottom-4 left-0 right-0 flex-row justify-center gap-2 ">
-              {product.images.map((_, index) => (
+              {product.images.map((_: any, index: number) => (
                 <TouchableOpacity
                   key={index}
                   onPress={() => setCurrentImageIndex(index)}
@@ -166,7 +372,7 @@ const ProductScreen = () => {
           {/* Thumbnail Strip */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} className="p-4">
             <View className="flex-row gap-2 ">
-              {product.images.map((img, index) => (
+              {product.images.map((img: any, index: number) => (
                 <TouchableOpacity
                   key={index}
                   onPress={() => setCurrentImageIndex(index)}
@@ -251,7 +457,7 @@ const ProductScreen = () => {
           </View>
 
           {/* Allergen Info */}
-          <View className="mb-6">
+         <View className="mb-6">
             <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-3">
               Allergen Information
             </Text>
@@ -275,18 +481,21 @@ const ProductScreen = () => {
               <Text className="text-lg font-semibold text-neutral-900 dark:text-white">Quantity</Text>
               <View className="flex-row items-center bg-gray-100 dark:bg-neutral-700 rounded-full">
                 <TouchableOpacity onPress={decrementQuantity} className="p-3">
-                  <Minus size={18} color="#374151" />
+                  <Minus size={18} color="#ACB0B2" />
                 </TouchableOpacity>
                 <Text className="text-lg font-semibold text-neutral-900 dark:text-white mx-6">
                   {quantity}
                 </Text>
                 <TouchableOpacity onPress={incrementQuantity} className="p-3">
-                  <Plus size={18} color="#374151" />
+                  <Plus size={18} color="#ACB0B2" />
                 </TouchableOpacity>
               </View>
             </View>
 
-            <TouchableOpacity className="w-full bg-primary py-4 rounded-xl flex-row items-center justify-center gap-2">
+            <TouchableOpacity 
+              className="w-full bg-primary py-4 rounded-xl flex-row items-center justify-center gap-2"
+              onPress={addProductToCart}
+            >
               <ShoppingCart size={22} color="white" />
               <Text className="text-white font-semibold text-lg">
                 Add to Cart - ${(product.price * quantity).toFixed(2)}
@@ -329,7 +538,7 @@ const ProductScreen = () => {
               <Text className="text-xs text-gray-500 dark:text-neutral-500 mt-2">Member since {seller.memberSince}</Text>
             </View>
           </View>
-          <TouchableOpacity className="mt-4 w-full bg-gray-100 dark:bg-neutral-800 py-3 rounded-xl items-center">
+          <TouchableOpacity className="mt-4 w-full bg-gray-100 dark:bg-neutral-800 py-3 rounded-xl items-center" onPress={() => router.push(`/productShop?shop_id=${product.shop_id}`)}>
             <Text className="text-gray-900 dark:text-white font-medium">Visit Store</Text>
           </TouchableOpacity>
         </View>
@@ -338,7 +547,7 @@ const ProductScreen = () => {
         <View className="bg-white dark:bg-neutral-800 mt-2 p-4 mb-4">
           <View className="flex-row items-center justify-between mb-6">
             <Text className="text-2xl font-bold text-neutral-900 dark:text-white">Customer Reviews</Text>
-            <TouchableOpacity className="bg-primary px-6 py-2 rounded-xl">
+            <TouchableOpacity className="bg-primary px-1 py-2 rounded-xl">
               <Text className="text-white font-medium">Write Review</Text>
             </TouchableOpacity>
           </View>
@@ -424,7 +633,7 @@ const ProductScreen = () => {
         </View>
         
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

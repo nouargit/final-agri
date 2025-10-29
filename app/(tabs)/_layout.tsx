@@ -1,13 +1,11 @@
-import { Redirect, Tabs, useFocusEffect } from 'expo-router';
-import React, { useEffect, useState, useCallback } from 'react';
-import { Platform } from 'react-native';
-import { icons } from "@/constants/imports";
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Redirect, Tabs, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -46,7 +44,7 @@ export default function TabLayout() {
   
   return (
     <Tabs
-      initialRouteName="training"
+      initialRouteName="index"
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
@@ -54,8 +52,7 @@ export default function TabLayout() {
         tabBarBackground: TabBarBackground,
         tabBarStyle:
         {
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
+          
           height: 80,
           paddingBottom: 10,
           paddingTop: 10,
@@ -70,10 +67,10 @@ export default function TabLayout() {
             height: 0,
           },
           borderBottomWidth: 0,
-          borderRadius: 20,
+          borderTopWidth: 1,
           marginHorizontal: 0,
           marginBottom: 0,
-          borderBlockColor:"transparent",
+          borderBlockColor:"#303333",
           borderBlockEndColor:"red",
           position: 'absolute',
         }

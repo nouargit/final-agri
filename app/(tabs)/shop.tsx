@@ -1,13 +1,13 @@
 import ProfileItemCard from '@/components/ProfileItemCard';
+import { config } from '@/config';
 import { images } from '@/constants/imports';
 import items from '@/constants/items';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DarkTheme } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { ChevronDown, Plus, Search, X } from 'lucide-react-native';
+import { ChevronDown, Plus, Search, X, Package } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
+
 import { Alert, Image, Modal, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native';
 import Animated, {
   Extrapolate,
@@ -17,11 +17,7 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 
-const config = {
-  baseUrl: 'http://10.142.232.194:8000',
-  csrfTokenUrl: '/sanctum/csrf-cookie',
-  shopsUrl: '/api/shops',
-};
+
 
 const HEADER_IMAGE_HEIGHT = 250;
 const AVATAR_SIZE = 120;
@@ -257,11 +253,13 @@ export default function ShopScreen() {
               {/* Background Image */}
               
                <View style={{ height: HEADER_IMAGE_HEIGHT, overflow: 'hidden', }}>
+                
                 <Animated.View style={[{ width: '100%', height: '100%' }, imageAnimatedStyle]}>
                   <Image
                        source={theme === 'dark' ? images.shopBgBlue : images.shopBgPink}
-                    className="w-full h-full opacity-60"
+                    className="w-full h-full opacity-80"
                   />
+                 
                 </Animated.View>
               </View>
               
@@ -272,6 +270,7 @@ export default function ShopScreen() {
                 className="bg-white dark:bg-neutral-950 rounded-t-3xl px-4 pt-16 pb-4"
                 style={{ marginTop: -PROFILE_OVERLAP }}
               >
+                
                 {/* Avatar - Positioned to overlap both sections */}
                 <View 
                   className="absolute mx-5 left-1/2 items-center"
@@ -323,7 +322,7 @@ export default function ShopScreen() {
               </View>
             </Animated.View>
 
-               {/* Top Action Bar */}
+               {/* Action Bar */}
                 <View className="flex-row items-center justify-between mx-4">
                   <Text className="text-2xl font-bold text-neutral-950 dark:text-white"></Text>
                   
@@ -355,7 +354,14 @@ export default function ShopScreen() {
                       <Plus size={24} color="#6B7280" />
                     </TouchableOpacity>
                   </View>
+                   <TouchableOpacity className="p-2 bg-slate-200 rounded-full dark:bg-neutral-700" onPress={() => {
+
+                  router.navigate(`../shopOrdersScreen`)
+                }}>
+                  <Package size={24} color="#6B7280" />
+                </TouchableOpacity>
                 </View>
+                
             {/* Search & Tabs - This stays visible when scrolling */}
             <View className="bg-white dark:bg-neutral-950 px-4 pt-2 pb-2 border-b border-gray-200 dark:border-gray-700">
               {/* Search Bar */}

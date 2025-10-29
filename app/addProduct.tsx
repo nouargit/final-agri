@@ -1,5 +1,6 @@
 import CustomButton from '@/components/CustomButton';
 import CustomInput from '@/components/CustomInput';
+import { config } from '@/config';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery } from '@tanstack/react-query';
@@ -8,15 +9,15 @@ import { router } from 'expo-router';
 import { ArrowLeft, Camera, ChevronDown, Plus, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    Image,
-    Modal,
-    ScrollView,
-    StatusBar,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  Image,
+  Modal,
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -87,8 +88,8 @@ const AddProductScreen = () => {
 
       // Fetch categories for the selected shop
       const url = selectedShopId 
-        ? `${config.baseURL}/api/categories?shop_id=${selectedShopId}`
-        : `${config.baseURL}/api/categories`;
+        ? `${config.baseUrl}/api/categories?shop_id=${selectedShopId}`
+        : `${config.baseUrl}/api/categories`;
 
       const response = await fetch(url, {
         method: 'GET',
@@ -201,10 +202,7 @@ const AddProductScreen = () => {
 
   
 
-  const config = {
-    baseURL: 'http://10.142.232.194:8000',
-    shopsUrl: '/api/shops',
-  };
+  
 
   // Fetch shops data
   const getShopData = async () => {
@@ -214,7 +212,7 @@ const AddProductScreen = () => {
         throw new Error('No authentication token found. Please login first.');
       }
       
-      const response = await fetch(`${config.baseURL}${config.shopsUrl}`, {
+      const response = await fetch(`${config.baseUrl}${config.shopsUrl}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -268,7 +266,7 @@ const AddProductScreen = () => {
     try {
           const token = await AsyncStorage.getItem('auth_token');
          console.log('Product data:', formData);
-      const response = await fetch(`${config.baseURL}/api/products`, {
+      const response = await fetch(`${config.baseUrl}${config.productsUrl}`, {
         method: 'POST',
        headers: {
       'Authorization': token ? `Bearer ${token}` : '',
@@ -277,6 +275,7 @@ const AddProductScreen = () => {
     },
         body: JSON.stringify(formData),
       });
+      console.log(formData.images);
       return await response.json();
     } catch (error) {
       console.error('Error adding product:', error);

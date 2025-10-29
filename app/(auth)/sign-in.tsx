@@ -1,9 +1,9 @@
-import { View, Text, TouchableOpacity } from "react-native";
-import { Link, router } from 'expo-router';
-import CustomInput from "@/components/CustomInput";
 import CustomButton from "@/components/CustomButton";
-import { TouchableWithoutFeedback, Keyboard } from 'react-native';
+import CustomInput from "@/components/CustomInput";
+import { config } from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Link, router } from 'expo-router';
+import { Keyboard, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 
 import { useState } from "react";
 
@@ -16,13 +16,8 @@ export default function SignInScreen() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Configuration - matching your Laravel setup
-  const config = {
-    baseUrl: 'http://10.142.232.194:8000',
-    csrfTokenUrl: '/sanctum/csrf-cookie',
-    loginUrl: '/api/auth/login',
-    userUrl: '/api/user',
-  };
+  
+  
   
   const submit = async () => {
     if (!form.email || !form.password) {

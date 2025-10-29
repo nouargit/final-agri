@@ -1,14 +1,73 @@
-import AddsCard from '@/components/AddsCard';
 import CategoryCard from '@/components/CategorysCard';
 import ItemCard from '@/components/ItemCard';
+import { config } from '@/config';
 import categoriesEN from '@/constants/categories';
 import { images } from '@/constants/imports';
-import items, { Item } from '@/constants/items';
+import { Item } from '@/constants/items';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import MasonryList from "@react-native-seoul/masonry-list";
+import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react-native';
-import { Dimensions, FlatList, ScrollView, StatusBar, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Dimensions, ScrollView, StatusBar, Text, View } from 'react-native';
+
+
+
+
 const Training = () => {
+
+const getProducts = async () => {
+  try {
+     const token = await AsyncStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found. Please login first.');
+      }
+
+    const response = await fetch(`${config.baseUrl}/api/products`,{
+      method:'GET',
+      headers:{
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      
+    });
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+  console.log('fetching from')
+  const data = await response.json();
+
+  //ensure data is an array
+  return Array.isArray(data) ? data : data.data || [];
+
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return []; // Return empty array on error
+  }
+  
+}
+
+const {data: productsData, isLoading, error} = useQuery({
+  queryKey: ['products'],
+  queryFn: getProducts,
+});
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-neutral-50 dark:bg-neutral-950 justify-center items-center">
+        <Text className="text-neutral-500">Loading products...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View className="flex-1 bg-neutral-50 dark:bg-neutral-950 justify-center items-center">
+        <Text className="text-red-500">Error loading products</Text>
+      </View>
+    );
+  }
+
   return (
     <View className="flex-1 bg-neutral-50 dark:bg-neutral-950">
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
@@ -23,7 +82,7 @@ const Training = () => {
       
      
       <MasonryList
-        data={items as Item[]}
+        data={productsData || []}
         keyExtractor={(item) => item.id.toString()}
         numColumns={2}
         showsVerticalScrollIndicator={false}
@@ -49,7 +108,7 @@ const Training = () => {
               )}
             />*/}
             {/* Categories Section */}
-            <View className="mt-3 mb-1">
+            <View className="mt-1 mb-2">
               <Text className="text-lg font-bold text-neutral-900 dark:text-white mb-3">
                 Categories
               </Text>
@@ -58,7 +117,7 @@ const Training = () => {
                 showsHorizontalScrollIndicator={false} 
                 className="flex-row w-full"
               >
-                {categoriesEN.map((category) => (
+                {(categoriesEN || []).map((category) => (
                   <CategoryCard key={category.id} category={category} />
                 ))}
               </ScrollView>

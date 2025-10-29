@@ -1,7 +1,7 @@
 import { BlurView } from 'expo-blur'
 import { router } from 'expo-router'
 import { Image, ImageSourcePropType, Text, TouchableOpacity, View } from 'react-native'
-
+import { images } from '@/constants/imports'
 interface Item {
   price: number
   id: number
@@ -20,7 +20,7 @@ const ItemCard = ({ item }: ItemCardProps) => {
        style={{ width: "100%" }}
   className="mb-1"
       onPress={() => {
-        router.push(`../product`)
+        router.push(`../product?id=${item.id}`)
       }}
     >
       <View className="bg-white dark:bg-neutral-800 rounded-3xl shadow-lg dark:shadow-neutral-900/30 overflow-hidden border border-neutral-100 dark:border-neutral-700">
@@ -29,7 +29,7 @@ const ItemCard = ({ item }: ItemCardProps) => {
         
           <Image
             
-            source={item.image}
+            source={images.baklawa}
   style={{ width: "100%", maxHeight: 300, alignSelf: "center" }} // try 3/4 or 4/5
   className="rounded-t-3xl"
   resizeMode='cover'
@@ -52,7 +52,7 @@ const ItemCard = ({ item }: ItemCardProps) => {
             Tap to explore
           </Text>
            <Text className="text-lg font-bold text-neutral-900 dark:text-white leading-tight mb-1">
-            DZD {item.price.toFixed(2)}
+            DZD {item.price}
           </Text>
         </View>
     </TouchableOpacity>
