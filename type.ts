@@ -114,6 +114,7 @@ interface GetMenuParams {
 export type OrderStatus = 'Pending' | 'Preparing' | 'On the way' | 'Delivered' | 'Cancelled';
 
 export interface Order {
+  product: any;
   id: string;
   name: string;
   date: string;

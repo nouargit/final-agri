@@ -259,33 +259,55 @@ const AddProductScreen = () => {
   }, [selectedShopId]);
 
   const handleSubmit = async () => {
-    if (!validateForm()) return;
+  if (!validateForm()) return;
+  setIsLoading(true);
 
-    setIsLoading(true);
-    
-    try {
-          const token = await AsyncStorage.getItem('auth_token');
-         console.log('Product data:', formData);
-      const response = await fetch(`${config.baseUrl}${config.productsUrl}`, {
-        method: 'POST',
-       headers: {
-      'Authorization': token ? `Bearer ${token}` : '',
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    },
-        body: JSON.stringify(formData),
-      });
-      console.log(formData.images);
-      return await response.json();
-    } catch (error) {
-      console.error('Error adding product:', error);
-      throw error;
-    }
- 
-    finally {
-      setIsLoading(false);
-    }
-  };
+  try {
+    const token = await AsyncStorage.getItem('auth_token');
+
+    const form = new FormData();
+    form.append('name', formData.name);
+    form.append('description', formData.description);
+    form.append('price', formData.price);
+    form.append('shop_id', formData.shop_id);
+    form.append('category_id', formData.category_id);
+    form.append('calories', formData.calories);
+    form.append('protein', formData.protein);
+    form.append('preparationTime', formData.preparationTime);
+
+    // Append each image
+    formData.images.forEach((uri, index) => {
+      const filename = uri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename || '');
+      const type = match ? `image/${match[1]}` : `image`;
+      form.append(`images[${index}]`, {
+        uri,
+        name: filename,
+        type,
+      } as any);
+    });
+
+    const response = await fetch(`${config.baseUrl}${config.productsUrl}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+      },
+      body: form,
+    });
+
+    const data = await response.json();
+    console.log('Product saved:', data);
+    Alert.alert('Success', 'Product added successfully');
+    router.back();
+  } catch (error) {
+    console.error('Error adding product:', error);
+    Alert.alert('Error', 'Failed to add product');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">

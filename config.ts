@@ -1,5 +1,5 @@
 export const config = {
-  baseUrl: 'http://10.56.221.194:8000',
+  baseUrl: 'http://10.254.134.194:8000',
   shopsUrl: '/api/shops',
   userUrl: '/api/user',
     csrfTokenUrl: '/sanctum/csrf-cookie',

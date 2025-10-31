@@ -1,62 +1,69 @@
-import { BlurView } from 'expo-blur'
-import { router } from 'expo-router'
-import { Image, ImageSourcePropType, Text, TouchableOpacity, View } from 'react-native'
-import { images } from '@/constants/imports'
+import { BlurView } from 'expo-blur';
+import { router } from 'expo-router';
+import { Image, Text, TouchableOpacity, View, ImageSourcePropType } from 'react-native';
+import { images } from '@/constants/imports';
+
 interface Item {
-  price: number
-  id: number
-  image: ImageSourcePropType
-  name: string
+  id: number;
+  name: string;
+  price: number;
+  images: Array<{ url: string }>; // <-- exact shape from API
 }
 
 type ItemCardProps = {
-  item: Item
-}
+  item: Item;
+};
+
+const CARD_IMAGE_HEIGHT = 250; // fixed height → Masonry loves it
 
 const ItemCard = ({ item }: ItemCardProps) => {
+  const remoteUrl = item.images?.[0]?.url?.trim();
+  const fallback = images.cake;
+
+  
+
+  const source = remoteUrl ? { uri: remoteUrl } : fallback;
+
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       activeOpacity={0.8}
-       style={{ width: "100%" }}
-  className="mb-1"
-      onPress={() => {
-        router.push(`../product?id=${item.id}`)
-      }}
+      className="mb-3" // vertical gap between cards
+      onPress={() => router.push(`../product?id=${item.id}`)}
     >
-      <View className="bg-white dark:bg-neutral-800 rounded-3xl shadow-lg dark:shadow-neutral-900/30 overflow-hidden border border-neutral-100 dark:border-neutral-700">
-        {/* Image Container with Gradient Overlay */}
-        <View className="relative max-h-[300px]">
-        
-          <Image
-            
-            source={images.baklawa}
-  style={{ width: "100%", maxHeight: 300, alignSelf: "center" }} // try 3/4 or 4/5
-  className="rounded-t-3xl"
-  resizeMode='cover'
-          />
-          {/* Subtle gradient overlay for better text readability */}
-          <View className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/20 to-transparent" />
-        </View>
+      <View className="rounded-3xl">
+        {/* ---------- IMAGE ---------- */}
+        <Image
+          source={source}
+          style={{ width: '100%', height: CARD_IMAGE_HEIGHT, borderRadius: 20 }}
+          resizeMode="cover"
+          // optional: show placeholder while loading
+          // defaultSource={fallback} // works only with local assets
+         
+        />
 
-        {/* Content Section */}
-       
+        {/* subtle gradient */}
+        <View
+          pointerEvents="none"
+          className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/20 to-transparent"
+        />
 
-        {/* Decorative Element */}
-       
-      </View>
-       <View className="p-4">
-          <Text className="text-l font-quicksand-semibold text-neutral-900 dark:text-white leading-tight ">
+        {/* ---------- CONTENT ---------- */}
+        <View className="p-4">
+          <Text className="text-lg font-quicksand-semibold text-neutral-900 dark:text-white">
             {item.name}
           </Text>
-          <Text className="font-quicksand-small text-neutral-500 dark:text-neutral-400">
+
+          <Text className="text-sm font-quicksand text-neutral-500 dark:text-neutral-400">
             Tap to explore
           </Text>
-           <Text className="text-lg font-bold text-neutral-900 dark:text-white leading-tight mb-1">
+
+          <Text className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">
             DZD {item.price}
           </Text>
         </View>
+      </View>
     </TouchableOpacity>
-  )
-}
+  );
+};
 
-export default ItemCard
+export default ItemCard;

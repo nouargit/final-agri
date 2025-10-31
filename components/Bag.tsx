@@ -86,6 +86,7 @@ interface BagProps {
     status: string
   }
   shop: {
+    logo_url: any | undefined;
     name: string
     image: any
   }
@@ -100,13 +101,13 @@ const Bag = ({ bag, shop }: BagProps) => {
  
   
   <TouchableOpacity className="w-full bg-white  dark:bg-neutral-800 rounded-2xl p-4  " onPress={() => {
-    router.navigate(`/orders`)
+    router.navigate(`/orders?id=${bag.id}`)
   }}>
  
     <View className="flex-row items-center">  
        {/* Thumbnail */}
     <Image
-      source={shop.image}
+      source={{uri: shop.logo_url}}
       className="w-16 h-16 rounded-full mr-4"
     />
 

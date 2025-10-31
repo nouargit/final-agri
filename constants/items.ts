@@ -6,6 +6,7 @@ export type Item = {
   price: number;
   category: string;
   desc: string;
+  images: Array<{ url: string }>;
 }
 const items = [
     {

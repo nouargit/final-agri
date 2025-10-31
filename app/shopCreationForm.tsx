@@ -1,8 +1,9 @@
 import { config } from '@/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 
 
@@ -14,9 +15,31 @@ function shopCreationForm() {
     const [wilaya, setWilaya] = useState('');
     const [daira, setDaira] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [shopImage, setShopImage] = useState<string | null>(null);
 
     // Configuration - matching your Laravel setup
     
+    const pickImage = async () => {
+      // Request permission
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert("Permission Required", "Permission to access camera roll is required!");
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1], // Square aspect ratio for shop logo
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setShopImage(result.assets[0].uri);
+      }
+    };
 
     const createShop = async () => {
       if (!name || !number || !shopDiscreption || !wilaya || !daira) {
@@ -51,29 +74,42 @@ function shopCreationForm() {
 
         console.log("Step 3: Creating shop...");
         
-        // Step 3: Create shop
-        const shopData = {
-          name: name,
-          description: shopDiscreption, 
-          phone: number,
-          wilaya: wilaya,
-          daira: daira,
-        };
+        // Step 3: Create shop with FormData for image upload
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('description', shopDiscreption);
+        formData.append('phone', number);
+        formData.append('wilaya', wilaya);
+        formData.append('daira', daira);
 
-        console.log("Shop data being sent:", shopData);
+        // Add image if selected
+        if (shopImage) {
+          const imageUri = shopImage;
+          const filename = imageUri.split('/').pop() || 'shop-image.jpg';
+          const match = /\.(\w+)$/.exec(filename);
+          const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+          formData.append('logo_image', {
+            uri: imageUri,
+            name: filename,
+            type: type,
+          } as any);
+        }
+
+        console.log("Shop data being sent with image:", { name, shopDiscreption, number, wilaya, daira, hasImage: !!shopImage });
 
         const response = await fetch(`${config.baseUrl}${config.shopsUrl}`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
-            'Content-Type': 'application/json',
+            'Content-Type': 'multipart/form-data',
           },
-          body: JSON.stringify(shopData),
+          body: formData,
         });
 
         console.log("Request sent to:", `${config.baseUrl}${config.shopsUrl}`);
-        console.log("Request body:", JSON.stringify(shopData));
+        //console.log("Request body:", JSON.stringify(shopData));
         console.log("Response status:", response.status);
 
         const responseData = await response.json();
@@ -93,6 +129,7 @@ function shopCreationForm() {
                   setShopDiscreption('');
                   setWilaya('');
                   setDaira('');
+                  setShopImage(null);
                   // Navigate back or to shop management
                   router.back();
                 }
@@ -121,6 +158,39 @@ function shopCreationForm() {
     <Text className="text-lg font-bold text-neutral-900 dark:text-white mb-3">
         {name}
       </Text>
+      
+      {/* Image Picker Section */}
+      <View className="mb-4">
+        <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+          Shop Image
+        </Text>
+        <TouchableOpacity 
+          onPress={pickImage}
+          className="bg-white dark:bg-neutral-800 rounded-2xl p-4 mb-3 shadow-sm border-2 border-dashed border-gray-300 dark:border-neutral-600 items-center justify-center"
+          style={{ minHeight: 120 }}
+        >
+          {shopImage ? (
+            <View className="items-center">
+              <Image 
+                source={{ uri: shopImage }} 
+                className="w-20 h-20 rounded-xl mb-2"
+                resizeMode="cover"
+              />
+              <Text className="text-sm text-neutral-600 dark:text-neutral-400">
+                Tap to change image
+              </Text>
+            </View>
+          ) : (
+            <View className="items-center">
+              <Text className="text-4xl text-neutral-400 mb-2">📷</Text>
+              <Text className="text-sm text-neutral-600 dark:text-neutral-400">
+                Tap to select shop image
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
       <TextInput
         placeholder="Shop Name"
         className="bg-white dark:bg-neutral-800 dark:text-white rounded-2xl p-4 mb-3 shadow-sm"

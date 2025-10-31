@@ -26,6 +26,36 @@ const { width } = Dimensions.get('window');
     ingredients: ["Dark Chocolate", "Butter", "Eggs", "Sugar", "Flour", "Vanilla Ice Cream"],
     sizes: ["Small", "Medium", "Large"],
     allergens: ["Eggs", "Dairy", "Gluten"],}
+
+// Helper function to process images from database
+const processImages = (images: any) => {
+  //console.log('Raw images from API:', images);
+  
+  // If no images, return fallback
+  if (!images) {
+    return [
+      "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800&h=600&fit=crop"
+    ];
+  }
+
+  // Handle your database format: array of objects with url property
+  if (Array.isArray(images)) {
+    const processedImages = images.map(img => img.url).filter(url => url);
+   // console.log('Processed images:', processedImages);
+    return processedImages;
+  }
+
+  // Fallback to default images
+  return [
+    "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800&h=600&fit=crop"
+  ];
+};
 const ProductScreen = () => {
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -33,6 +63,10 @@ const ProductScreen = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const navigation = useNavigation();
   const { id } = useLocalSearchParams();
+  
+  // Ensure id is a string, handle array case
+  const productId = Array.isArray(id) ? id[0] : id;
+  
   const handleBack = () => {
     navigation.goBack();
   };
@@ -44,7 +78,7 @@ const ProductScreen = () => {
         throw new Error('No authentication token found. Please login first.');
       }
      
-    const response = await fetch(`${config.baseUrl}/api/products/${id}`,{
+    const response = await fetch(`${config.baseUrl}/api/products/${productId}`,{
       method:'GET',
       headers:{
           'Authorization': `Bearer ${token}`,
@@ -56,25 +90,75 @@ const ProductScreen = () => {
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
-  //console.log('fetching from')
-  const cart = await response.json();
-  //console.log('Raw API response:', cart);
+  
+  const product = await response.json();
+  //console.log('Raw API response:', product);
 
-  // Return the actual product cart, not an array
-  return cart.cart || cart;
+  // Return the actual product data
+  return product.data || product;
 
   } catch (error) {
     
     throw error; // Throw the error instead of returning empty array
   }
   
-}, [id]);
+}, [productId]);
 
   const {data: productTemp, isLoading, error} = useQuery({
-  queryKey: ['products', id],
+  queryKey: ['products', productId],
   queryFn: getProducts,
-   enabled: !!id, // Only run query when id is available
+   enabled: !!productId, // Only run query when productId is available
 });
+
+// Helper function to safely process images
+const processImages = (images: any) => {
+  if (!images) {
+    return [
+      "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800&h=600&fit=crop"
+    ];
+  }
+
+  // If images is a string, try to parse it as JSON
+  if (typeof images === 'string') {
+    try {
+      const parsed = JSON.parse(images);
+      if (Array.isArray(parsed)) {
+        return parsed.map(img => typeof img === 'string' ? img : img.url || img.src || '');
+      }
+    } catch (e) {
+      console.log('Failed to parse images JSON:', e);
+      return [images]; // If it's just a single image URL string
+    }
+  }
+
+  // If images is already an array
+  if (Array.isArray(images)) {
+    return images.map(img => {
+      if (typeof img === 'string') {
+        return img;
+      }
+      // If it's an object, try to extract URL
+      return img.url || img.src || img.image || img.path || '';
+    }).filter(url => url); // Remove empty URLs
+  }
+
+  // If it's an object, try to extract URL
+  if (typeof images === 'object') {
+    return [images.url || images.src || images.image || images.path || ''].filter(url => url);
+  }
+
+  // Fallback to default images
+  return [
+    "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800&h=600&fit=crop"
+  ];
+};
+
 const product = {
     id: productTemp?.id || 1,
     shop_id: productTemp?.shop_id || 1,
@@ -87,12 +171,7 @@ const product = {
       "Indulgent warm chocolate cake with a molten chocolate center. Served with vanilla ice cream and fresh berries. Perfect for chocolate lovers!",
     preparationTime: productTemp?.preparationTime || "15-20 min",
     calories: productTemp?.calories || "580 cal",
-    images: productTemp?.images || [
-      "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800&h=600&fit=crop"
-    ],
+    images: processImages(productTemp?.images),
     ingredients: ["Dark Chocolate", "Butter", "Eggs", "Sugar", "Flour", "Vanilla Ice Cream"],
     sizes: ["Small", "Medium", "Large"],
     allergens: ["Eggs", "Dairy", "Gluten"],
@@ -100,10 +179,10 @@ const product = {
 
   const seller = {
     name: productTemp?.shop?.name || "Sweet Delights Bakery",
-    avatar: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=100&h=100&fit=crop",
+    avatar: productTemp?.shop?.logo_url || "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=100&h=100&fit=crop",
     rating: 4.9,
     reviews: 2840,
-    location: "New York, NY",
+    location: productTemp?.shop?.wilaya || "New York, NY",
     memberSince: "2019",
     responseTime: "Within 1 hour",
     verified: true
@@ -372,7 +451,7 @@ const product = {
           {/* Thumbnail Strip */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} className="p-4">
             <View className="flex-row gap-2 ">
-              {product.images.map((img: any, index: number) => (
+              {product.images.map((img: string, index: number) => (
                 <TouchableOpacity
                   key={index}
                   onPress={() => setCurrentImageIndex(index)}
