@@ -41,7 +41,8 @@ interface ProductFormData {
   calories: string;
   protein: string;
   shop_id: string;
-  category_id: string; // Add category_id to the form data
+  category_id: string;
+  comments: string;
 }
 
 // Static fallback categories (will be replaced by fetched categories)
@@ -78,6 +79,7 @@ const AddProductScreen = () => {
     protein: '',
     shop_id: '',
     category_id: '',
+    comments: '',
   });
   const getShopCategories = async () => {
     try {
@@ -296,7 +298,11 @@ const AddProductScreen = () => {
       body: form,
     });
 
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const data = await response.json();
+
     console.log('Product saved:', data);
     Alert.alert('Success', 'Product added successfully');
     router.back();

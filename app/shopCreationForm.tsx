@@ -1,8 +1,11 @@
 import { config } from '@/config';
+import { useLocationStore } from '@/stors/locationStore';
+import { useShopFormStore } from '@/stors/shopFormStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useState } from 'react';
+
 import { Alert, Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 
@@ -16,6 +19,8 @@ function shopCreationForm() {
     const [daira, setDaira] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [shopImage, setShopImage] = useState<string | null>(null);
+    const { selectedLocation } = useLocationStore();
+    const { formData, updateField, clearFormData } = useShopFormStore();
 
     // Configuration - matching your Laravel setup
     
@@ -37,11 +42,13 @@ function shopCreationForm() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setShopImage(result.assets[0].uri);
+        updateField('shopImage', result.assets[0].uri);
       }
     };
 
     const createShop = async () => {
+      const { name, number, shopDiscreption, wilaya, daira, shopImage } = formData;
+      
       if (!name || !number || !shopDiscreption || !wilaya || !daira) {
         Alert.alert("Error", "Please fill in all fields including Wilaya and Daira");
         return;
@@ -81,6 +88,9 @@ function shopCreationForm() {
         formData.append('phone', number);
         formData.append('wilaya', wilaya);
         formData.append('daira', daira);
+        if (selectedLocation) {
+         formData.append('location', JSON.stringify(selectedLocation));
+        }
 
         // Add image if selected
         if (shopImage) {
@@ -123,13 +133,8 @@ function shopCreationForm() {
               {
                 text: "OK",
                 onPress: () => {
-                  // Clear form
-                  setName('');
-                  setNumber('');
-                  setShopDiscreption('');
-                  setWilaya('');
-                  setDaira('');
-                  setShopImage(null);
+                  // Clear form data from store
+                  clearFormData();
                   // Navigate back or to shop management
                   router.back();
                 }
@@ -156,7 +161,7 @@ function shopCreationForm() {
   return (
     <View className='mx-7'> 
     <Text className="text-lg font-bold text-neutral-900 dark:text-white mb-3">
-        {name}
+        {formData.name || 'New Shop'}
       </Text>
       
       {/* Image Picker Section */}
@@ -169,10 +174,10 @@ function shopCreationForm() {
           className="bg-white dark:bg-neutral-800 rounded-2xl p-4 mb-3 shadow-sm border-2 border-dashed border-gray-300 dark:border-neutral-600 items-center justify-center"
           style={{ minHeight: 120 }}
         >
-          {shopImage ? (
+          {formData.shopImage ? (
             <View className="items-center">
               <Image 
-                source={{ uri: shopImage }} 
+                source={{ uri: formData.shopImage }} 
                 className="w-20 h-20 rounded-xl mb-2"
                 resizeMode="cover"
               />
@@ -194,36 +199,46 @@ function shopCreationForm() {
       <TextInput
         placeholder="Shop Name"
         className="bg-white dark:bg-neutral-800 dark:text-white rounded-2xl p-4 mb-3 shadow-sm"
-        value={name}
-        onChangeText={setName}
+        value={formData.name}
+        onChangeText={(text) => updateField('name', text)}
       />
       <TextInput
         placeholder="Shop Description"
         className="bg-white dark:bg-neutral-800 dark:text-white rounded-2xl p-4 mb-3 shadow-sm"
-        value={shopDiscreption}
-        onChangeText={setShopDiscreption}
+        value={formData.shopDiscreption}
+        onChangeText={(text) => updateField('shopDiscreption', text)}
         multiline
         numberOfLines={3}
       />
       <TextInput
         placeholder="Phone Number"
         className="bg-white dark:bg-neutral-800 dark:text-white rounded-2xl p-4  mb-3 shadow-sm"
-        value={number}
-        onChangeText={setNumber}
+        value={formData.number}
+        onChangeText={(text) => updateField('number', text)}
         keyboardType="phone-pad"
       />
       <TextInput
         placeholder="Wilaya"
         className="bg-white dark:bg-neutral-800 dark:text-white rounded-2xl p-4 mb-3 shadow-sm"
-        value={wilaya}
-        onChangeText={setWilaya}
+        value={formData.wilaya}
+        onChangeText={(text) => updateField('wilaya', text)}
       />
       <TextInput
         placeholder="Daira"
         className="bg-white dark:bg-neutral-800  dark:text-white rounded-2xl p-4 mb-3 shadow-sm"
-        value={daira}
-        onChangeText={setDaira}
+        value={formData.daira}
+        onChangeText={(text) => updateField('daira', text)}
       />
+      <TouchableOpacity
+        className="bg-white dark:bg-neutral-800 rounded-2xl p-4 mb-3 shadow-sm border-2 border-dashed border-gray-300 dark:border-neutral-600 items-center justify-center"
+        style={{ minHeight: 120 }}
+        onPress={()=>router.push('/map')}
+        
+      >
+        <Text className="text-sm text-neutral-600 dark:text-neutral-400">
+          Tap to select location
+        </Text>
+      </TouchableOpacity>
     
     <TouchableOpacity 
       className={`${isSubmitting ? 'bg-gray-400' : 'bg-[#FF6F61]'} dark:bg-[#FF6F61] rounded-2xl p-4 flex-row items-center justify-center shadow-lg`}
@@ -234,6 +249,11 @@ function shopCreationForm() {
         {isSubmitting ? 'Creating Shop...' : 'Create Shop'}
       </Text>
     </TouchableOpacity>
+    {selectedLocation && (
+      <Text className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">
+        Selected Location: {selectedLocation.latitude}, {selectedLocation.longitude}
+      </Text>
+    )}
     </View>
   )
 }
