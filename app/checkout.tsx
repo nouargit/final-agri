@@ -1,10 +1,15 @@
-import { useLocationStore } from "@/stors/locationStore";
 import * as Location from "expo-location";
+import { Dropdown } from "react-native-element-dropdown";
 import { router, useLocalSearchParams } from "expo-router";
+import { Image } from "react-native";
+import { getDistance } from 'geolib';
 import { useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
-import { getDistance } from 'geolib';
+import cart from "./(tabs)/cart";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { images } from "@/constants/imports";
+import { config } from "@/config";
 interface LocationCoordinate {
   latitude: number;
   longitude: number;
@@ -12,9 +17,14 @@ interface LocationCoordinate {
 
 export default function MapScreen() {
   const [userLocation, setUserLocation] = useState<LocationCoordinate | null>(null);
-  const { selectedLocation, setSelectedLocation } = useLocationStore();
-  const { shopLocation } = useLocalSearchParams();
-  
+  const [selectedLocation, setSelectedLocation] = useState<LocationCoordinate | null>(userLocation);
+  const { shopLocation: shopLocationStr } = useLocalSearchParams();
+  const shopLocation = shopLocationStr ? JSON.parse(shopLocationStr as string) : null;
+  const { cart } = useLocalSearchParams();
+  const cartString = Array.isArray(cart) ? cart[0] : cart;
+  const parsedCart = cartString ? JSON.parse(cartString) : null
+ const [selectedType, setSelectedType] = useState('delivery');
+  //const cartItems = cart && typeof cart === 'string' ? JSON.parse(cart).items?.[0] : null;
   
  const { total } = useLocalSearchParams();
   useEffect(() => {
@@ -41,6 +51,67 @@ export default function MapScreen() {
     const { latitude, longitude } = event.nativeEvent.coordinate;
     setSelectedLocation({ latitude, longitude });
     // callback removed – onLocationSelected is not defined in scope
+  }
+  const order=async ()=>{
+  const token =await AsyncStorage.getItem('auth_token');
+  if(!token){
+   alert('Please login first');
+  }
+
+  console.log('shop_id',parsedCart.items[0].product.shop.id)
+  console.log('items',parsedCart.items.map((item: { product: { id: number; }; quantity: number; }) => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+        })),)
+        console.log('total',parseFloat(Array.isArray(total) ? total[0] : total))
+        console.log( 'location', selectedLocation)
+        console.log( 'type', selectedType)
+
+
+
+
+
+
+
+  try{
+    const response = await fetch(`${config.baseUrl}/api/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        shop_id: parsedCart.items[0].product.shop.id,
+        items: parsedCart.items.map((item: { product: { id: number; }; quantity: number; }) => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+        })),
+        total: parseFloat(Array.isArray(total) ? total[0] : total),
+        subtotal:parseFloat(Array.isArray(total) ? total[0] : total),
+        delivery_fee: selectedLocation && shopLocation
+          ? parseFloat(((getDistance(shopLocation, selectedLocation) / 1000) * 200).toFixed(3))
+          : 0,
+        location: JSON.stringify(selectedLocation),
+        type: selectedType,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    if (!response.ok) {
+      alert('sucsessfull order')
+    }
+    const data = await response.json();
+    console.log('Raw API response:', data);
+    return data.data || data;
+  } catch (error) {
+    console.error('Error placing order:', error);
+
+  }
+
+  
+
   };
 
   if (!userLocation) {
@@ -65,8 +136,8 @@ export default function MapScreen() {
       <MapView
         style={{ flex: 1 }}
         initialRegion={{
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
+          latitude: shopLocation.latitude,
+          longitude: shopLocation.longitude,
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         }}
@@ -75,36 +146,53 @@ export default function MapScreen() {
         showsMyLocationButton={true}
         onPress={handleMapPress}
       >
+         <Marker
+            coordinate={shopLocation}
+            title="Shop Location"
+            description="This will be your shop's position"
+            
+            image={images.shopMarker}
+        
+          />
         {selectedLocation && (
           <Marker
             coordinate={selectedLocation}
             title="Shop Location"
             description="This will be your shop's position"
-          />
+           
+          >
+           
+              </Marker>
         )}
       </MapView>
 
       {selectedLocation && (
         <View className="absolute bottom-0  bg-white p-4 w-full min-h-44 rounded-3xl shadow-md">
           <Text className="text-lg font-bold text-gray-900 dark:text-white">
-            Delevery: {((getDistance(userLocation, selectedLocation) / 1000)*200).toFixed(2)} da
+            Delevery: {((getDistance(shopLocation, selectedLocation) / 1000)*200).toFixed(2)} DZD
           </Text>
           <Text className="text-lg font-bold text-gray-900 dark:text-white">
-            Total: {parseFloat(Array.isArray(total) ? total[0] : total) + parseFloat(((getDistance(userLocation, selectedLocation) / 1000)*100).toFixed(3))}
+            Total: {(parseFloat(Array.isArray(total) ? total[0] : total)) + (parseFloat(((getDistance(shopLocation, selectedLocation) / 1000)*200).toFixed(3)))} DZD
           </Text>
+          <Dropdown
+            data={[
+              { label: 'Delivery', value: 'delivery' },
+              { label: 'Pickup', value: 'pickup' },
+            ]}
+            labelField="label"
+            valueField="value"
+            placeholder="Select payment method"
+            value={selectedType}
+            onChange={setSelectedType}
+          />
+          
 
           <TouchableOpacity
             className="bg-primary rounded-full mt-3 p-3"
-            onPress={() => {
-              if (selectedLocation) {
-                console.log("Selected location:", selectedLocation);
-                // Navigate directly back to shop creation form
-                router.push('/shopCreationForm');
-              }
-            }}
+            onPress={order}
           >
             <Text className="text-center text-white font-bold">
-              Save Location
+              order
             </Text>
           </TouchableOpacity>
         </View>

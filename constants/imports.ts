@@ -25,6 +25,7 @@ export const images={
    shopBg:require("../assets/images/408.png"),
    shopBgBlue:require("../assets/images/shopBgBlue.png"),
    shopBgPink:require("../assets/images/shopBgPink.png"),
+   shopMarker:require("../assets/images/store.png"),
 
    
 }

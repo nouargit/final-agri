@@ -29,6 +29,17 @@ export default function RootLayout() {
     'Quicksand-Bold': require('../assets/fonts/Quicksand-Bold.ttf'),
     'Quicksand-Light': require('../assets/fonts/Quicksand-Light.ttf'),
     'Malika': require('../assets/fonts/malika.ttf'),
+    'Gilmer-Bold': require('../assets/fonts/Gilmer-Bold.otf'),
+    'Gilmer-Regular': require('../assets/fonts/Gilmer-Regular.otf'),
+    
+    'Gilmer-Thin': require('../assets/fonts/Gilmer-Thin.otf'),
+    // Gilroy fonts
+    'Gilroy-Light': require('../assets/fonts/Gilroy-Light.ttf'),
+    'Gilroy-Regular': require('../assets/fonts/Gilroy-Light.ttf'), // Using Light as Regular
+    'Gilroy-Medium': require('../assets/fonts/Gilroy-Medium.ttf'),
+    'Gilroy-SemiBold': require('../assets/fonts/Gilroy-SemiBold.ttf'),
+    'Gilroy-Bold': require('../assets/fonts/Gilroy-Bold.ttf'),
+    'Gilroy-Heavy': require('../assets/fonts/Gilroy-Heavy.ttf'),
   });
 
   if (!loaded) {

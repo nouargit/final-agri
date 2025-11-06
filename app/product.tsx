@@ -222,13 +222,13 @@ const product = {
       const token = await AsyncStorage.getItem('auth_token');
       const user_data = await AsyncStorage.getItem('user_data');
       const user_id = user_data ? JSON.parse(user_data).id : null;
-     // console.log('User ID:', user_id);
+    //console.log('User ID:', product.shop_id);
       if (!token) {
         throw new Error('No authentication token found. Please login first.');
       }
 
       // First, try to get existing cart
-      const cartResponse = await fetch(`${config.baseUrl}/api/carts/${product.shop_id}`, {
+      const cartResponse = await fetch(`${config.baseUrl}/api/carts?shop_id=${product.shop_id}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -238,19 +238,20 @@ const product = {
 
       });
 
-      let cart;
       
+      let cart;
       if (cartResponse.ok) {
         const cartData = await cartResponse.json();
-        cart = cartData.data || cartData;
        
+       cart = cartData.data || cartData;
+       //console.log("sucsess, cart:",cart[0].id)
       }
+      
 
       // If no cart exists or cart is empty/null, create a new one
       if (!cart || (Array.isArray(cart) && cart.length === 0)) {
-       
-       
-     
+      
+        console.log("create new cart")
         const newCartResponse = await fetch(`${config.baseUrl}/api/carts`, {
           method: 'POST',
           headers: {
@@ -266,17 +267,19 @@ const product = {
         });
 
         if (!newCartResponse.ok) {
+         
           throw new Error('Failed to create new cart');
         }
-        
+         
         const newCartData = await newCartResponse.json();
         cart = newCartData.data || newCartData;
+        console.log("new cart",cart)
       
       }
 
       // Ensure cart has cart_items array
       if (!cart.cart_items) {
-       
+       console.log("cart_items is null")
         cart.cart_items = [];
       }
 
@@ -313,7 +316,7 @@ const product = {
       } else {
         // Add new item to cart
         
-        const addResponse = await fetch(`${config.baseUrl}/api/carts/${cart.id}/items`, {
+        const addResponse = await fetch(`${config.baseUrl}/api/carts/${cart[0].id}/items`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -343,6 +346,7 @@ const product = {
     } catch (error) {
      
       alert('Failed to add item to cart. Please try again.');
+      
     }
   };
 
@@ -383,15 +387,15 @@ const product = {
   
 
   return (
-    <View className="bg-gray-50 flex-1 dark:bg-neutral-900 pt-3">
+    <View className="bg-gray-50 flex-1 dark:bg-neutral-900 ">
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       {/* Header */}
-      <View className="bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-700">
+      <View className="bg-white dark:bg-neutral-900 ">
         <View className="px-4 py-4 flex-row items-center justify-between">
           <TouchableOpacity className="p-2 rounded-full bg-gray-100 dark:bg-neutral-800" onPress={handleBack}>
             <ArrowLeft size={20} color="#374151" />
           </TouchableOpacity>
-          <Text className="text-lg font-semibold text-neutral-900 dark:text-white">Product Details</Text>
+          <Text className="text-2xl font-gilroy-bold text-neutral-900 dark:text-white">Product Details</Text>
           <TouchableOpacity
             className="p-2 rounded-full bg-gray-100 dark:bg-neutral-800"
             onPress={() => setIsFavorite(!isFavorite)}
@@ -407,17 +411,17 @@ const product = {
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Image Carousel */}
-        <View className="bg-white dark:bg-neutral-800">
-          <View className="relative" style={{ height: 360 }}>
+        <View className="bg-white dark:bg-neutral-800 ">
+          <View className="relative" style={{ height: 450, margin: 10 }}>
             <Image
               source={{ uri: product.images[currentImageIndex] }}
-              className="w-full h-full rounded-b-3xl"
+              className="w-full h-full rounded-3xl"
               resizeMode="cover"
             />
             
             {/* Discount Badge */}
             <View className="absolute top-4 right-4 bg-primary px-3 py-1 rounded-full">
-              <Text className="text-white text-sm font-medium">20% OFF</Text>
+              <Text className="text-white text-sm font-gilroy-semibold">20% OFF</Text>
             </View>
             
             {/* Navigation Arrows */}
@@ -449,48 +453,33 @@ const product = {
           </View>
 
           {/* Thumbnail Strip */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="p-4">
-            <View className="flex-row gap-2 ">
-              {product.images.map((img: string, index: number) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => setCurrentImageIndex(index)}
-                  className={`w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                    index === currentImageIndex ? 'border-primary' : 'border-gray-200'
-                  }`}
-                >
-                  <Image source={{ uri: img }} className="w-full h-full" resizeMode="cover" />
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
+         
         </View>
 
         {/* Product Details */}
         <View className="bg-white dark:bg-neutral-800 mt-2 p-4">
-          <Text className="text-3xl font-bold text-neutral-900 dark:text-white mb-3">{product.name}</Text>
-
+          <View className="flex-row items-center justify-between"></View>
+          <View className="flex-row justify-between">
+          <Text className="text-4xl font-gilroy-bold text-neutral-900 dark:text-white mb-3">{product.name}</Text>
+            <Text className="text-4xl font-gilroy-bold text-primary">${product.price}</Text>
+          </View>
           <View className="flex-row items-center mb-4 flex-wrap">
             <View className="flex-row items-center gap-1 mr-4">
               <Star size={18} color="#F59E0B" fill="#F59E0B" />
-              <Text className="text-neutral-900 dark:text-white font-medium">{product.rating}</Text>
+              <Text className="text-neutral-900 dark:text-white font-gilroy-semibold">{product.rating}</Text>
               <Text className="text-neutral-500 dark:text-neutral-400">({product.reviews} reviews)</Text>
             </View>
             <View className="bg-green-100 dark:bg-green-900 px-3 py-1 rounded-lg">
-              <Text className="text-green-800 dark:text-green-200 text-sm font-medium">
+              <Text className="text-green-800 dark:text-green-200 text-sm font-gilroy-semibold">
                 {product.preparationTime}
               </Text>
             </View>
           </View>
 
           <View className="flex-row items-center mb-6">
-            <Text className="text-5xl font-bold text-primary">${product.price}</Text>
-            <Text className="text-xl text-gray-400 dark:text-neutral-500 line-through ml-3">
-              ${product.originalPrice}
-            </Text>
-            <View className="bg-gray-100 dark:bg-neutral-800 px-3 py-1 rounded-lg ml-auto">
-              <Text className="text-gray-600 dark:text-neutral-400 text-sm">{product.calories}</Text>
-            </View>
+            
+           
+           
           </View>
 
           <Text className="text-gray-600 dark:text-neutral-300 leading-relaxed mb-6">
@@ -512,7 +501,7 @@ const product = {
                   }`}
                 >
                   <Text
-                    className={`font-medium ${
+                    className={`font-mediumgilroy-semibold ${
                       selectedSize === size ? "text-orange-600" : "text-gray-700 dark:text-neutral-200"
                     }`}
                   >
@@ -525,7 +514,7 @@ const product = {
 
           {/* Ingredients */}
           <View className="mb-6">
-            <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-3">Ingredients</Text>
+            <Text className="text-lg font-gilroy-semibold text-neutral-900 dark:text-white mb-3">Ingredients</Text>
             <View className="flex-row flex-wrap gap-2">
               {product.ingredients.map((ingredient, index) => (
                 <View key={index} className="bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full">
@@ -537,7 +526,7 @@ const product = {
 
           {/* Allergen Info */}
          <View className="mb-6">
-            <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-3">
+            <Text className="text-lg font-gilroy-semibold text-neutral-900 dark:text-white mb-3">
               Allergen Information
             </Text>
             <View className="flex-row flex-wrap gap-2">
@@ -546,7 +535,7 @@ const product = {
                   key={index}
                   className="bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 px-3 py-1 rounded-full"
                 >
-                  <Text className="text-yellow-800 dark:text-yellow-200 text-sm font-medium">
+                  <Text className="text-yellow-800 dark:text-yellow-200 text-sm font-gilroy-semibold">
                     Contains {allergen}
                   </Text>
                 </View>
@@ -554,38 +543,12 @@ const product = {
             </View>
           </View>
 
-          {/* Quantity and Add to Cart */}
-          <View className="border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
-            <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-lg font-semibold text-neutral-900 dark:text-white">Quantity</Text>
-              <View className="flex-row items-center bg-gray-100 dark:bg-neutral-700 rounded-full">
-                <TouchableOpacity onPress={decrementQuantity} className="p-3">
-                  <Minus size={18} color="#ACB0B2" />
-                </TouchableOpacity>
-                <Text className="text-lg font-semibold text-neutral-900 dark:text-white mx-6">
-                  {quantity}
-                </Text>
-                <TouchableOpacity onPress={incrementQuantity} className="p-3">
-                  <Plus size={18} color="#ACB0B2" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <TouchableOpacity 
-              className="w-full bg-primary py-4 rounded-xl flex-row items-center justify-center gap-2"
-              onPress={addProductToCart}
-            >
-              <ShoppingCart size={22} color="white" />
-              <Text className="text-white font-semibold text-lg">
-                Add to Cart - ${(product.price * quantity).toFixed(2)}
-              </Text>
-            </TouchableOpacity>
-          </View>
+        
         </View>
 
         {/* Seller Profile Card */}
         <View className="bg-white dark:bg-neutral-800 mt-2 p-4">
-          <Text className="text-xl font-bold text-neutral-900 dark:text-white mb-4">Seller Information</Text>
+          <Text className="text-xl font-gilroy-bold text-neutral-900 dark:text-white mb-4">Seller Information</Text>
           <View className="flex-row gap-4">
             <Image
               source={{ uri: seller.avatar }}
@@ -594,14 +557,14 @@ const product = {
             />
             <View className="flex-1">
               <View className="flex-row items-center gap-2 mb-1">
-                <Text className="text-lg font-semibold text-neutral-900 dark:text-white">{seller.name}</Text>
+                <Text className="text-lg font-gilroy-bold text-neutral-900 dark:text-white">{seller.name}</Text>
                 {seller.verified && (
                   <Award size={16} color="#3B82F6" fill="#3B82F6" />
                 )}
               </View>
               <View className="flex-row items-center gap-1 mb-2">
                 <Star size={14} color="#F59E0B" fill="#F59E0B" />
-                <Text className="text-sm font-medium text-gray-700 dark:text-neutral-300">{seller.rating}</Text>
+                <Text className="text-sm font-gilroy-semibold text-gray-700 dark:text-neutral-300">{seller.rating}</Text>
                 <Text className="text-sm text-gray-500 dark:text-neutral-400">({seller.reviews} reviews)</Text>
               </View>
               <View className="flex-row items-center gap-4 mb-2">
@@ -618,16 +581,16 @@ const product = {
             </View>
           </View>
           <TouchableOpacity className="mt-4 w-full bg-gray-100 dark:bg-neutral-800 py-3 rounded-xl items-center" onPress={() => router.push(`/productShop?shop_id=${product.shop_id}`)}>
-            <Text className="text-gray-900 dark:text-white font-medium">Visit Store</Text>
+            <Text className="text-gray-900 dark:text-white font-gilroy-bold">Visit Store</Text>
           </TouchableOpacity>
         </View>
 
         {/* Comments and Ratings Section */}
         <View className="bg-white dark:bg-neutral-800 mt-2 p-4 mb-4">
           <View className="flex-row items-center justify-between mb-6">
-            <Text className="text-2xl font-bold text-neutral-900 dark:text-white">Customer Reviews</Text>
+            <Text className="text-2xl font-gilroy-bold text-neutral-900 dark:text-white">Customer Reviews</Text>
             <TouchableOpacity className="bg-primary px-1 py-2 rounded-xl">
-              <Text className="text-white font-medium">Write Review</Text>
+              <Text className="text-white font-gilroy-semibold">Write Review</Text>
             </TouchableOpacity>
           </View>
 
@@ -635,7 +598,7 @@ const product = {
           <View className="bg-gray-50 dark:bg-neutral-900 rounded-xl p-6 mb-6">
             <View className="flex-row gap-8">
               <View className="items-center">
-                <Text className="text-5xl font-bold text-neutral-900 dark:text-white mb-2">{product.rating}</Text>
+                <Text className="text-5xl font-gilroy-bold text-neutral-900 dark:text-white mb-2">{product.rating}</Text>
                 <View className="flex-row gap-1 mb-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star key={star} size={20} color="#F59E0B" fill="#F59E0B" />
@@ -680,7 +643,7 @@ const product = {
                   <View className="flex-1">
                     <View className="flex-row items-center justify-between mb-2">
                       <View>
-                        <Text className="font-semibold text-neutral-900 dark:text-white">{comment.user}</Text>
+                        <Text className="font-gilroy-bold text-neutral-900 dark:text-white">{comment.user}</Text>
                         <Text className="text-sm text-gray-500 dark:text-neutral-400">{comment.date}</Text>
                       </View>
                       <View className="flex-row gap-1">
@@ -707,11 +670,38 @@ const product = {
           </View>
 
           <TouchableOpacity className="mt-6 w-full border-2 border-gray-200 dark:border-neutral-700 py-3 rounded-xl items-center">
-            <Text className="text-gray-700 dark:text-neutral-300 font-medium">Load More Reviews</Text>
+            <Text className="text-gray-700 dark:text-neutral-300 font-gilroy-medium">Load More Reviews</Text>
           </TouchableOpacity>
         </View>
         
       </ScrollView>
+        {/* Quantity and Add to Cart */}
+          <View className=" rounded-t-3xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 mx-1 p-4">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-lg font-gilroy-bold text-neutral-900 dark:text-white">Quantity</Text>
+              <View className="flex-row items-center bg-gray-100 dark:bg-neutral-700 rounded-full">
+                <TouchableOpacity onPress={decrementQuantity} className="p-3">
+                  <Minus size={18} color="#ACB0B2" />
+                </TouchableOpacity>
+                <Text className="text-lg font-gilroy-bold text-neutral-900 dark:text-white mx-6">
+                  {quantity}
+                </Text>
+                <TouchableOpacity onPress={incrementQuantity} className="p-3">
+                  <Plus size={18} color="#ACB0B2" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              className="w-full bg-primary py-4 mb-4 rounded-xl flex-row items-center justify-center gap-2"
+              onPress={addProductToCart}
+            >
+              <ShoppingCart size={22} color="white" />
+              <Text className="text-white font-gilroy-bold text-lg">
+                Add to Cart - ${(product.price * quantity).toFixed(2)}
+              </Text>
+            </TouchableOpacity>
+          </View>
     </View>
   );
 };

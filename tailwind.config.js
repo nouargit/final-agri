@@ -20,7 +20,20 @@ module.exports = {
         'quicksand-semibold': ['Quicksand-SemiBold'],
         'quicksand-bold': ['Quicksand-Bold'],
         'quicksand-light': ['Quicksand-Light'],
+        'gilmer-bold': ['Gilmer-Bold'],
+        'gilmer-regular': ['Gilmer-Regular'],
+        'gilmer-light': ['Gilmer-Light'],
+        'gilmer-thin': ['Gilmer-Thin'],
+        // Gilroy fonts - making Gilroy the default
+        'sans': ['Gilroy-Regular'], // Default sans-serif font
+        'gilroy': ['Gilroy-Regular'],
+        'gilroy-light': ['Gilroy-Light'],
+        'gilroy-medium': ['Gilroy-Medium'],
+        'gilroy-semibold': ['Gilroy-SemiBold'],
+        'gilroy-bold': ['Gilroy-Bold'],
+        'gilroy-heavy': ['Gilroy-Heavy'],
       },
+
     },
   },
   plugins: [],

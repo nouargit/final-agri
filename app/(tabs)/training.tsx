@@ -105,7 +105,7 @@ const onRefresh = async () => {
       
       {/* Header */}
       <View className="flex-row justify-between px-6 pt-5 pb-4 rounded-b-3xl  dark:bg-neutral-900 ">
-        <Text className="text-4xl font-malika text-primary dark:text-red-300">Mysweet.</Text>
+        <Text className="text-4xl font-gilroy-bold text-primary dark:text-red-300">Mysweet.</Text>
         <View className="justify-end w-10 h-10 bg-slate-200 dark:bg-neutral-700 rounded-full p-2 items-center">
           <Search size={24} color="#ff6370" strokeWidth={2} />
         </View>
@@ -123,7 +123,7 @@ const onRefresh = async () => {
           paddingTop: 8,
         }}
         renderItem={({ item }) => (
-          <View className="flex-1 px-2 pb-4 mt-3">
+          <View className="flex-1 px-2 pb-3 mt-1">
             <ItemCard item={item} />
           </View>)}
         ListHeaderComponent={

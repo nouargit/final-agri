@@ -46,11 +46,11 @@
     }
 
     .label {
-        @apply text-base text-start w-full font-quicksand-medium text-gray-500 pl-2;
+        @apply text-base text-start w-full font-gilroy-medium text-gray-500 pl-2;
     }
 
     .input {
-        @apply rounded-lg p-3 w-full text-base font-quicksand-semibold text-dark-100 border-b leading-5;
+        @apply rounded-lg p-3 w-full text-base font-gilroy-semibold text-dark-100 border-b leading-5;
     }
 
     .filter {
@@ -70,7 +70,7 @@
     }
 
     .searchbar {
-        @apply relative flex flex-row items-center justify-center w-full bg-white shadow-md shadow-black/10 rounded-full  font-quicksand-medium text-dark-100 gap-5;
+        @apply relative flex flex-row items-center justify-center w-full bg-white shadow-md shadow-black/10 rounded-full  font-gilroy-medium text-dark-100 gap-5;
     }
 
     .tab-icon {
@@ -94,46 +94,46 @@
     }
 
     .h1-bold {
-        @apply text-3xl font-quicksand-bold;
+        @apply text-3xl font-gilroy-bold;
     }
 
     .h3-bold {
-        @apply text-xl font-quicksand-bold;
+        @apply text-xl font-gilroy-bold;
     }
 
     .base-bold {
-        @apply font-quicksand-bold !important;
+        @apply font-gilroy-bold !important;
     }
 
     .base-semibold {
-        @apply text-lg font-quicksand-semibold;
+        @apply text-lg font-gilroy-semibold;
     }
 
     .base-regular {
-        @apply text-lg font-quicksand;
+        @apply text-lg font-gilroy;
     }
 
     .paragraph-bold {
-        @apply text-lg font-quicksand-bold;
+        @apply text-lg font-gilroy-bold;
     }
 
     .paragraph-semibold {
-        @apply text-base font-quicksand-semibold;
+        @apply text-base font-gilroy-semibold;
     }
 
     .paragraph-medium {
-        @apply text-base font-quicksand-medium;
+        @apply text-base font-gilroy-medium;
     }
 
     .body-medium {
-        @apply text-sm font-quicksand-medium;
+        @apply text-sm font-gilroy-medium;
     }
 
     .body-regular {
-        @apply text-sm font-quicksand;
+        @apply text-sm font-gilroy;
     }
 
     .small-bold {
-        @apply text-xs font-quicksand-bold;
+        @apply text-xs font-gilroy-bold;
     }
 }

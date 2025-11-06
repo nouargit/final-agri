@@ -92,68 +92,65 @@ const Cart = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-neutral-950">
-      {/* Header */}
-      <View className="px-6 pt-4 pb-2">
-        <Text className="text-2xl font-bold text-gray-900 dark:text-white">
-          Shopping Cart
-        </Text>
-        {carts.length > 0 && (
-          <Text className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {carts.length} {carts.length === 1 ? 'item' : 'items'} in your cart
-          </Text>
-        )}
-      </View>
+  {/* Header */}
+  <View className="px-6 pt-4 pb-2">
+    <Text className="text-2xl font-bold text-gray-900 dark:text-white">
+      Shopping Cart
+    </Text>
+    {carts.length > 0 && (
+      <Text className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        {carts.length} {carts.length === 1 ? 'item' : 'items'} in your cart
+      </Text>
+    )}
+  </View>
 
-      {/* Search Bar */}
-      <View className="px-6 pb-4">
-        <View className="flex-row items-center bg-white dark:bg-neutral-900 rounded-xl px-4 py-1 border border-gray-200 dark:border-neutral-800 shadow-sm">
-          <Search size={20} color="#9CA3AF" />
-          <TextInput
-            className="flex-1 ml-3 text-gray-900 dark:text-white text-base"
-            placeholder="Search by shop name..."
-            placeholderTextColor="#9CA3AF"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-      </View>
-
-      {/* Content */}
-      {isLoading ? (
-        renderLoadingState()
-      ) : error ? (
-        renderErrorState()
-      ) : filteredCarts.length === 0 ? (
-        searchQuery ? (
-          <View className="flex-1 items-center justify-center px-6">
-            <Text className="text-lg text-gray-500 dark:text-gray-400">
-              No results found for "{searchQuery}"
-            </Text>
-          </View>
-        ) : (
-          renderEmptyState()
-        )
-      ) : (
-        <View className="flex-1 mb-4">
-        <FlatList
-          data={filteredCarts}
-          renderItem={({ item }) => (
-            <Bag bag={item} shop={item.shop} />
-          )}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerClassName="px-6 pb-6"
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isLoading}
-              onRefresh={refetch}
-              tintColor="#3B82F6"
-            />
-          }
-        />
+  {/* Search Bar */}
+  <View className="px-6 pb-4">
+    <View className="flex-row items-center bg-white dark:bg-neutral-900 rounded-xl px-4 py-1 border border-gray-200 dark:border-neutral-800 shadow-sm">
+      <Search size={20} color="#9CA3AF" />
+      <TextInput
+        className="flex-1 ml-3 text-gray-900 dark:text-white text-base"
+        placeholder="Search by shop name..."
+        placeholderTextColor="#9CA3AF"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
     </View>
-      )}
-    </SafeAreaView>
+  </View>
+
+  {/* Content */}
+  {isLoading ? (
+    renderLoadingState()
+  ) : error ? (
+    renderErrorState()
+  ) : filteredCarts.length === 0 ? (
+    searchQuery ? (
+      <View className="flex-1 items-center justify-center px-6">
+        <Text className="text-lg text-gray-500 dark:text-gray-400">
+          No results found for "{searchQuery}"
+        </Text>
+      </View>
+    ) : (
+      renderEmptyState()
+    )
+  ) : (
+    <FlatList
+      data={filteredCarts}
+      renderItem={({ item }) => <Bag bag={item} shop={item.shop} />}
+      keyExtractor={(item) => item.id.toString()}
+      contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={isLoading}
+          onRefresh={refetch}
+          tintColor="#3B82F6"
+        />
+      }
+    />
+  )}
+</SafeAreaView>
+
   )
 }
 

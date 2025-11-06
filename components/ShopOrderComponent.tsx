@@ -42,7 +42,7 @@ const ShopOrderComponent: React.FC<ShopOrderComponentProps> = ({
   return (
     <ScrollView className="flex-1 bg-white dark:bg-neutral-950">
       <View className="p-4">
-        <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+        <Text className="text-2xl font-gilroy-bold text-gray-900 dark:text-white mb-6">
           Shop Orders
         </Text>
         
@@ -54,11 +54,11 @@ const ShopOrderComponent: React.FC<ShopOrderComponentProps> = ({
           >
             {/* Order Header */}
             <View className="flex-row justify-between items-center mb-3">
-              <Text className="text-lg font-semibold text-gray-900 dark:text-white">
+              <Text className="text-lg font-gilroy-semibold text-gray-900 dark:text-white">
                 Order #{order.id}
               </Text>
               <View className={`px-3 py-1 rounded-full ${statusColors[order.status]}`}>
-                <Text className="text-xs font-medium capitalize">
+                <Text className="text-xs font-gilroy-medium capitalize">
                   {order.status}
                 </Text>
               </View>
@@ -70,15 +70,11 @@ const ShopOrderComponent: React.FC<ShopOrderComponentProps> = ({
               className="flex-row items-center mb-4"
             >
               {/* Profile Picture */}
-              <Image
-                source={order.customer.profilePicture}
-                className="w-12 h-12 rounded-full mr-3"
-                resizeMode="cover"
-              />
+              
               
               <View className="flex-1">
                 {/* Customer Name */}
-                <Text className="text-base font-medium text-gray-900 dark:text-white">
+                <Text className="text-base font-gilroy-medium text-gray-900 dark:text-white">
                   {order.customer.name}
                 </Text>
                 
@@ -97,7 +93,7 @@ const ShopOrderComponent: React.FC<ShopOrderComponentProps> = ({
               <View className="flex-row space-x-2">
                 {/* Accepted Orders Tag */}
                 <View className="bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full">
-                  <Text className="text-xs font-medium text-green-800 dark:text-green-300">
+                  <Text className="text-xs font-gilroy-medium text-green-800 dark:text-green-300">
                     ✓ {order.customer.acceptedOrders} Accepted
                   </Text>
                 </View>
@@ -105,7 +101,7 @@ const ShopOrderComponent: React.FC<ShopOrderComponentProps> = ({
                 {/* Returned Orders Tag */}
                 {order.customer.returnedOrders > 0 && (
                   <View className="bg-red-100 dark:bg-red-900/30 px-3 py-1 rounded-full">
-                    <Text className="text-xs font-medium text-red-800 dark:text-red-300">
+                    <Text className="text-xs font-gilroy-medium text-red-800 dark:text-red-300">
                       ↩ {order.customer.returnedOrders} Returned
                     </Text>
                   </View>
@@ -126,7 +122,7 @@ const ShopOrderComponent: React.FC<ShopOrderComponentProps> = ({
                 <Text className="text-sm text-gray-600 dark:text-gray-400 mr-3">
                   {order.orderDate}
                 </Text>
-                <Text className="text-lg font-bold text-gray-900 dark:text-white">
+                <Text className="text-lg font-gilroy-medium text-gray-900 dark:text-white">
                   {order.totalAmount}
                 </Text>
               </View>

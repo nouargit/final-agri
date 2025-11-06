@@ -1,11 +1,11 @@
-import { useCallback, useRef, useState } from 'react';
-import { FlatList, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { FlatList, Text, TouchableOpacity, View } from 'react-native';
 
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import SearchBar from '@/components/SearchBar';
 import { config } from '@/config';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import OrderCard from '../components/OrderCard';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -36,7 +36,7 @@ const orders = () => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    console.log('Raw API response:', data.items[0].product.shop.name);
+    console.log('Raw API response:', data.items[0].product.shop.location);
     return data.data || data;
    }
 
@@ -111,7 +111,7 @@ const orders = () => {
     </View>
       <View className='flex-row justify-between items-center px-4 py-2 bg-white dark:bg-neutral-800 rounded-b-2xl shadow-sm border-t border-gray-100 dark:border-neutral-700 w-full'>
           <Text className='text-lg font-bold text-gray-900 dark:text-white'>Total: {cartSummary?.summary?.subtotal}</Text>
-          <TouchableOpacity onPress={()=>router.push(`/checkout?total=${cartSummary?.summary?.subtotal}&shopLocation=${cart?.shop?.location}`)} className='bg-primary text-white px-4 py-2 rounded-full'>
+          <TouchableOpacity onPress={()=>router.push(`/checkout?total=${cartSummary?.summary?.subtotal}&shopLocation=${cart?.items[0].product.shop.location}&cart=${encodeURIComponent(JSON.stringify(cart))}`)} className='bg-primary text-white px-4 py-2 rounded-full'>
             <Text className='text-lg font-bold text-white'>Checkout</Text>
           </TouchableOpacity>
         </View>

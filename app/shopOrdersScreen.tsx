@@ -2,6 +2,10 @@ import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ShopOrderComponent from '@/components/ShopOrderComponent';
 import { images } from '@/constants/imports';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { config } from '@/config';
+import { useLocalSearchParams } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 
 // Sample shop orders data
 const sampleShopOrders = [
@@ -83,6 +87,36 @@ const sampleShopOrders = [
 ];
 
 const ShopOrdersScreen = () => {
+
+  const {shop_id}= useLocalSearchParams();
+ 
+  const getOrders =async()=>{
+    const token = await AsyncStorage.getItem('auth_token');
+    try {
+      const response = await fetch(`${config.baseUrl}/api/orders?shop_id=${shop_id}`,{
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('Raw API response:', data.data);
+      return data.data || data;
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    }
+  }
+  const {data:orders}=useQuery({
+    queryKey: ['orders', shop_id],
+    queryFn: getOrders,
+  });
+  
   const handleOrderPress = (order: any) => {
     console.log('Order pressed:', order.id);
     // Handle order details navigation
