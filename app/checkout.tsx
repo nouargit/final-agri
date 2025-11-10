@@ -58,7 +58,7 @@ export default function MapScreen() {
    alert('Please login first');
   }
 
-  console.log('shop_id',parsedCart.items[0].product.shop.id)
+  //console.log('shop_id',parsedCart.items[0].product.shop.id)
   console.log('items',parsedCart.items.map((item: { product: { id: number; }; quantity: number; }) => ({
           product_id: item.product.id,
           quantity: item.quantity,
@@ -66,12 +66,6 @@ export default function MapScreen() {
         console.log('total',parseFloat(Array.isArray(total) ? total[0] : total))
         console.log( 'location', selectedLocation)
         console.log( 'type', selectedType)
-
-
-
-
-
-
 
   try{
     const response = await fetch(`${config.baseUrl}/api/orders`, {

@@ -17,6 +17,14 @@ import { useState } from 'react';
 
 const Training = () => {
 
+// Test function to check if images are accessible
+
+
+// Test connectivity when component mounts
+
+// Test the first few image URLs
+
+
 const getProducts = async () => {
   try {
      const token = await AsyncStorage.getItem('auth_token');
@@ -36,9 +44,15 @@ const getProducts = async () => {
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
-  console.log('fetching from')
+  
   const data = await response.json();
+ 
+  
 const products = Array.isArray(data) ? data : data.data || [];
+  
+  // Test the first few image URLs after cleaning
+ 
+  
   //ensure data is an array
   return products.map((p: { images: any[]; image_url: any; }) => {
     
@@ -49,22 +63,31 @@ const products = Array.isArray(data) ? data : data.data || [];
       images: p.images?.map((img: any) => {
         // Clean the URL by removing spaces and backticks
         let cleanUrl = img.uri || img.url || img;
+        console.log('Original image object:', img);
+        console.log('Extracted cleanUrl before cleaning:', cleanUrl);
+        
         if (typeof cleanUrl === 'string') {
-        
+          // Handle the specific backtick issue - remove wrapping backticks first
+          cleanUrl = cleanUrl.replace(/^`+/, '').replace(/`+$/, '');
           
-          // More aggressive cleaning - remove all non-URL characters
-          cleanUrl = cleanUrl
-            .replace(/[\s`'"]/g, '') // Remove spaces, backticks, quotes
-            .replace(/^[^h]*/, '') // Remove everything before 'http'
-            .replace(/[^a-zA-Z0-9:\/\.\-_]*$/, ''); // Remove trailing non-URL chars
         
+          console.log('Cleaned URL:', cleanUrl);
+          
+          // Return the cleaned URL without any backticks
+          const result = { url: cleanUrl };
+          console.log('Final result:', result);
+          return result;
+        } else {
+          // If it's not a string, return as-is
+          console.log('CleanUrl is not a string, returning as-is');
+          const result = { url: cleanUrl };
+          console.log('Final result:', result);
+          return result;
         }
-        
-        const result = { url: cleanUrl };
-        return result;
       }) || (p.image_url ? [{ url: p.image_url }] : []),
     };
   });
+
 
   } catch (error) {
     console.error("Error fetching products:", error);

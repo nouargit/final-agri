@@ -36,7 +36,7 @@ const orders = () => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    console.log('Raw API response:', data.items[0].product.shop.location);
+    //console.log('Raw API response:', data.items[0].product.shop.location);
     return data.data || data;
    }
 
@@ -85,7 +85,7 @@ const orders = () => {
   }
  
 
-  //console.log('Cart data:', cart); // This will show you the data structure
+//console.log('Cart datajjjjjjjjj:', cart.items[0].product.images[0].url); // This will show you the data structure
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

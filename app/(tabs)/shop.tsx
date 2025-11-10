@@ -356,7 +356,7 @@ export default function ShopScreen() {
                   </View>
                    <TouchableOpacity className="p-2 bg-slate-200 rounded-full dark:bg-neutral-700" onPress={() => {
 
-                  router.navigate(`../shopOrdersScreen`)
+                  router.navigate(`../shopOrdersScreen?shop_id=${selectedShopId}`)
                 }}>
                   <Package size={24} color="#6B7280" />
                 </TouchableOpacity>

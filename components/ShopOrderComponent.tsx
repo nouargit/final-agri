@@ -13,10 +13,18 @@ interface Customer {
 
 interface Order {
   id: string;
+  user_id:string;
+  order_number: number;
+  shop_id:string;
   customer: Customer;
   orderDate: string;
   totalAmount: string;
+  delevery_fee:number;
+  subtotal:number;
+
+  location:string;
   status: 'pending' | 'accepted' | 'preparing' | 'ready' | 'delivered';
+  created_at: string;
   items: number;
 }
 
@@ -39,6 +47,15 @@ const ShopOrderComponent: React.FC<ShopOrderComponentProps> = ({
   onOrderPress, 
   onCustomerPress 
 }) => {
+  if(!orders || orders.length === 0) {
+    return (
+      <View className="flex-1 items-center justify-center px-6">
+        <Text className="text-lg text-gray-500 dark:text-gray-400">
+          No orders found
+        </Text>
+      </View>
+    )
+  }
   return (
     <ScrollView className="flex-1 bg-white dark:bg-neutral-950">
       <View className="p-4">
@@ -65,65 +82,77 @@ const ShopOrderComponent: React.FC<ShopOrderComponentProps> = ({
             </View>
 
             {/* Customer Info */}
-            <TouchableOpacity
-              onPress={() => onCustomerPress?.(order.customer)}
-              className="flex-row items-center mb-4"
-            >
-              {/* Profile Picture */}
-              
-              
-              <View className="flex-1">
-                {/* Customer Name */}
-                <Text className="text-base font-gilroy-medium text-gray-900 dark:text-white">
-                  {order.customer.name}
-                </Text>
+            {order.customer && (
+              <TouchableOpacity
+                onPress={() => onCustomerPress?.(order.customer)}
+                className="flex-row items-center mb-4"
+              >
+                {/* Profile Picture */}
                 
-                {/* Phone Number */}
-                <View className="flex-row items-center mt-1">
-                  <IconSymbol name="phone" size={14} color="#6B7280" />
-                  <Text className="text-sm text-gray-600 dark:text-gray-400 ml-1">
-                    {order.customer.phoneNumber}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-
-            {/* Customer Stats Tags */}
-            <View className="flex-row justify-between items-center mb-3">
-              <View className="flex-row space-x-2">
-                {/* Accepted Orders Tag */}
-                <View className="bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full">
-                  <Text className="text-xs font-gilroy-medium text-green-800 dark:text-green-300">
-                    ✓ {order.customer.acceptedOrders} Accepted
-                  </Text>
-                </View>
                 
-                {/* Returned Orders Tag */}
-                {order.customer.returnedOrders > 0 && (
-                  <View className="bg-red-100 dark:bg-red-900/30 px-3 py-1 rounded-full">
-                    <Text className="text-xs font-gilroy-medium text-red-800 dark:text-red-300">
-                      ↩ {order.customer.returnedOrders} Returned
+                <View className="flex-1">
+                  {/* Customer Name */}
+                  <Text className="text-base font-gilroy-medium text-gray-900 dark:text-white">
+                    {order.customer?.name || 'Customer'}
+                  </Text>
+                  
+                  {/* Phone Number */}
+                  <View className="flex-row items-center mt-1">
+                    <IconSymbol name="phone" size={14} color="#6B7280" />
+                    <Text className="text-sm text-gray-600 dark:text-gray-400 ml-1">
+                      {order.customer?.phoneNumber || 'No phone number'}
                     </Text>
                   </View>
-                )}
+                </View>
+              </TouchableOpacity>
+            )}
+            
+            {!order.customer && (
+              <View className="mb-4">
+                <Text className="text-base font-gilroy-medium text-gray-900 dark:text-white">
+                  Customer information not available
+                </Text>
               </View>
-            </View>
+            )}
+
+            {/* Customer Stats Tags */}
+            {order.customer && (
+              <View className="flex-row justify-between items-center mb-3">
+                <View className="flex-row space-x-2">
+                  {/* Accepted Orders Tag */}
+                  <View className="bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full">
+                    <Text className="text-xs font-gilroy-medium text-green-800 dark:text-green-300">
+                      ✓ {order.customer?.acceptedOrders || 0} Accepted
+                    </Text>
+                  </View>
+                  
+                  {/* Returned Orders Tag */}
+                  {order.customer?.returnedOrders > 0 && (
+                    <View className="bg-red-100 dark:bg-red-900/30 px-3 py-1 rounded-full">
+                      <Text className="text-xs font-gilroy-medium text-red-800 dark:text-red-300">
+                        ↩ {order.customer?.returnedOrders || 0} Returned
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            )}
 
             {/* Order Details */}
             <View className="flex-row justify-between items-center pt-3 border-t border-gray-100 dark:border-gray-700">
               <View className="flex-row items-center">
                 <IconSymbol name="bag" size={16} color="#6B7280" />
                 <Text className="text-sm text-gray-600 dark:text-gray-400 ml-1">
-                  {order.items} items
+                  {order.items? order.items : 0} items
                 </Text>
               </View>
               
               <View className="flex-row items-center">
                 <Text className="text-sm text-gray-600 dark:text-gray-400 mr-3">
-                  {order.orderDate}
+                  {order.created_at}
                 </Text>
                 <Text className="text-lg font-gilroy-medium text-gray-900 dark:text-white">
-                  {order.totalAmount}
+                  {order.subtotal}
                 </Text>
               </View>
             </View>
