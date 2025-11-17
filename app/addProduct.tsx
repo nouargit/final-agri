@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 
@@ -61,6 +62,7 @@ const commonAllergens = [
 
 const AddProductScreen = () => {
   const colorScheme = useColorScheme();
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [newIngredient, setNewIngredient] = useState('');
   const [selectedShopId, setSelectedShopId] = useState<string>('');
@@ -129,14 +131,14 @@ const AddProductScreen = () => {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Please grant camera roll permissions to add images.');
+        Alert.alert(t('addProduct.permissionNeeded'), t('addProduct.grantCameraRoll'));
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [1, 1],
+        aspect: [9, 16],
         quality: 0.8,
       });
 
@@ -145,7 +147,7 @@ const AddProductScreen = () => {
         updateFormData('images', newImages);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick image');
+      Alert.alert(t('addProduct.error'), t('addProduct.failedPickImage'));
     }
   };
 
@@ -175,27 +177,27 @@ const AddProductScreen = () => {
 
   const validateForm = () => {
     if (!formData.name.trim()) {
-      Alert.alert('Validation Error', 'Product name is required');
+      Alert.alert(t('addProduct.validationError'), t('addProduct.productNameRequired'));
       return false;
     }
     if (!formData.description.trim()) {
-      Alert.alert('Validation Error', 'Product description is required');
+      Alert.alert(t('addProduct.validationError'), t('addProduct.productDescriptionRequired'));
       return false;
     }
     if (!formData.price.trim() || isNaN(Number(formData.price))) {
-      Alert.alert('Validation Error', 'Valid price is required');
+      Alert.alert(t('addProduct.validationError'), t('addProduct.validPriceRequired'));
       return false;
     }
     if (!formData.category_id) {
-      Alert.alert('Validation Error', 'Category is required');
+      Alert.alert(t('addProduct.validationError'), t('addProduct.categoryRequiredAlert'));
       return false;
     }
     if (formData.images.length === 0) {
-      Alert.alert('Validation Error', 'At least one image is required');
+      Alert.alert(t('addProduct.validationError'), t('addProduct.imageRequired'));
       return false;
     }
     if (!selectedShopId) {
-      Alert.alert('Validation Error', 'Please select a shop');
+      Alert.alert(t('addProduct.validationError'), t('addProduct.pleaseSelectShopAlert'));
       return false;
     }
     return true;
@@ -304,11 +306,11 @@ const AddProductScreen = () => {
     const data = await response.json();
 
     console.log('Product saved:', data);
-    Alert.alert('Success', 'Product added successfully');
+    Alert.alert(t('addProduct.success'), t('addProduct.productAddedSuccessfully'));
     router.back();
   } catch (error) {
     console.error('Error adding product:', error);
-    Alert.alert('Error', 'Failed to add product');
+    Alert.alert(t('addProduct.error'), t('addProduct.failedAddProduct'));
   } finally {
     setIsLoading(false);
   }
@@ -324,14 +326,14 @@ const AddProductScreen = () => {
         <TouchableOpacity onPress={() => router.back()} className="p-2">
           <ArrowLeft size={24} color={colorScheme === 'dark' ? '#FFFFFF' : '#000000'} />
         </TouchableOpacity>
-        <Text className="text-xl font-bold text-gray-900 dark:text-white">Add New Product</Text>
+        <Text className="text-xl font-bold text-gray-900 dark:text-white">{t('addProduct.header')}</Text>
         <View className="w-10" />
       </View>
 
       {/* Shop Selection */}
       <View className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
         <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Select Shop *
+          {t('addProduct.selectShopLabel')}
         </Text>
         <TouchableOpacity
           onPress={() => setShopSelectionVisible(true)}
@@ -340,9 +342,9 @@ const AddProductScreen = () => {
           <Text className={`${selectedShopId ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
             {selectedShopId 
               ? (Array.isArray(shopData) 
-                  ? shopData.find(shop => shop.id === selectedShopId)?.name || 'Select Shop'
-                  : shopData?.name || 'Select Shop')
-              : 'Select Shop'
+                  ? shopData.find(shop => shop.id === selectedShopId)?.name || t('shop.selectShop')
+                  : shopData?.name || t('shop.selectShop'))
+              : t('shop.selectShop')
             }
           </Text>
           <ChevronDown size={20} color="#6B7280" />
@@ -354,7 +356,7 @@ const AddProductScreen = () => {
           {/* Product Images */}
           <View className="mb-6">
             <Text className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              Product Images *
+              {t('addProduct.productImages')}
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
               <View className="flex-row gap-3">
@@ -378,7 +380,7 @@ const AddProductScreen = () => {
                   className="w-24 h-24 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl items-center justify-center"
                 >
                   <Camera size={24} color={colorScheme === 'dark' ? '#9CA3AF' : '#6B7280'} />
-                  <Text className="text-xs text-gray-500 dark:text-gray-400 mt-1">Add Photo</Text>
+                  <Text className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('addProduct.addPhoto')}</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -387,22 +389,22 @@ const AddProductScreen = () => {
           {/* Basic Information */}
           <View className="mb-6">
             <Text className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              Basic Information
+              {t('addProduct.basicInformation')}
             </Text>
             
             <CustomInput
-              placeholder="Product Name"
+              placeholder={t('addProduct.productName')}
               value={formData.name}
               onChangeText={(text) => updateFormData('name', text)}
             />
 
             <View className="mb-4">
-              <Text className="text-sm text-gray-600 dark:text-gray-400 mb-2">Category *</Text>
+              <Text className="text-sm text-gray-600 dark:text-gray-400 mb-2">{t('addProduct.categoryLabel')}</Text>
               <Dropdown
                 data={categories || []}//9999
                 labelField="label"
                 valueField="id"
-                placeholder={!selectedShopId ? 'Select a shop first' : 'Select Category'}
+                placeholder={!selectedShopId ? t('addProduct.selectShopFirst') : t('addProduct.selectCategory')}
                 placeholderStyle={{ 
                   color: colorScheme === "dark" ? "#9CA3AF" : "#6B7280",
                   fontSize: 16
@@ -442,17 +444,17 @@ const AddProductScreen = () => {
             </View>
 
             <CustomInput
-              placeholder="Price (USD)"
+              placeholder={t('addProduct.priceUSD')}
               value={formData.price}
               onChangeText={(text) => updateFormData('price', text)}
               keyboardType="number-pad"
             />
 
             <View className="mb-4">
-              <Text className="text-sm text-gray-600 dark:text-gray-400 mb-2">Description *</Text>
+              <Text className="text-sm text-gray-600 dark:text-gray-400 mb-2">{t('addProduct.descriptionLabel')}</Text>
               <View className="border border-gray-300 dark:border-gray-600 rounded-xl p-4 bg-gray-50 dark:bg-neutral-800">
                 <CustomInput
-                  placeholder="Describe your product..."
+                  placeholder={t('addProduct.descriptionPlaceholder')}
                   value={formData.description}
                   onChangeText={(text) => updateFormData('description', text)}
                 />
@@ -463,13 +465,13 @@ const AddProductScreen = () => {
           {/* Nutritional Information */}
           <View className="mb-6">
             <Text className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              Nutritional Information
+              {t('addProduct.nutritionalInformation')}
             </Text>
             
             <View className="flex-row gap-3 mb-4">
               <View className="flex-1">
                 <CustomInput
-                  placeholder="Calories"
+                  placeholder={t('addProduct.calories')}
                   value={formData.calories}
                   onChangeText={(text) => updateFormData('calories', text)}
                   keyboardType="number-pad"
@@ -477,7 +479,7 @@ const AddProductScreen = () => {
               </View>
               <View className="flex-1">
                 <CustomInput
-                  placeholder="Protein (g)"
+                  placeholder={t('addProduct.protein')}
                   value={formData.protein}
                   onChangeText={(text) => updateFormData('protein', text)}
                   keyboardType="number-pad"
@@ -486,7 +488,7 @@ const AddProductScreen = () => {
             </View>
 
             <CustomInput
-              placeholder="Preparation Time (e.g., 15-20 mins)"
+              placeholder={t('addProduct.preparationTime')}
               value={formData.preparationTime}
               onChangeText={(text) => updateFormData('preparationTime', text)}
             />
@@ -495,13 +497,13 @@ const AddProductScreen = () => {
           {/* Ingredients */}
           <View className="mb-6">
             <Text className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              Ingredients
+              {t('addProduct.ingredients')}
             </Text>
             
             <View className="flex-row gap-2 mb-3">
               <View className="flex-1">
                 <CustomInput
-                  placeholder="Add ingredient"
+                  placeholder={t('addProduct.addIngredient')}
                   value={newIngredient}
                   onChangeText={setNewIngredient}
                 />
@@ -531,10 +533,10 @@ const AddProductScreen = () => {
           {/* Allergens */}
           <View className="mb-8">
             <Text className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              Allergen Information
+              {t('addProduct.allergenInformation')}
             </Text>
             <Text className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              Select all allergens that apply to your product
+              {t('addProduct.selectAllergens')}
             </Text>
             
             <View className="flex-row flex-wrap gap-2">
@@ -564,7 +566,7 @@ const AddProductScreen = () => {
 
           {/* Submit Button */}
           <CustomButton
-            title="Add Product"
+            title={t('addProduct.addProductBtn')}
             onPress={handleSubmit}
             isLoading={isLoading}
             style="mb-8"
@@ -591,11 +593,11 @@ const AddProductScreen = () => {
             <ScrollView className="max-h-80">
               {shopsLoading ? (
                 <View className="p-4">
-                  <Text className="text-gray-600 dark:text-gray-400 text-center">Loading shops...</Text>
+                  <Text className="text-gray-600 dark:text-gray-400 text-center">{t('addProduct.loadingShops')}</Text>
                 </View>
               ) : shopError ? (
                 <View className="p-4">
-                  <Text className="text-red-600 dark:text-red-400 text-center">Error loading shops</Text>
+                  <Text className="text-red-600 dark:text-red-400 text-center">{t('addProduct.errorLoadingShops')}</Text>
                 </View>
               ) : Array.isArray(shopData) && shopData.length > 0 ? (
                 shopData.map((shop) => (
@@ -631,7 +633,7 @@ const AddProductScreen = () => {
                 ))
               ) : (
                 <View className="p-4">
-                  <Text className="text-gray-600 dark:text-gray-400 text-center">No shops available</Text>
+                  <Text className="text-gray-600 dark:text-gray-400 text-center">{t('addProduct.noShopsAvailable')}</Text>
                 </View>
               )}
             </ScrollView>

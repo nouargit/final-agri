@@ -6,6 +6,8 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Image, ScrollView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import { getDateLocale, setAppLanguage } from '@/lib/i18n';
 
 interface UserData {
   
@@ -26,6 +28,7 @@ async function getUserData(): Promise<UserData> {
 function Profile() {
   const [userData, setUserData] = useState<UserData>({});
   const [isLoading, setIsLoading] = useState(true);
+  const { t, i18n } = useTranslation();
 const {data}=useQuery({
   queryKey: ['userData'],
   queryFn: getUserData,
@@ -39,12 +42,12 @@ const {data}=useQuery({
 
   const handleLogout = async () => {
     Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
+      t('profile.logout'),
+      t('profile.logoutConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('profile.cancel'), style: 'cancel' },
         {
-          text: 'Logout',
+          text: t('profile.confirmLogout'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -62,22 +65,22 @@ const {data}=useQuery({
   const formatJoinDate = (dateString?: string) => {
     if (!dateString) return 'Unknown';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString(getDateLocale(), { 
       year: 'numeric', 
       month: 'long' 
     });
   };
 
   const menuItems = [
-    { icon: 'person.circle', title: 'Edit Profile', subtitle: 'Update your personal information' },
-    { icon: 'heart', title: 'Favorites', subtitle: 'Your saved items', onPress: () => router.push('../shopCreationForm') },
-    { icon: 'bag', title: 'Order History', subtitle: 'View past orders' },
-    { icon: 'creditcard', title: 'Payment Methods', subtitle: 'Manage your cards' },
-    { icon: 'location', title: 'Addresses', subtitle: 'Delivery addresses' },
-    { icon: 'bell', title: 'Notifications', subtitle: 'Manage notifications' },
-    { icon: 'questionmark.circle', title: 'Help & Support', subtitle: 'Get help when you need it' },
-    { icon: 'info.circle', title: 'About', subtitle: 'App version and info' },
-    { icon: 'info.circle', title: 'my shop', subtitle: 'my shop',onPress:()=>router.push('/shop') },
+    { icon: 'person.circle', title: t('profile.menu.editProfile'), subtitle: t('profile.subtitle') },
+    { icon: 'heart', title: t('profile.menu.favorites'), subtitle: t('profile.menu.favorites'), onPress: () => router.push('../shopCreationForm') },
+    { icon: 'bag', title: t('profile.menu.orderHistory'), subtitle: t('profile.menu.orderHistory') },
+    { icon: 'creditcard', title: t('profile.menu.paymentMethods'), subtitle: t('profile.menu.paymentMethods') },
+    { icon: 'location', title: t('profile.menu.addresses'), subtitle: t('profile.menu.addresses') },
+    { icon: 'bell', title: t('profile.menu.notifications'), subtitle: t('profile.menu.notifications') },
+    { icon: 'questionmark.circle', title: t('profile.menu.help'), subtitle: t('profile.menu.help') },
+    { icon: 'info.circle', title: t('profile.menu.about'), subtitle: t('profile.menu.about') },
+    { icon: 'info.circle', title: t('profile.menu.myShop'), subtitle: t('profile.menu.myShopSubtitle'), onPress:()=>router.push('/shop') },
   ];
 
   if (isLoading) {
@@ -94,22 +97,20 @@ const {data}=useQuery({
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View className="px-6 pt-4 pb-6">
-          <View className="flex-row justify-between items-center">
-            <View>
-              <Text className="text-3xl font-bold text-neutral-900 dark:text-white">Profile</Text>
-              <Text className="text-base text-neutral-500 dark:text-neutral-400 mt-1">
-                Manage your account
-              </Text>
-            </View>
-            <TouchableOpacity 
-              onPress={handleLogout}
-              className="bg-red-100 dark:bg-red-900/30 p-3 rounded-full"
-            >
-              <IconSymbol name="power" size={20} color="#ef4444" />
-            </TouchableOpacity>
+      <View className="px-6 pt-4 pb-6">
+        <View className="flex-row justify-between items-center">
+          <View>
+              <Text className="text-3xl font-bold text-neutral-900 dark:text-white">{t('profile.title')}</Text>
+              <Text className="text-base text-neutral-500 dark:text-neutral-400 mt-1">{t('profile.subtitle')}</Text>
           </View>
+          <TouchableOpacity 
+            onPress={handleLogout}
+            className="bg-red-100 dark:bg-red-900/30 p-3 rounded-full"
+          >
+            <IconSymbol name="power" size={20} color="#ef4444" />
+          </TouchableOpacity>
         </View>
+      </View>
 
         {/* Profile Card */}
         <View className="mx-6 mb-6 bg-white dark:bg-neutral-800 rounded-3xl p-6 shadow-sm">
@@ -124,14 +125,17 @@ const {data}=useQuery({
               </TouchableOpacity>
             </View>
             
-            <Text className="text-2xl font-bold text-neutral-900 dark:text-white mt-4">
-              {data?.name || 'Guest User'}
+            <Text className="text-2xl font-gilroy-semibold text-neutral-900 dark:text-white mt-4">
+              {data?.name || t('profile.guestUser')}
             </Text>
             <Text className="text-neutral-500 dark:text-neutral-400 mt-1">
-              {data?.email || 'No email'}
+              {data?.email || t('profile.noEmail')}
             </Text>
             <Text className="text-sm text-neutral-400 dark:text-neutral-500 mt-2">
-              Member since {formatJoinDate(data?.created_at)}
+              {t('profile.memberSince', { date: formatJoinDate(data?.created_at) })}
+            </Text>
+            <Text className="text-sm font-dubai-regular text-neutral-400 dark:text-neutral-500 mt-2">
+              لا اعلم
             </Text>
           </View>
 
@@ -139,15 +143,15 @@ const {data}=useQuery({
           <View className="flex-row justify-between mt-6 pt-6 border-t border-neutral-100 dark:border-neutral-700">
             <View className="items-center flex-1">
               <Text className="text-2xl font-bold text-neutral-900 dark:text-white">12</Text>
-              <Text className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">Orders</Text>
+              <Text className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">{t('profile.orders')}</Text>
             </View>
             <View className="items-center flex-1">
               <Text className="text-2xl font-bold text-neutral-900 dark:text-white">4</Text>
-              <Text className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">Favorites</Text>
+              <Text className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">{t('profile.favorites')}</Text>
             </View>
             <View className="items-center flex-1">
               <Text className="text-2xl font-bold text-neutral-900 dark:text-white">3</Text>
-              <Text className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">In Cart</Text>
+              <Text className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">{t('profile.inCart')}</Text>
             </View>
             
           </View>
@@ -155,9 +159,22 @@ const {data}=useQuery({
 
         {/* Menu Items */}
         <View className="px-6">
-          <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
-            Account Settings
-          </Text>
+          <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">{t('profile.accountSettings')}</Text>
+
+          <View className="bg-white dark:bg-neutral-800 rounded-2xl p-4 mb-4">
+            <Text className="text-neutral-900 dark:text-white font-semibold mb-3">{t('profile.language')}</Text>
+            <View className="flex-row gap-3">
+              <TouchableOpacity onPress={() => setAppLanguage('en')} className={`px-3 py-2 rounded-full ${i18n.language==='en' ? 'bg-primary' : 'bg-neutral-100 dark:bg-neutral-700'}`}>
+                <Text className={`${i18n.language==='en' ? 'text-white' : 'text-neutral-900 dark:text-white'}`}>{t('profile.english')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setAppLanguage('fr')} className={`px-3 py-2 rounded-full ${i18n.language==='fr' ? 'bg-primary' : 'bg-neutral-100 dark:bg-neutral-700'}`}>
+                <Text className={`${i18n.language==='fr' ? 'text-white' : 'text-neutral-900 dark:text-white'}`}>{t('profile.french')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setAppLanguage('ar')} className={`px-3 py-2 rounded-full ${i18n.language==='ar' ? 'bg-primary' : 'bg-neutral-100 dark:bg-neutral-700'}`}>
+                <Text className={`${i18n.language==='ar' ? 'text-white' : 'text-neutral-900 dark:text-white'}`}>{t('profile.arabic')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
           
           {menuItems.map((item, index) => (
             <TouchableOpacity
@@ -187,12 +204,8 @@ const {data}=useQuery({
         {/* App Info */}
         <View className="px-6 mt-6 mb-8">
           <View className="bg-neutral-100 dark:bg-neutral-800 rounded-2xl p-4">
-            <Text className="text-center text-neutral-500 dark:text-neutral-400 text-sm">
-              Sweeta App v1.0.0
-            </Text>
-            <Text className="text-center text-neutral-400 dark:text-neutral-500 text-xs mt-1">
-              Made with ❤️ for sweet lovers
-            </Text>
+            <Text className="text-center text-neutral-500 dark:text-neutral-400 text-sm">{t('profile.appNameVersion')}</Text>
+            <Text className="text-center text-neutral-400 dark:text-neutral-500 text-xs mt-1">{t('profile.appTagline')}</Text>
           </View>
         </View>
       </ScrollView>

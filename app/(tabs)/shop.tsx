@@ -9,6 +9,7 @@ import { ChevronDown, Plus, Search, X, Package } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 
 import { Alert, Image, Modal, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import Animated, {
   Extrapolate,
   interpolate,
@@ -34,6 +35,7 @@ export default function ShopScreen() {
   const scrollY = useSharedValue(0);
   const [shopItems] = useState([...items]);
   const theme = useColorScheme();
+  const { t } = useTranslation();
 
   const getShopCategories = async () => {
     const token = await AsyncStorage.getItem('auth_token');
@@ -183,7 +185,7 @@ export default function ShopScreen() {
   const handleAddCategory = async () => {
     if (newCategory.trim() && !tabs.includes(newCategory.trim())) {
       if (!selectedShopId) {
-        Alert.alert('Error', 'Please select a shop first');
+        Alert.alert(t('shop.error'), t('shop.pleaseSelectShop'));
         return;
       }
 
@@ -211,13 +213,13 @@ export default function ShopScreen() {
           await refetchCategories();
           setNewCategory('');
           setModalVisible(false);
-          Alert.alert('Success', 'Category added successfully!');
+          Alert.alert(t('common.today') ? t('common.today') && t('shop.selectShop') ? 'Success' : 'Success' : 'Success', t('shop.addCategorySuccess'));
         } else {
           const errorData = await response.json();
-          Alert.alert('Error', errorData.message || 'Failed to add category');
+          Alert.alert(t('shop.error'), errorData.message || t('shop.addCategoryError'));
         }
       } catch (error) {
-        Alert.alert('Error', 'Failed to add category. Please try again.');
+        Alert.alert(t('shop.error'), t('shop.addCategoryError'));
       }
     }
   };
@@ -242,7 +244,7 @@ export default function ShopScreen() {
         ListEmptyComponent={
           <View className="items-center justify-center py-20">
             <Text className="text-gray-500 dark:text-gray-400 text-center">
-              No items found
+              {t('shop.noItems')}
             </Text>
           </View>
         }
@@ -334,10 +336,10 @@ export default function ShopScreen() {
                     >
                       <Text className="text-sm text-gray-700 dark:text-gray-300 mr-1">
                         {selectedShopId 
-                          ? (Array.isArray(shopData) 
-                              ? shopData.find(shop => shop.id === selectedShopId)?.name || 'Select Shop'
-                              : shopData?.name || 'Select Shop')
-                          : 'Select Shop'
+                      ? (Array.isArray(shopData) 
+                          ? shopData.find(shop => shop.id === selectedShopId)?.name || t('shop.selectShop')
+                          : shopData?.name || t('shop.selectShop'))
+                          : t('shop.selectShop')
                         }
                       </Text>
                       <ChevronDown size={16} color="#6B7280" />
@@ -404,7 +406,7 @@ export default function ShopScreen() {
                 ))}
                  <TouchableOpacity
                       onPress={() => setModalVisible(true)}
-                      className="  p-2 "
+                      className="p-2 bg-gray-100 dark:bg-neutral-700 rounded-full ml-1"
                     >
                       <Plus size={24} color="#6B7280" />
                     </TouchableOpacity>
@@ -424,7 +426,7 @@ export default function ShopScreen() {
         <View className="flex-1 justify-end bg-black/50">
           <View className="bg-white dark:bg-gray-800 rounded-t-3xl p-6 pb-8">
             <View className="flex-row items-center justify-between mb-6">
-              <Text className="text-xl font-bold text-gray-900 dark:text-white">Add Category</Text>
+              <Text className="text-xl font-bold text-gray-900 dark:text-white">{t('shop.addCategory')}</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <X size={24} color="#6B7280" />
               </TouchableOpacity>
@@ -432,7 +434,7 @@ export default function ShopScreen() {
 
             <TextInput
               className="bg-gray-100 dark:bg-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white mb-4"
-              placeholder="Category name"
+              placeholder={t('shop.categoryName')}
               placeholderTextColor="#9CA3AF"
               value={newCategory}
               onChangeText={setNewCategory}
@@ -440,10 +442,10 @@ export default function ShopScreen() {
 
             <TouchableOpacity
               onPress={handleAddCategory}
-              className="bg-gray-900 dark:bg-white rounded-xl py-3 items-center"
+              className="bg-primary rounded-xl py-3 items-center"
             >
-              <Text className="text-white dark:text-gray-900 font-semibold text-base">
-                Add Category
+              <Text className="text-white font-semibold text-base">
+                {t('shop.addCategoryBtn')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -460,7 +462,7 @@ export default function ShopScreen() {
         <View className="flex-1 justify-end bg-black/50">
           <View className="bg-white dark:bg-gray-800 rounded-t-3xl p-6 pb-8">
             <View className="flex-row items-center justify-between mb-6">
-              <Text className="text-xl font-bold text-gray-900 dark:text-white">Select Shop</Text>
+              <Text className="text-xl font-bold text-gray-900 dark:text-white">{t('shop.selectShop')}</Text>
               <TouchableOpacity onPress={() => setShopSelectionVisible(false)}>
                 <X size={24} color="#6B7280" />
               </TouchableOpacity>
@@ -480,7 +482,7 @@ export default function ShopScreen() {
                       : 'bg-gray-100 dark:bg-gray-700'
                   }`}
                 >
-                  <Text className={`font-bold font-3xl m-5 ${
+                  <Text className={`font-bold text-3xl m-5 ${
                     selectedShopId === shop.id 
                       ? 'text-white dark:text-gray-900' 
                       : 'text-gray-900 dark:text-white'

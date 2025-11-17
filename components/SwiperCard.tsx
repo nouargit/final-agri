@@ -1,50 +1,81 @@
-import React from 'react'
-import { View, Image, Text, ImageSourcePropType } from 'react-native'
+import { View, Text, Image, Dimensions, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
 
-type SwiperCardProps = {
-  dessert: {
-    image: string;
+interface SwiperCardProps {
+  product : {
+    image: any;
+    name: string;
+    description: string;
+    price: number;
   };
-  index: number;
-  scrollY: number;
 }
 
-export default function SwiperCard({ dessert, index, scrollY }: SwiperCardProps) {
+const SwiperCard = ({ product }: SwiperCardProps) => {
+  const windowWidth = Dimensions.get('window').width;
+
   return (
-    <View className="flex-1 bg-white dark:bg-neutral-800 rounded-3xl overflow-hidden">
-      {/* Product Image */}
-      <View className="h-64 w-full">
-        <Image 
-          source={src} 
-          className="w-full h-full" 
-          resizeMode="cover" 
+    <View>
+      <View style={{ width: windowWidth * 0.93, height: windowWidth * 1.5, marginBottom: 12 }}>
+        <Image
+          source={product.image}
+          resizeMode="cover"
+          style={styles.image}
         />
-      </View>
-      
-      {/* Product Info */}
-      <View className="flex-1 p-6 justify-between">
-        <View className="gap-3">
-          <Text className="text-xl font-bold text-neutral-900 dark:text-white" numberOfLines={2}>
-            {title}
-          </Text>
-          <Text className="text-sm text-neutral-600 dark:text-neutral-300" numberOfLines={3}>
-            {desc}
-          </Text>
-        </View>
-        
-        {/* Price and Rating */}
-        <View className="flex-row items-center justify-between mt-4">
-          <Text className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-            ${price}
-          </Text>
-          <View className="flex-row items-center gap-1">
-            <Text className="text-yellow-500">★</Text>
-            <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              4.8
-            </Text>
-          </View>
+
+        {/* 🔥 Bottom Gradient Overlay */}
+        <LinearGradient
+          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.8)']}
+          style={styles.gradient}
+        />
+
+        {/* 🔥 Text on Gradient */}
+        <View style={styles.textContainer}>
+          <Text style={styles.name}>{product.name}</Text> 
+          <Text style={styles.desc}>{product.description}</Text>
+          <Text style={styles.price}>${product.price}</Text>
         </View>
       </View>
     </View>
-  )
-}
+  );
+};
+
+export default SwiperCard;
+
+const styles = StyleSheet.create({
+  image: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
+  },
+  gradient: {
+    position: 'absolute',
+    bottom: 0,
+    height: '45%',
+    width: '100%',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  textContainer: {
+    position: 'absolute',
+    bottom: 20,
+    paddingHorizontal: 16,
+    width: '100%',
+  },
+  name: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  desc: {
+    color: '#ddd',
+    fontSize: 14,
+    marginTop: 4,
+  },
+  price: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+    marginTop: 8,
+  },
+});

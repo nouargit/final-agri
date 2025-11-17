@@ -6,11 +6,13 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Redirect, Tabs, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
 
   const checkAuthStatus = async () => {
     try {
@@ -53,9 +55,9 @@ export default function TabLayout() {
         tabBarStyle:
         {
           
-          height: 80,
+          height: 70,
           paddingBottom: 10,
-          paddingTop: 10,
+          paddingTop: 6,
           
          
           elevation: 0, 
@@ -70,8 +72,8 @@ export default function TabLayout() {
           borderTopWidth: 1,
           marginHorizontal: 0,
           marginBottom: 0,
-          borderBlockColor:"#303333",
-          borderBlockEndColor:"red",
+         
+          
           position: 'absolute',
         }
       }}
@@ -79,7 +81,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t('tabs.home'),
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
@@ -88,7 +90,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="training"
         options={{
-          title: 'Explore',
+          title: t('tabs.explore'),
           
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="search" color={color} />,
         }}
@@ -96,7 +98,7 @@ export default function TabLayout() {
       <Tabs.Screen
       name='cart'
       options={{
-        title:'Cart',
+        title: t('tabs.cart'),
         tabBarIcon: ({ color }) => <IconSymbol size={28} name="Handbag" color={color} />
       }}
       />
@@ -104,14 +106,14 @@ export default function TabLayout() {
       <Tabs.Screen
       name='shop'
       options={{
-        title:'Shop',
+        title: t('tabs.shop'),
         tabBarIcon: ({ color }) => <IconSymbol size={28} name="Store" color={color} />
       }}
       />
        <Tabs.Screen
       name='profile'
       options={{
-        title:'Profile',
+        title: t('tabs.profile'),
         tabBarIcon: ({ color }) => <IconSymbol size={28} name="User" color={color} />
       }}
       />

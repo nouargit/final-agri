@@ -91,7 +91,7 @@ const ItemCard = ({ item }: ItemCardProps) => {
 
         {/* ---------- CONTENT ---------- */}
         <View className="p-4">
-          <Text className="text-2xl font-gilroy-semibold text-neutral-800 dark:text-white">
+          <Text className="text-xl font-gilroy-semibold text-neutral-800 dark:text-white">
             {item.name}
           </Text>
          
@@ -99,7 +99,7 @@ const ItemCard = ({ item }: ItemCardProps) => {
           Tap to explore
           </Text>
 
-          <Text className="mt-1 text-xl font-gilroy-bold text-primary dark:text-primary">
+          <Text className="mt-1 text-lg font-gilroy-bold text-neutral-800 dark:text-neutral-300">
             DZD {item.price}
           </Text>
         </View>

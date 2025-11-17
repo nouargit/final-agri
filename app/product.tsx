@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { config } from '@/config';
 import { router, useLocalSearchParams } from 'expo-router';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 const { width } = Dimensions.get('window');
  const temp={images: [
       "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=800&h=600&fit=crop",
@@ -63,6 +64,7 @@ const ProductScreen = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const navigation = useNavigation();
   const { id } = useLocalSearchParams();
+  const { t } = useTranslation();
   
   // Ensure id is a string, handle array case
   const productId = Array.isArray(id) ? id[0] : id;
@@ -364,12 +366,13 @@ const product = {
   const prevImage = () => {
     setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
   };
+  console.log("product",product.images[0])
 
   // Add loading and error states
   if (isLoading) {
     return (
       <SafeAreaView className="bg-gray-50 flex-1 dark:bg-neutral-900 pt-7 justify-center items-center">
-        <Text className="text-gray-600 dark:text-gray-400">Loading product...</Text>
+        <Text className="text-gray-600 dark:text-gray-400">{t('product.loadingProduct')}</Text>
       </SafeAreaView>
     );
   }
@@ -377,7 +380,7 @@ const product = {
   if (error) {
     return (
       <SafeAreaView className="bg-gray-50 flex-1 dark:bg-neutral-900 pt-7 justify-center items-center">
-        <Text className="text-red-600 dark:text-red-400">Error loading product</Text>
+        <Text className="text-red-600 dark:text-red-400">{t('product.errorLoadingProduct')}</Text>
         <Text className="text-gray-600 dark:text-gray-400 mt-2">{error.message}</Text>
       </SafeAreaView>
     );
@@ -395,7 +398,7 @@ const product = {
           <TouchableOpacity className="p-2 rounded-full bg-gray-100 dark:bg-neutral-800" onPress={handleBack}>
             <ArrowLeft size={20} color="#374151" />
           </TouchableOpacity>
-          <Text className="text-2xl font-gilroy-bold text-neutral-900 dark:text-white">Product Details</Text>
+          <Text className="text-2xl font-gilroy-bold text-neutral-900 dark:text-white">{t('product.productDetails')}</Text>
           <TouchableOpacity
             className="p-2 rounded-full bg-gray-100 dark:bg-neutral-800"
             onPress={() => setIsFavorite(!isFavorite)}
@@ -412,7 +415,7 @@ const product = {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Image Carousel */}
         <View className="bg-white dark:bg-neutral-800 ">
-          <View className="relative" style={{ height: 450, margin: 10 }}>
+          <View className="relative" style={{ height: 420, margin: 10 }}>
             <Image
               source={{ uri: product.images[currentImageIndex] }}
               className="w-full h-full rounded-3xl"
@@ -421,7 +424,7 @@ const product = {
             
             {/* Discount Badge */}
             <View className="absolute top-4 right-4 bg-primary px-3 py-1 rounded-full">
-              <Text className="text-white text-sm font-gilroy-semibold">20% OFF</Text>
+              <Text className="text-white text-sm font-gilroy-semibold">{t('product.discount')}</Text>
             </View>
             
             {/* Navigation Arrows */}
@@ -488,7 +491,7 @@ const product = {
 
           {/* Size Selection */}
           <View className="mb-6">
-            <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-3">Size</Text>
+            <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-3">{t('product.size')}</Text>
             <View className="flex-row gap-3">
               {product.sizes.map((size) => (
                 <TouchableOpacity
@@ -514,7 +517,7 @@ const product = {
 
           {/* Ingredients */}
           <View className="mb-6">
-            <Text className="text-lg font-gilroy-semibold text-neutral-900 dark:text-white mb-3">Ingredients</Text>
+            <Text className="text-lg font-gilroy-semibold text-neutral-900 dark:text-white mb-3">{t('product.ingredients')}</Text>
             <View className="flex-row flex-wrap gap-2">
               {product.ingredients.map((ingredient, index) => (
                 <View key={index} className="bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full">
@@ -527,7 +530,7 @@ const product = {
           {/* Allergen Info */}
          <View className="mb-6">
             <Text className="text-lg font-gilroy-semibold text-neutral-900 dark:text-white mb-3">
-              Allergen Information
+              {t('product.allergensHeader')}
             </Text>
             <View className="flex-row flex-wrap gap-2">
               {product.allergens.map((allergen, index) => (
@@ -536,7 +539,7 @@ const product = {
                   className="bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 px-3 py-1 rounded-full"
                 >
                   <Text className="text-yellow-800 dark:text-yellow-200 text-sm font-gilroy-semibold">
-                    Contains {allergen}
+                    {t('product.contains', { item: allergen })}
                   </Text>
                 </View>
               ))}
@@ -548,7 +551,7 @@ const product = {
 
         {/* Seller Profile Card */}
         <View className="bg-white dark:bg-neutral-800 mt-2 p-4">
-          <Text className="text-xl font-gilroy-bold text-neutral-900 dark:text-white mb-4">Seller Information</Text>
+          <Text className="text-xl font-gilroy-bold text-neutral-900 dark:text-white mb-4">{t('product.sellerInfo')}</Text>
           <View className="flex-row gap-4">
             <Image
               source={{ uri: seller.avatar }}
@@ -565,7 +568,7 @@ const product = {
               <View className="flex-row items-center gap-1 mb-2">
                 <Star size={14} color="#F59E0B" fill="#F59E0B" />
                 <Text className="text-sm font-gilroy-semibold text-gray-700 dark:text-neutral-300">{seller.rating}</Text>
-                <Text className="text-sm text-gray-500 dark:text-neutral-400">({seller.reviews} reviews)</Text>
+                <Text className="text-sm text-gray-500 dark:text-neutral-400">{t('product.reviewsCount', { count: seller.reviews })}</Text>
               </View>
               <View className="flex-row items-center gap-4 mb-2">
                 <View className="flex-row items-center gap-1">
@@ -577,20 +580,20 @@ const product = {
                 <Clock size={14} color="#6B7280" />
                 <Text className="text-sm text-gray-600 dark:text-neutral-400">{seller.responseTime}</Text>
               </View>
-              <Text className="text-xs text-gray-500 dark:text-neutral-500 mt-2">Member since {seller.memberSince}</Text>
+              <Text className="text-xs text-gray-500 dark:text-neutral-500 mt-2">{t('product.memberSince', { year: seller.memberSince })}</Text>
             </View>
           </View>
           <TouchableOpacity className="mt-4 w-full bg-gray-100 dark:bg-neutral-800 py-3 rounded-xl items-center" onPress={() => router.push(`/productShop?shop_id=${product.shop_id}`)}>
-            <Text className="text-gray-900 dark:text-white font-gilroy-bold">Visit Store</Text>
+            <Text className="text-gray-900 dark:text-white font-gilroy-bold">{t('product.visitStore')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Comments and Ratings Section */}
         <View className="bg-white dark:bg-neutral-800 mt-2 p-4 mb-4">
           <View className="flex-row items-center justify-between mb-6">
-            <Text className="text-2xl font-gilroy-bold text-neutral-900 dark:text-white">Customer Reviews</Text>
+            <Text className="text-2xl font-gilroy-bold text-neutral-900 dark:text-white">{t('product.customerReviews')}</Text>
             <TouchableOpacity className="bg-primary px-1 py-2 rounded-xl">
-              <Text className="text-white font-gilroy-semibold">Write Review</Text>
+              <Text className="text-white font-gilroy-semibold">{t('product.writeReview')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -604,7 +607,7 @@ const product = {
                     <Star key={star} size={20} color="#F59E0B" fill="#F59E0B" />
                   ))}
                 </View>
-                <Text className="text-sm text-gray-600 dark:text-neutral-400">{product.reviews} reviews</Text>
+                <Text className="text-sm text-gray-600 dark:text-neutral-400">{t('product.reviewsCount', { count: product.reviews })}</Text>
               </View>
               <View className="flex-1 gap-2">
                 {[5, 4, 3, 2, 1].map((stars) => (
@@ -660,7 +663,7 @@ const product = {
                     <Text className="text-gray-700 dark:text-neutral-300 leading-relaxed mb-3">{comment.comment}</Text>
                     <TouchableOpacity>
                       <Text className="text-sm text-gray-600 dark:text-neutral-400">
-                        👍 Helpful ({comment.helpful})
+                        👍 {t('product.helpful')} ({comment.helpful})
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -670,7 +673,7 @@ const product = {
           </View>
 
           <TouchableOpacity className="mt-6 w-full border-2 border-gray-200 dark:border-neutral-700 py-3 rounded-xl items-center">
-            <Text className="text-gray-700 dark:text-neutral-300 font-gilroy-medium">Load More Reviews</Text>
+            <Text className="text-gray-700 dark:text-neutral-300 font-gilroy-medium">{t('product.loadMoreReviews')}</Text>
           </TouchableOpacity>
         </View>
         
@@ -678,7 +681,7 @@ const product = {
         {/* Quantity and Add to Cart */}
           <View className=" rounded-t-3xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 mx-1 p-4">
             <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-lg font-gilroy-bold text-neutral-900 dark:text-white">Quantity</Text>
+              <Text className="text-lg font-gilroy-bold text-neutral-900 dark:text-white">{t('product.quantity')}</Text>
               <View className="flex-row items-center bg-gray-100 dark:bg-neutral-700 rounded-full">
                 <TouchableOpacity onPress={decrementQuantity} className="p-3">
                   <Minus size={18} color="#ACB0B2" />
@@ -698,7 +701,7 @@ const product = {
             >
               <ShoppingCart size={22} color="white" />
               <Text className="text-white font-gilroy-bold text-lg">
-                Add to Cart - ${(product.price * quantity).toFixed(2)}
+                {t('product.addToCartTotal', { total: (product.price * quantity).toFixed(2) })}
               </Text>
             </TouchableOpacity>
           </View>

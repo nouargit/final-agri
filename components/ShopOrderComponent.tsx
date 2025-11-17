@@ -1,5 +1,6 @@
+import { router } from 'expo-router';
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { IconSymbol } from './ui/IconSymbol';
 
 interface Customer {
@@ -66,7 +67,7 @@ const ShopOrderComponent: React.FC<ShopOrderComponentProps> = ({
         {orders.map((order) => (
           <TouchableOpacity
             key={order.id}
-            onPress={() => onOrderPress?.(order)}
+            onPress={() => router.push(`/shopOrdersManagement?order_id=${order.id}`)}
             className="bg-white dark:bg-neutral-800 rounded-xl p-4 mb-4 shadow-sm border border-gray-100 dark:border-gray-700"
           >
             {/* Order Header */}

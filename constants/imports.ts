@@ -26,6 +26,8 @@ export const images={
    shopBgBlue:require("../assets/images/shopBgBlue.png"),
    shopBgPink:require("../assets/images/shopBgPink.png"),
    shopMarker:require("../assets/images/store.png"),
+   zamel:require("../assets/images/zamel.jpg"),
+
 
    
 }

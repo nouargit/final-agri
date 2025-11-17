@@ -3,6 +3,7 @@ import * as Location from "expo-location";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
+import { useTranslation } from 'react-i18next';
 import MapView, { Marker } from "react-native-maps";
 import { getDistance } from 'geolib';
 interface LocationCoordinate {
@@ -13,12 +14,13 @@ interface LocationCoordinate {
 export default function MapScreen() {
   const [userLocation, setUserLocation] = useState<LocationCoordinate | null>(null);
   const { selectedLocation, setSelectedLocation } = useLocationStore();
+  const { t } = useTranslation();
   useEffect(() => {
     (async () => {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") {
-          alert("Permission to access location was denied");
+          alert(t('map.permissionDenied'));
           return;
         }
         const loc = await Location.getCurrentPositionAsync({});
@@ -28,7 +30,7 @@ export default function MapScreen() {
         });
       } catch (error) {
         console.error("Error getting location:", error);
-        alert("Error getting your location. Please try again.");
+        alert(t('map.errorLocation'));
       }
     })();
   }, []);
@@ -42,7 +44,7 @@ export default function MapScreen() {
   if (!userLocation) {
     return (
       <View className="flex-1 items-center justify-center">
-        <Text>Loading map...</Text>
+        <Text>{t('map.loadingMap')}</Text>
       </View>
     );
   }
@@ -51,10 +53,10 @@ export default function MapScreen() {
     <View className="flex-1">
       <View className="bg-white dark:bg-neutral-900 pt-12 pb-4 px-4 shadow-sm">
         <Text className="text-2xl font-bold text-neutral-900 dark:text-white text-center">
-          Shop Location
+          {t('map.title')}
         </Text>
         <Text className="text-sm text-neutral-600 dark:text-neutral-400 text-center mt-1">
-          Tap on the map to select your shop's location
+          {t('map.subtitle')}
         </Text>
       </View>
       
@@ -67,15 +69,15 @@ export default function MapScreen() {
           longitudeDelta: 0.01,
         }}
         showsUserLocation={true}
-        userLocationAnnotationTitle="You are here"
+        userLocationAnnotationTitle={t('map.youAreHere')}
         showsMyLocationButton={true}
         onPress={handleMapPress}
       >
         {selectedLocation && (
           <Marker
             coordinate={selectedLocation}
-            title="Shop Location"
-            description="This will be your shop's position"
+            title={t('map.markerTitle')}
+            description={t('map.markerDesc')}
           />
         )}
       </MapView>
@@ -96,7 +98,7 @@ export default function MapScreen() {
             }}
           >
             <Text className="text-center text-white font-bold">
-              Save Location
+              {t('map.saveLocation')}
             </Text>
           </TouchableOpacity>
         </View>

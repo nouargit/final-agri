@@ -5,6 +5,7 @@ import { Image } from "react-native";
 import { getDistance } from 'geolib';
 import { useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
+import { useTranslation } from 'react-i18next';
 import MapView, { Marker } from "react-native-maps";
 import cart from "./(tabs)/cart";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -23,7 +24,8 @@ export default function MapScreen() {
   const { cart } = useLocalSearchParams();
   const cartString = Array.isArray(cart) ? cart[0] : cart;
   const parsedCart = cartString ? JSON.parse(cartString) : null
- const [selectedType, setSelectedType] = useState('delivery');
+  const [selectedType, setSelectedType] = useState('delivery');
+  const { t } = useTranslation();
   //const cartItems = cart && typeof cart === 'string' ? JSON.parse(cart).items?.[0] : null;
   
  const { total } = useLocalSearchParams();
@@ -32,7 +34,7 @@ export default function MapScreen() {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") {
-          alert("Permission to access location was denied");
+          alert(t('map.permissionDenied'));
           return;
         }
         const loc = await Location.getCurrentPositionAsync({});
@@ -42,7 +44,7 @@ export default function MapScreen() {
         });
       } catch (error) {
         console.error("Error getting location:", error);
-        alert("Error getting your location. Please try again.");
+        alert(t('map.errorLocation'));
       }
     })();
   }, []);
@@ -55,7 +57,7 @@ export default function MapScreen() {
   const order=async ()=>{
   const token =await AsyncStorage.getItem('auth_token');
   if(!token){
-   alert('Please login first');
+   alert(t('checkout.loginRequired'));
   }
 
   //console.log('shop_id',parsedCart.items[0].product.shop.id)
@@ -94,7 +96,7 @@ export default function MapScreen() {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     if (!response.ok) {
-      alert('sucsessfull order')
+      alert(t('checkout.successOrder'))
     }
     const data = await response.json();
     console.log('Raw API response:', data);
@@ -111,7 +113,7 @@ export default function MapScreen() {
   if (!userLocation) {
     return (
       <View className="flex-1 items-center justify-center">
-        <Text>Loading map...</Text>
+        <Text>{t('map.loadingMap')}</Text>
       </View>
     );
   }
@@ -120,10 +122,10 @@ export default function MapScreen() {
     <View className="flex-1">
       <View className="bg-white dark:bg-neutral-900 pt-12 pb-4 px-4 shadow-sm">
         <Text className="text-2xl font-bold text-neutral-900 dark:text-white text-center">
-          Shop Location
+          {t('map.title')}
         </Text>
         <Text className="text-sm text-neutral-600 dark:text-neutral-400 text-center mt-1">
-          Tap on the map to select your shop's location
+          {t('map.subtitle')}
         </Text>
       </View>
       
@@ -136,14 +138,14 @@ export default function MapScreen() {
           longitudeDelta: 0.01,
         }}
         showsUserLocation={true}
-        userLocationAnnotationTitle="You are here"
+        userLocationAnnotationTitle={t('map.youAreHere')}
         showsMyLocationButton={true}
         onPress={handleMapPress}
       >
          <Marker
             coordinate={shopLocation}
-            title="Shop Location"
-            description="This will be your shop's position"
+            title={t('map.markerTitle')}
+            description={t('map.markerDesc')}
             
             image={images.shopMarker}
         
@@ -151,8 +153,8 @@ export default function MapScreen() {
         {selectedLocation && (
           <Marker
             coordinate={selectedLocation}
-            title="Shop Location"
-            description="This will be your shop's position"
+            title={t('map.markerTitle')}
+            description={t('map.markerDesc')}
            
           >
            
@@ -163,19 +165,19 @@ export default function MapScreen() {
       {selectedLocation && (
         <View className="absolute bottom-0  bg-white p-4 w-full min-h-44 rounded-3xl shadow-md">
           <Text className="text-lg font-bold text-gray-900 dark:text-white">
-            Delevery: {((getDistance(shopLocation, selectedLocation) / 1000)*200).toFixed(2)} DZD
+            {t('checkout.deliveryLabel', { amount: ((getDistance(shopLocation, selectedLocation) / 1000)*200).toFixed(2) })}
           </Text>
           <Text className="text-lg font-bold text-gray-900 dark:text-white">
-            Total: {(parseFloat(Array.isArray(total) ? total[0] : total)) + (parseFloat(((getDistance(shopLocation, selectedLocation) / 1000)*200).toFixed(3)))} DZD
+            {t('checkout.totalLabel', { amount: (parseFloat(Array.isArray(total) ? total[0] : total)) + (parseFloat(((getDistance(shopLocation, selectedLocation) / 1000)*200).toFixed(3))) })}
           </Text>
           <Dropdown
             data={[
-              { label: 'Delivery', value: 'delivery' },
-              { label: 'Pickup', value: 'pickup' },
+              { label: t('checkout.delivery'), value: 'delivery' },
+              { label: t('checkout.pickup'), value: 'pickup' },
             ]}
             labelField="label"
             valueField="value"
-            placeholder="Select payment method"
+            placeholder={t('checkout.paymentPlaceholder')}
             value={selectedType}
             onChange={setSelectedType}
           />
@@ -186,7 +188,7 @@ export default function MapScreen() {
             onPress={order}
           >
             <Text className="text-center text-white font-bold">
-              order
+              {t('checkout.order')}
             </Text>
           </TouchableOpacity>
         </View>

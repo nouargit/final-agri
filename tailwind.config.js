@@ -32,6 +32,7 @@ module.exports = {
         'gilroy-semibold': ['Gilroy-SemiBold'],
         'gilroy-bold': ['Gilroy-Bold'],
         'gilroy-heavy': ['Gilroy-Heavy'],
+        'dubai-regular': ['Dubai-Regular'],
       },
 
     },

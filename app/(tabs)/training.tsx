@@ -1,6 +1,6 @@
 import CategoryCard from '@/components/CategorysCard';
 import ItemCard from '@/components/ItemCard';
-import { FlatList, RefreshControl } from "react-native";
+import { FlatList, RefreshControl, TouchableOpacity } from "react-native";
 import { config } from '@/config';
 import categoriesEN from '@/constants/categories';
 import { images } from '@/constants/imports';
@@ -8,14 +8,16 @@ import { Item } from '@/constants/items';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MasonryList from "@react-native-seoul/masonry-list";
 import { useQuery } from '@tanstack/react-query';
-import { Search } from 'lucide-react-native';
+import { Search,Handbag } from 'lucide-react-native';
 import { Dimensions, ScrollView, StatusBar, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
-
+import { Vibration } from 'react-native';
 
 
 
 const Training = () => {
+  const { t } = useTranslation();
 
 // Test function to check if images are accessible
 
@@ -23,7 +25,9 @@ const Training = () => {
 // Test connectivity when component mounts
 
 // Test the first few image URLs
-
+ const handleVibrate = () => {
+    Vibration.vibrate(30); 
+  };
 
 const getProducts = async () => {
   try {
@@ -63,25 +67,23 @@ const products = Array.isArray(data) ? data : data.data || [];
       images: p.images?.map((img: any) => {
         // Clean the URL by removing spaces and backticks
         let cleanUrl = img.uri || img.url || img;
-        console.log('Original image object:', img);
-        console.log('Extracted cleanUrl before cleaning:', cleanUrl);
+       
         
         if (typeof cleanUrl === 'string') {
           // Handle the specific backtick issue - remove wrapping backticks first
           cleanUrl = cleanUrl.replace(/^`+/, '').replace(/`+$/, '');
           
         
-          console.log('Cleaned URL:', cleanUrl);
+       
           
           // Return the cleaned URL without any backticks
           const result = { url: cleanUrl };
-          console.log('Final result:', result);
+      
           return result;
         } else {
           // If it's not a string, return as-is
-          console.log('CleanUrl is not a string, returning as-is');
           const result = { url: cleanUrl };
-          console.log('Final result:', result);
+         
           return result;
         }
       }) || (p.image_url ? [{ url: p.image_url }] : []),
@@ -109,7 +111,7 @@ const onRefresh = async () => {
   if (isLoading) {
     return (
       <View className="flex-1 bg-neutral-50 dark:bg-neutral-950 justify-center items-center">
-        <Text className="text-neutral-500">Loading products...</Text>
+        <Text className="text-neutral-500">{t('training.loadingProducts')}</Text>
       </View>
     );
   }
@@ -117,18 +119,21 @@ const onRefresh = async () => {
   if (error) {
     return (
       <View className="flex-1 bg-neutral-50 dark:bg-neutral-950 justify-center items-center">
-        <Text className="text-red-500">Error loading products</Text>
+        <Text className="text-red-500">{t('training.errorLoadingProducts')}</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-neutral-50 dark:bg-neutral-900">
+    <View className="flex-1 bg-white dark:bg-neutral-900">
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       
       {/* Header */}
       <View className="flex-row justify-between px-6 pt-5 pb-4 rounded-b-3xl  dark:bg-neutral-900 ">
-        <Text className="text-4xl font-gilroy-bold text-primary dark:text-red-300">Mysweet.</Text>
+        <TouchableOpacity className="justify-end w-10 h-10 bg-slate-200 dark:bg-neutral-700 rounded-full p-2 items-center" onPress={handleVibrate}>
+          <Handbag size={24} color="#ff6370" strokeWidth={2} />
+        </TouchableOpacity>
+        <Text className="text-4xl font-gilroy-bold text-primary dark:text-primary">sweetr.</Text>
         <View className="justify-end w-10 h-10 bg-slate-200 dark:bg-neutral-700 rounded-full p-2 items-center">
           <Search size={24} color="#ff6370" strokeWidth={2} />
         </View>
@@ -153,16 +158,16 @@ const onRefresh = async () => {
           <View className="px-1 py-3 mb-3">
             <View className="mt-1 mb-2">
               <Text className="text-lg font-bold text-neutral-900 dark:text-white mb-3">
-                Categories
+                {t('training.categories')}
               </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row w-full">
                 {(categoriesEN || []).map((category) => (
-                  <CategoryCard key={category.id} category={category} />
+                  <CategoryCard key={category.id} category={category} vibration={handleVibrate} />
                 ))}
               </ScrollView>
             </View>
             <Text className="text-lg font-bold text-neutral-900 dark:text-white mt-6 mb-1">
-              Popular products
+              {t('training.popularProducts')}
             </Text>
           </View>
         }

@@ -1,37 +1,52 @@
-import { View, Text, Image, ImageSourcePropType } from 'react-native'
+import { View, Text, Image, ImageSourcePropType, TouchableOpacity } from 'react-native'
 
 
 interface Category {
+  icon: any
   id: number
   name: string
   image: ImageSourcePropType
   bgColor: string
   pp:number
+  
 }
 
 type CategoryCardProps = {
   category: Category
+  vibration:()=>void
 }
 
-const CategoryCard = ({ category }: CategoryCardProps) => {
+const CategoryCard = ({ category,vibration }: CategoryCardProps) => {
   return (
-    <View
-      className="  dark:border   rounded-3xl items-center justify-between mx-2 overflow-hidden "
-      style={{  backgroundColor:`${category.bgColor}33`,
+    <TouchableOpacity
+      className="  dark:border   rounded-3xl  justify-between mx-2 overflow-hidden px-2 "
+      style={{  backgroundColor:`${category.bgColor}30`,
     borderColor: category.bgColor,
-    borderWidth: 4 }}
+    borderWidth: 4,
+     }}
+     onPress={()=>vibration()}
     > 
+
+     
      {/* category Name */}
-    
-    <Text className=" p-2 paragraph-bold text-black dark:text-white">
+    <View className="flex-row items-center" >
+      {/* category Icon */}
+       <category.icon color={category.bgColor} />
+      <Text className=" p-2 paragraph-bold text-zinc-800 dark:text-white" >
+       
+      
         {category.name}
       </Text> 
-      {/* category Image */}
+     </View>
+   
+    
+      
+      
      
 
      
      
-    </View>
+    </TouchableOpacity>
   )
 }
 

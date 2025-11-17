@@ -106,7 +106,7 @@ const ShopOrdersScreen = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      console.log('Raw API response:', shop_id);
+     
       return data.data || data;
     } catch (error) {
       console.error('Error fetching orders:', error);

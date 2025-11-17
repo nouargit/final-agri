@@ -3,15 +3,17 @@ import { StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useTranslation } from 'react-i18next';
 
 export default function NotFoundScreen() {
+  const { t } = useTranslation();
   return (
     <>
-      <Stack.Screen options={{ title: 'Oops!' }} />
+      <Stack.Screen options={{ title: t('notFound.oops') }} />
       <ThemedView style={styles.container}>
-        <ThemedText type="title">This screen does not exist.</ThemedText>
-        <Link href="/(tabs)/index" style={styles.link}>
-          <ThemedText type="link">Go to Menu screen!</ThemedText>
+        <ThemedText type="title">{t('notFound.message')}</ThemedText>
+        <Link href="/(tabs)" style={styles.link}>
+          <ThemedText type="link">{t('notFound.goMenu')}</ThemedText>
         </Link>
       </ThemedView>
     </>

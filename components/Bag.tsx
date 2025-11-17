@@ -1,148 +1,210 @@
-import { images } from '@/constants/imports';
 import { router } from 'expo-router';
-import { Image, Text, TouchableOpacity, View } from "react-native";
-const filters = [
-  {
-    label: "All", 
-    value: '',
-  },
-  {
-    label: "Pending",
-    value: "pending",
-  },
-  {
-    label: "Preparing",
-    value: "preparing",
-  },
-  {
-    label: "On the way",
-    value: "on the way",
-  },
-  {
-    label: "Delivered",
-    value: "delivered",
-  },
-  {
-    label: "Cancelled",
-    value: "cancelled",
-  },
-]
-const orders = [
-  {
-    id: "ORD-1001",
-    bakery: "Sweet Delights Bakery",
-    date: "2025-10-01",
-    status: "Pending",
-    total: "$25.50",
-    thumbnail:
-      images.bluePudding,
-  },
-  {
-    id: "ORD-1002",
-    bakery: "Cake Heaven",
-    date: "2025-09-28",
-    status: "Delivered",
-    total: "$42.00",
-    thumbnail:
-      images.baklawa,
-  },
-  {
-    id: "ORD-1003",
-    bakery: "Golden Bakes",
-    date: "2025-09-25",
-    status: "On the way",
-    total: "$18.75",
-    thumbnail:
-      images.panCake,
-  },
-  {
-    id: "ORD-1004",
-    bakery: "Delightful Bakes",
-    date: "2025-09-22",
-    status: "Cancelled",
-    total: "$30.00",
-    thumbnail:
-      images.beghrir,
-  },
-  
-];
+import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Package, ChevronRight, Calendar } from 'lucide-react-native';
+import { config } from '@/config';
+import { useTranslation } from 'react-i18next';
+import { getDateLocale } from '@/lib/i18n';
 
-const statusColors: Record<string, string> = {
-  Pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
-  Preparing: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
-  "On the way": "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-  Delivered: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  Cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+const statusColors: Record<string, { bg: string; text: string; border: string }> = {
+  pending: {
+    bg: 'bg-amber-100 dark:bg-amber-900/30',
+    text: 'text-amber-700 dark:text-amber-300',
+    border: 'border-amber-300 dark:border-amber-800',
+  },
+  preparing: {
+    bg: 'bg-orange-100 dark:bg-orange-900/30',
+    text: 'text-orange-700 dark:text-orange-300',
+    border: 'border-orange-300 dark:border-orange-800',
+  },
+  'on the way': {
+    bg: 'bg-blue-100 dark:bg-blue-900/30',
+    text: 'text-blue-700 dark:text-blue-300',
+    border: 'border-blue-300 dark:border-blue-800',
+  },
+  delivered: {
+    bg: 'bg-green-100 dark:bg-green-900/30',
+    text: 'text-green-700 dark:text-green-300',
+    border: 'border-green-300 dark:border-green-800',
+  },
+  cancelled: {
+    bg: 'bg-red-100 dark:bg-red-900/30',
+    text: 'text-red-700 dark:text-red-300',
+    border: 'border-red-300 dark:border-red-800',
+  },
+  active: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    border: 'border-emerald-300 dark:border-emerald-800',
+  },
 };
-interface BagProps {
-  bag: {
-    id: number
-    ShopName: string
-    price: number
-    ItemsNumber: number
-    ShopImage: any
-    date: string
-    total: string
-    status: string
-  }
-  shop: {
-    logo_url: any | undefined;
-    name: string
-    image: any
-  }
+
+interface CartItem {
+  id: number;
+  product: {
+    images: any;
+    id: number;
+    name: string;
+    image_url?: string;
+  };
+  quantity: number;
+  price: number;
 }
 
-const Bag = ({ bag, shop }: BagProps) => {
-  //const [bg, text] = statusColors[bag.status].split(" ");
+interface BagProps {
+  bag: {
+    id: number;
+    shop_id: number;
+    user_id: number;
+    total: number;
+    status: string;
+    created_at: string;
+    updated_at: string;
+    items?: CartItem[];
+  };
+  shop: {
+    id: number;
+    name: string;
+    logo_url?: string;
+  };
+  type: 'bags' | 'orders';
+}
+
+const Bag = ({ bag, shop, type }: BagProps) => {
+  const { t } = useTranslation();
+  const statusKey = bag.status.toLowerCase();
+  const statusStyle = statusColors[statusKey] || statusColors.active;
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return t('common.today');
+    if (diffDays === 1) return t('common.yesterday');
+    if (diffDays < 7) return t('common.daysAgo', { count: diffDays });
+
+    return date.toLocaleDateString(getDateLocale(), {
+      month: 'short',
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+    });
+  };
+
+  const formatPrice = (price: number) => `$${price}`;
+
+  const itemsCount = bag.items?.length || 0;
+  const totalQuantity = bag.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
   return (
-    <View className=" mt-4 rounded-2xl border border-neutral-100 dark:border-neutral-700 shadow-md shadow-neutral-300 dark:shadow-neutral-900 w-full">
-  {/* Shadow container - outside the touchable */}
- 
-  
-  <TouchableOpacity className="w-full bg-white  dark:bg-neutral-800 rounded-2xl p-4  " onPress={() => {
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={() => {
     router.navigate(`/orders?id=${bag.id}`)
-  }}>
- 
-    <View className="flex-row items-center">  
-       {/* Thumbnail */}
-    <Image
-      source={{uri: shop.logo_url}}
-      className="w-16 h-16 rounded-full mr-4"
-    />
+  }}
+      className="mb-5 rounded-3xl bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md shadow-gray-300/40 dark:shadow-black/40 active:scale-[0.98]"
+    >
+      <View className="p-5">
+        {/* Header */}
+        <View className="flex-row items-start mb-5">
+          {/* Logo */}
+          <View className="w-16 h-16 rounded-full bg-gray-50 dark:bg-neutral-700 border border-gray-200 dark:border-neutral-600 items-center justify-center mr-4 overflow-hidden">
+            {shop.logo_url ? (
+               <Image source={{ uri: `${config.baseUrl}${shop.logo_url}` }} style={{ height: '100%', width: '100%' }}  resizeMode="cover" />
+            ) : (
+              <Package size={30} color="#FF6F61" strokeWidth={1.5} />
+            )}
+          </View>
 
-    {/* Order Info */}
-    <View className="flex-1">
-     
-      <Text className="font-bold text-gray-800 dark:text-neutral-100">{shop.name}</Text>
+          {/* Shop Info */}
+          <View className="flex-1">
+            <Text
+              className="font-gilroy-bold text-gray-900 dark:text-white text-lg mb-1"
+              numberOfLines={1}
+            >
+              {shop.name}
+            </Text>
 
-      <View className="flex-row items-center mt-1">
-        <Text className="text-gray-500 dark:text-neutral-500 text-sm">{bag.date}</Text>
+            <View className="flex-row items-center mb-2">
+              <Calendar size={14} color="#9CA3AF" strokeWidth={2} />
+              <Text className="text-gray-500 dark:text-gray-400 text-sm ml-1.5">
+                {formatDate(bag.created_at)}
+              </Text>
+            </View>
 
-       
-        
+            <View
+              className={`self-start px-3 py-1 rounded-full border ${statusStyle.bg} ${statusStyle.border}`}
+            >
+              <Text className={`text-xs font-bold capitalize ${statusStyle.text}`}>
+                {bag.status.replace('_', ' ')}
+              </Text>
+            </View>
+          </View>
+
+          {/* Total */}
+          <View className="ml-3  rounded-2xl py-2 ">
+            <Text className="font-gilroy-bold text-white text-md">{formatPrice(bag.total)}</Text>
+          </View>
+        </View>
+
+        {/* Items */}
+        {bag.items && bag.items.length > 0 ? (
+          <View className="mt-1">
+            <View className="flex-row items-center justify-between mb-3">
+              <View className="bg-gray-100 dark:bg-neutral-700 rounded-full px-3 py-1.5">
+                <Text className="text-gray-700 dark:text-gray-300 text-sm font-semibold">
+                  {itemsCount} {itemsCount === 1 ? t('common.item') : t('common.items')} • {totalQuantity} {t('common.total')}
+                </Text>
+              </View>
+              <ChevronRight size={20} color="#9CA3AF" strokeWidth={2} />
+            </View>
+
+            <View className="flex-row flex-wrap gap-2 rounded-2xl bg-gray-50 dark:bg-neutral-700/40 p-3 border border-gray-100 dark:border-neutral-600">
+              {bag.items.slice(0, 4).map((item) => (
+                
+                <View key={item.id} className="relative w-16 h-16 rounded-xl overflow-hidden">
+                  {item.product.images[0].url ? (
+                    <Image
+                      source={{ uri: item.product.images[0].url }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View className="w-full h-full bg-gray-100 dark:bg-neutral-600 items-center justify-center">
+                      <Package size={24} color="#D1D5DBFF6F61" strokeWidth={1.5} />
+                    </View>
+                  )}
+
+                  {item.quantity > 1 && (
+                    <View className="absolute -top-1.5 -right-1.5 bg-primary rounded-full w-6 h-6 items-center justify-center border-2 border-white dark:border-neutral-800">
+                      <Text className="text-white text-xs font-bold">{item.quantity}</Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+
+              {bag.items.length > 4 && (
+                <View className="w-16 h-16 rounded-xl bg-gray-200 dark:bg-neutral-600 items-center justify-center border border-gray-300 dark:border-neutral-500">
+                  <Text className="text-gray-600 dark:text-gray-300 font-bold text-sm">
+                    +{bag.items.length - 4}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        ) : (
+          <View className="rounded-2xl bg-gray-50 dark:bg-neutral-700/40 p-4 border border-gray-100 dark:border-neutral-600">
+            <Text className="text-gray-500 dark:text-gray-400 text-center text-sm">
+              {type === 'orders' ? t('bag.noItemsOrder') : t('bag.noItemsCart')}
+            </Text>
+          </View>
+        )}
       </View>
-       <View className={`ml-2 px-2 py-0.5 rounded-full }`}>
-          <Text className={`text-xs font-medium `}>
-            {bag.status}
-          </Text>
-        </View>
-      <View className="absolute right-0 top-0 ml-auto p-2   rounded-xl bg-primary">
-          <Text className="font-bold m-auto text-neutral-100 ">{bag.total}</Text>
-        </View>
-    </View>
-    </View>
 
-    <View className="flex-row items-center h-16 w-full mt-3 rounded-2xl bg-neutral-100 dark:bg-neutral-700">
-     {orders.map((order) => (
-        <Image
-          key={order.id}
-          source={order.thumbnail}
-          className="w-12 h-12 rounded-xl ml-3"
-        />
-     ))}
-    </View>
-  </TouchableOpacity>
-</View>
-)}
+      {/* Bottom accent */}
+      <View className={`h-1 ${statusStyle.bg.replace('100', '200').replace('30', '40')}`} />
+    </TouchableOpacity>
+  );
+};
+
 export default Bag;

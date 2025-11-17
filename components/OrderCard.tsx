@@ -7,6 +7,8 @@ import { Minus, Plus, X } from "lucide-react-native";
 import { useState } from "react";
 
 import { Image, ImageSourcePropType, Text, TouchableOpacity, useColorScheme, View } from "react-native";
+import { useTranslation } from 'react-i18next';
+import { getDateLocale } from '@/lib/i18n';
 
 // Status color mapping
 const statusColors: Record<string, string> = {
@@ -22,6 +24,7 @@ const OrderCard = ({ order, cart, image, refetch }: { order: any, cart: any, ima
   const [quantity, setQuantity] = useState<number>(order.quantity || 1);
   const colorScheme = useColorScheme();
   const { showActionSheetWithOptions } = useActionSheet();
+  const { t } = useTranslation();
 
   //console.log('0000000000000000000000000',image);
 
@@ -35,7 +38,7 @@ const OrderCard = ({ order, cart, image, refetch }: { order: any, cart: any, ima
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString(getDateLocale(), { 
       month: 'short', 
       day: 'numeric',
       year: 'numeric'
@@ -156,7 +159,7 @@ const OrderCard = ({ order, cart, image, refetch }: { order: any, cart: any, ima
                 </Text>
                 {quantity > 1 && (
                   <Text className="text-xs text-gray-500 dark:text-neutral-400">
-                    ${order.product.price} each
+                    ${order.product.price} {t('common.each')}
                   </Text>
                 )}
               </View>

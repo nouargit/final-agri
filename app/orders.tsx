@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import SearchBar from '@/components/SearchBar';
 import { config } from '@/config';
@@ -13,6 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const orders = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const cart_id = useLocalSearchParams().id as string;
+  const { t } = useTranslation();
 
   
   
@@ -75,13 +77,13 @@ const orders = () => {
   });
   
   if (isLoadingSummary) {
-    return <Text>Loading cart summary...</Text>;
+    return <Text>{t('orders.loadingSummary')}</Text>;
   }
   if (errorSummary) {
     return <Text>Error: {errorSummary.message}</Text>;
   }
   if (!cartSummary) {
-    return <Text>No cart summary available</Text>;
+    return <Text>{t('orders.noSummary')}</Text>;
   }
  
 
@@ -91,7 +93,7 @@ const orders = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
     <View style={{ flex: 1 }}>
       <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-      {isLoading && <Text>Loading cart...</Text>}
+      {isLoading && <Text>{t('orders.loadingCart')}</Text>}
       {error && <Text>Error: {error.message}</Text>}
       {cart && (
         <FlatList
@@ -110,9 +112,9 @@ const orders = () => {
        
     </View>
       <View className='flex-row justify-between items-center px-4 py-2 bg-white dark:bg-neutral-800 rounded-b-2xl shadow-sm border-t border-gray-100 dark:border-neutral-700 w-full'>
-          <Text className='text-lg font-bold text-gray-900 dark:text-white'>Total: {cartSummary?.summary?.subtotal}</Text>
+          <Text className='text-lg font-bold text-gray-900 dark:text-white'>{t('orders.total')}: {cartSummary?.summary?.subtotal}</Text>
           <TouchableOpacity onPress={()=>router.push(`/checkout?total=${cartSummary?.summary?.subtotal}&shopLocation=${cart?.items[0].product.shop.location}&cart=${encodeURIComponent(JSON.stringify(cart))}`)} className='bg-primary text-white px-4 py-2 rounded-full'>
-            <Text className='text-lg font-bold text-white'>Checkout</Text>
+            <Text className='text-lg font-bold text-white'>{t('orders.checkout')}</Text>
           </TouchableOpacity>
         </View>
     </GestureHandlerRootView>

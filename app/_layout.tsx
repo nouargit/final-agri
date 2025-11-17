@@ -7,6 +7,13 @@ import './globals.css';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import i18n, { initializeI18n } from '@/lib/i18n';
+import { useEffect, useState } from 'react';
+import { Text } from 'react-native';
+import { TextInput } from 'react-native';
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -20,7 +27,7 @@ const queryClient = new QueryClient({
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  
+  const [langReady, setLangReady] = useState(false);
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     'Quicksand-Regular': require('../assets/fonts/Quicksand-Regular.ttf'),
@@ -40,69 +47,92 @@ export default function RootLayout() {
     'Gilroy-SemiBold': require('../assets/fonts/Gilroy-SemiBold.ttf'),
     'Gilroy-Bold': require('../assets/fonts/Gilroy-Bold.ttf'),
     'Gilroy-Heavy': require('../assets/fonts/Gilroy-Heavy.ttf'),
+    'Dubai-Regular': require('../assets/fonts/Dubai-Regular.ttf'),
   });
 
-  if (!loaded) {
+  useEffect(() => {
+    initializeI18n().then(() => setLangReady(true))
+  }, [])
+
+  useEffect(() => {
+    if (!langReady) return
+    const isArabic = i18n.language === 'ar'
+    const anyText = Text as any
+    const anyTextInput = TextInput as any
+    anyText.defaultProps = anyText.defaultProps || {}
+    anyTextInput.defaultProps = anyTextInput.defaultProps || {}
+    if (isArabic) {
+      anyText.defaultProps.style = [{ fontFamily: 'Dubai-Regular', textAlign: 'right' }]
+      anyTextInput.defaultProps.style = [{ fontFamily: 'Dubai-Regular', textAlign: 'right' }]
+    } else {
+      anyText.defaultProps.style = null
+      anyTextInput.defaultProps.style = null
+    }
+  }, [langReady, i18n.language])
+
+  if (!loaded || !langReady) {
     return null;
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack
-            screenOptions={{
-              animation: 'slide_from_right',
-              animationTypeForReplace: 'push',
-              animationDuration: 300,
-            }}
-          >
-            <Stack.Screen 
-              name="(auth)" 
-              options={{ 
-                headerShown: false,
-                animation: 'fade'
-              }} 
-            />
-            <Stack.Screen 
-              name="(tabs)" 
-              options={{ 
-                headerShown: false,
-                animation: 'slide_from_bottom'
-              }} 
-            />
-            <Stack.Screen 
-              name="+not-found"
-              options={{
-                animation: 'slide_from_right'
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack
+              screenOptions={{
+                animation: 'slide_from_right',
+                animationTypeForReplace: 'push',
+                animationDuration: 300,
               }}
-            />
-            <Stack.Screen 
-              name="shopOrdersScreen" 
-              options={{ 
-                headerShown: true,
-                animation: 'slide_from_bottom'
-              }} 
-            />
-            <Stack.Screen 
-              name="product" 
-              options={{ 
-                headerShown: false,
-                animation: 'slide_from_right'
-              }} 
-            />
-            <Stack.Screen 
-              name="cakeDesigner" 
-              options={{ 
-                headerShown: false,
-                animation: 'slide_from_bottom'
-              }} 
-            />
-          </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </QueryClientProvider>
-    </SafeAreaView>
+            >
+              <Stack.Screen 
+                name="(auth)" 
+                options={{ 
+                  headerShown: false,
+                  animation: 'fade'
+                }} 
+              />
+              <Stack.Screen 
+                name="(tabs)" 
+                options={{ 
+                  headerShown: false,
+                  animation: 'slide_from_bottom'
+                }} 
+              />
+              <Stack.Screen 
+                name="+not-found"
+                options={{
+                  animation: 'slide_from_right'
+                }}
+              />
+              <Stack.Screen 
+                name="shopOrdersScreen" 
+                options={{ 
+                  headerShown: true,
+                  animation: 'slide_from_bottom'
+                }} 
+              />
+              <Stack.Screen 
+                name="product" 
+                options={{ 
+                  headerShown: false,
+                  animation: 'slide_from_right'
+                }} 
+              />
+              <Stack.Screen 
+                name="cakeDesigner" 
+                options={{ 
+                  headerShown: false,
+                  animation: 'slide_from_bottom'
+                }} 
+              />
+            </Stack>
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </QueryClientProvider>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
