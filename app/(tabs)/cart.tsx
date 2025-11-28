@@ -1,7 +1,9 @@
 import Bag from '@/components/Bag'
 import { images } from '@/constants/imports'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertCircle, Clock, Package, Search, ShoppingCart } from 'lucide-react-native'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ActivityIndicator,
@@ -10,7 +12,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,Image
+  View
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -19,8 +21,12 @@ const Cart = () => {
   const [activeTab, setActiveTab] = useState<'bags' | 'orders'>('bags')
   const { t } = useTranslation()
 
-  // Fake cart data (matching API structure)
-  const carts = [
+  // Storage keys for persistence
+  const CARTS_KEY = 'persisted_carts'
+  const ORDERS_KEY = 'persisted_orders'
+
+  // Initial (fallback) cart data used only if nothing is stored yet
+  const initialCartSeed = [
     {
       id: 1,
       shop_id: 1,
@@ -100,7 +106,7 @@ const Cart = () => {
     },
   ]
 
-  // Fake orders data (matching API structure)
+  // Fake orders data (still static; server-backed could be added later)
   const orders = [
     {
       id: 101,
@@ -257,12 +263,143 @@ const Cart = () => {
     },
   ]
 
-  const isLoading = false
-  const error = null
-  const refetch = () => {}
+  // Load carts from storage (seed if empty)
+  const loadCarts = useCallback(async () => {
+    try {
+      const raw = await AsyncStorage.getItem(CARTS_KEY)
+      if (!raw) {
+        // Seed storage with initial cart if missing
+        await AsyncStorage.setItem(CARTS_KEY, JSON.stringify(initialCartSeed))
+        return initialCartSeed
+      }
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) return parsed
+      return []
+    } catch (e) {
+      return []
+    }
+  }, [])
+
+  // Load orders from storage
+  const loadOrders = useCallback(async () => {
+    try {
+      const raw = await AsyncStorage.getItem(ORDERS_KEY)
+      if (!raw) return []
+      const parsed = JSON.parse(raw)
+      return Array.isArray(parsed) ? parsed : []
+    } catch (e) {
+      return []
+    }
+  }, [])
+
+  const queryClient = useQueryClient()
+
+  const { data: ordersData = [], refetch: refetchOrders, isLoading, error, isRefetching } = useQuery({
+    queryKey: ['orders'],
+    queryFn: loadOrders,
+    staleTime: 1000 * 30,
+  })
+
+  // Helper to persist updates (example usage for future add/remove actions)
+  const saveCarts = async (_next: any[]) => {
+    // Deprecated: using orders only now
+    return
+  }
+
+  const saveOrders = async (next: any[]) => {
+    await AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(next))
+    queryClient.setQueryData(['orders'], next)
+  }
+
+  // Example remove item function (not wired into UI yet)
+  // Recompute totals for a cart
+  const recomputeCartTotals = (cart: any) => {
+    const total = (cart.items || []).reduce((sum: number, it: any) => {
+      const line = (it.price ?? 0) * (it.quantity ?? 0)
+      return sum + line
+    }, 0)
+    return { ...cart, total: Number(total.toFixed(2)) }
+  }
+
+  // Upsert a product into a per-shop pending order (acts as cart)
+  const upsertItemToCart = async (shop: any, product: any, quantity: number = 1) => {
+    const existing = await loadOrders()
+    let cart = existing.find((c: any) => c.shop?.id === shop.id && (c.status || '').toLowerCase() === 'pending')
+
+    if (!cart) {
+      cart = {
+        id: Date.now(),
+        shop_id: shop.id,
+        user_id: 1,
+        total: 0,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        shop,
+        items: [],
+      }
+      existing.push(cart)
+    }
+
+    const idx = cart.items.findIndex((it: any) => it.product_id === product.id)
+    if (idx >= 0) {
+      const current = cart.items[idx]
+      cart.items[idx] = {
+        ...current,
+        quantity: (current.quantity ?? 0) + quantity,
+        price: product.price ?? current.price ?? 0,
+        updated_at: new Date().toISOString(),
+      }
+    } else {
+      cart.items.push({
+        id: Date.now(),
+        cart_id: cart.id,
+        product_id: product.id,
+        quantity: quantity,
+        price: product.price ?? 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        product,
+      })
+    }
+
+    const updated = existing.map((c: any) =>
+      c.id === cart.id ? recomputeCartTotals({ ...cart, updated_at: new Date().toISOString() }) : c
+    )
+    await saveOrders(updated)
+  }
+
+  // Remove a product from a pending order (cart view)
+  const removeCartItem = async (cartId: number, productId: number) => {
+    const orders = await loadOrders()
+    const next = orders
+      .map((c: any) => {
+        if (c.id !== cartId) return c
+        const items = (c.items || []).filter((it: any) => it.product_id !== productId)
+        const updated = recomputeCartTotals({ ...c, items })
+        return updated
+      })
+      .filter((c: any) => (c.items || []).length > 0)
+    await saveOrders(next)
+    queryClient.setQueryData(['orders'], next)
+  }
+
+  // Submit a cart: mark pending order as confirmed
+  const submitCart = async (cartId: number) => {
+    const orders = await loadOrders()
+    const nextOrders = orders.map((o: any) =>
+      o.id === cartId ? { ...o, status: 'confirmed', submitted_at: new Date().toISOString() } : o
+    )
+    await saveOrders(nextOrders)
+    queryClient.setQueryData(['orders'], nextOrders)
+    refetchOrders()
+  }
 
   // Filter data based on search query
-  const currentData = activeTab === 'bags' ? carts : orders
+  // Use orders only; if 'bags' tab selected, show pending orders as carts
+  const currentData = activeTab === 'bags'
+    ? ordersData.filter((o: any) => (o.status || '').toLowerCase() === 'pending')
+    : ordersData
   const filteredData = currentData.filter((item: any) => {
     if (!searchQuery) return true
     const shopName = item?.shop?.name?.toLowerCase() || ''
@@ -305,7 +442,7 @@ const Cart = () => {
         {t('cart.unableToLoad')}
       </Text>
       <TouchableOpacity 
-        onPress={() => refetch()}
+        onPress={() => refetchOrders()}
         className="mt-6 bg-primary px-6 py-3 rounded-full"
       >
         <Text className="text-white font-semibold">{t('common.tryAgain')}</Text>
@@ -359,9 +496,9 @@ const Cart = () => {
             }`}>
               {t('cart.tabCart') || 'Cart'}
             </Text>
-            {carts.length > 0 && (
+            {currentData.length > 0 && activeTab === 'bags' && (
               <View className="ml-2 bg-primary rounded-full px-2.5 py-0.5 min-w-[24px] items-center">
-                <Text className="text-white text-xs font-bold">{carts.length}</Text>
+                <Text className="text-white text-xs font-bold">{currentData.length}</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -386,9 +523,9 @@ const Cart = () => {
             }`}>
               {t('cart.tabOrders') || 'Orders'}
             </Text>
-            {orders.length > 0 && (
+            {activeTab === 'orders' && currentData.length > 0 && (
               <View className="ml-2 bg-blue-600 rounded-full px-2.5 py-0.5 min-w-[24px] items-center">
-                <Text className="text-white text-xs font-bold">{orders.length}</Text>
+                <Text className="text-white text-xs font-bold">{currentData.length}</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -434,10 +571,11 @@ const Cart = () => {
         <FlatList
           data={filteredData}
           renderItem={({ item }) => (
-            <Bag 
-              bag={item} 
-              shop={item.shop} 
+            <Bag
+              bag={item}
+              shop={item.shop}
               type={activeTab}
+              onSubmitCart={() => submitCart(item.id)}
             />
           )}
           keyExtractor={(item) => `${activeTab}-${item.id}`}
@@ -445,8 +583,8 @@ const Cart = () => {
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
-              refreshing={isLoading}
-              onRefresh={refetch}
+              refreshing={isLoading || isRefetching}
+              onRefresh={() => refetchOrders()}
               tintColor="#FF6F61"
               colors={['#FF6F61']}
             />

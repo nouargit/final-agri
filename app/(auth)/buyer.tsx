@@ -63,7 +63,7 @@ export default function Buyer() {
           Alert.alert('Validation Error', errors);
         } else if (data.code === 'ON_BOARDING_STEP_1_ALREADY_COMPLETED') {
           Alert.alert('Info', 'You have already completed this step.');
-          router.replace('/(tabs)');
+          router.replace('/buyerDetails');
         } else {
           Alert.alert('Error', data.message || 'Failed to complete onboarding');
         }
@@ -72,7 +72,7 @@ export default function Buyer() {
 
       // Success - consumers don't need step 2, go to main app
       Alert.alert('Success', 'Welcome! Your account has been created.');
-      router.replace('/(tabs)');
+      router.replace('/buyerDetails');
     } catch (err) {
       console.error('Unexpected error:', err);
       Alert.alert('Error', 'Something went wrong. Please try again.');

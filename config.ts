@@ -1,4 +1,3 @@
-import { images } from "./constants/imports";
 
 export const config = {
   baseUrl: 'https://agri-connect-api-six.vercel.app',
@@ -43,6 +42,9 @@ export const config = {
   // Consumer - Products
   consumerProductsUrl: '/api/products',
   consumerProductUrl: (id: string) => `/api/products/${id}`,
+  
+  // Buyer - Orders
+  buyerOrdersUrl: '/api/buyer/orders',
 
   // Carts (consumer)
   cartsUrl: '/api/carts',
@@ -60,10 +62,40 @@ export const config = {
   logoutUrl: '/api/logout',
   profileUrl: '/api/profile',
   ordersUrl: '/api/orders',
-  orderUrl: '/api/order',
+  orderUrl: '/api/buyer/order',
   orderItemsUrl: '/api/order-items',
   cartUrl: '/api/cart',
   cartItemsUrl: '/api/cart-items',
-  image_url: (id: string) => `https://minio-woc0wo00cg448scgww8kok4w.himmob.com/main/${id}`,
+  image_url: (id: string) => `${config.baseUrl}/api/images/${id}`,
 
 };
+
+export async function createBuyerOrder(token: string, payload: {
+  items: Array<{ productId: string | number; quantityKg: number }>,
+  delivery: { longitude: number; latitude: number; address: string }
+}) {
+  const res = await fetch(`${config.baseUrl}/buyer/orders`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      items: payload.items.map(i => ({
+        productId: String(i.productId),
+        quantityKg: i.quantityKg
+      })),
+      delivery: payload.delivery
+    })
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`Buyer order failed (${res.status}): ${text.substring(0, 200)}`);
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}

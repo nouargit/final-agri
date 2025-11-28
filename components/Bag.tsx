@@ -92,9 +92,11 @@ interface BagProps {
     logo_url?: string;
   };
   type: 'bags' | 'orders';
+  onSubmitCart?: () => void;
+  onRemoveItem?: (productId: number) => void;
 }
 
-const Bag = ({ bag, shop, type }: BagProps) => {
+const Bag = ({ bag, shop, type, onSubmitCart, onRemoveItem }: BagProps) => {
   const { t } = useTranslation();
   const statusKey = bag.status.toLowerCase();
   const statusStyle = statusColors[statusKey] || statusColors.active;
@@ -125,8 +127,8 @@ const Bag = ({ bag, shop, type }: BagProps) => {
     <TouchableOpacity
       activeOpacity={0.8}
       onPress={() => {
-    router.navigate(`/orders?id=${bag.id}`)
-  }}
+        router.navigate(`/order_items?id=${bag.id}`)
+      }}
       className="mb-5 rounded-3xl bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-md shadow-gray-300/40 dark:shadow-black/40 active:scale-[0.98]"
     >
       <View className="p-5">
@@ -222,6 +224,19 @@ const Bag = ({ bag, shop, type }: BagProps) => {
             <Text className="text-gray-500 dark:text-gray-400 text-center text-sm">
               {type === 'orders' ? t('bag.noItemsOrder') : t('bag.noItemsCart')}
             </Text>
+          </View>
+        )}
+
+        {type === 'bags' && (
+          <View className="mt-4 flex-row justify-end gap-3">
+            {onSubmitCart && (
+              <TouchableOpacity
+                onPress={onSubmitCart}
+                className="px-4 py-2 rounded-full bg-primary"
+              >
+                <Text className="text-white font-semibold">{t('cart.submitCart') || 'Submit Cart'}</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </View>

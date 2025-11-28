@@ -1,4 +1,5 @@
 import { config } from '@/config';
+import { useLocationStore } from '@/stors/locationStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from '@tanstack/react-query';
@@ -125,6 +126,7 @@ const ProductScreen = () => {
   const navigation = useNavigation();
   const { id } = useLocalSearchParams();
   const { t } = useTranslation();
+  const { selectedLocation } = useLocationStore();
   
   // Ensure id is a string, handle array case
   const productId = Array.isArray(id) ? id[0] : id;
@@ -283,130 +285,45 @@ const product = {
       const token = await AsyncStorage.getItem('auth_token');
       const user_data = await AsyncStorage.getItem('user_data');
       const user_id = user_data ? JSON.parse(user_data).id : null;
-    //console.log('User ID:', product.shop_id);
+      //console.log('User ID:', user_id);
       if (!token) {
         throw new Error('No authentication token found. Please login first.');
       }
 
-      // First, try to get existing cart
-      const cartResponse = await fetch(`${config.baseUrl}/api/carts?shop_id=${product.producerId}`, {
-        method: 'GET',
+      // Use Buyer endpoint: submit order with single item and current delivery
+      const delivery = selectedLocation ? {
+        longitude: selectedLocation.longitude,
+        latitude: selectedLocation.latitude,
+        address: 'Selected Location',
+      } : {
+        longitude: 0,
+        latitude: 0,
+        address: 'Unknown address',
+      };
+
+      const buyerRes = await fetch(`${config.baseUrl}${config.buyerOrdersUrl}`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-        }
-
+        },
+        body: JSON.stringify({
+          items: [{ productId: String(product.id), quantityKg: Number(quantity) }],
+          delivery,
+        }),
       });
-
-      
-      let cart;
-      if (cartResponse.ok) {
-        const cartData = await cartResponse.json();
-       
-       cart = cartData.data || cartData;
-       //console.log("sucsess, cart:",cart[0].id)
+      if (!buyerRes.ok) {
+        const text = await buyerRes.text();
+        throw new Error(`Buyer order failed: ${buyerRes.status} - ${text}`);
       }
-      
+      await buyerRes.json();
 
-      // If no cart exists or cart is empty/null, create a new one
-      if (!cart || (Array.isArray(cart) && cart.length === 0)) {
-      
-        console.log("create new cart")
-        const newCartResponse = await fetch(`${config.baseUrl}/api/carts`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            
-            shop_id: product.producerId,   
-            status: 'open' 
-          })
-        });
-
-        if (!newCartResponse.ok) {
-         
-          throw new Error('Failed to create new cart');
-        }
-         
-        const newCartData = await newCartResponse.json();
-        cart = newCartData.data || newCartData;
-        console.log("new cart",cart)
-      
-      }
-
-      // Ensure cart has cart_items array
-      if (!cart.cart_items) {
-       console.log("cart_items is null")
-        cart.cart_items = [];
-      }
-
-     
-
-      // Check if item already exists in cart
-      const existingItem = cart.cart_items.find((item: any) => 
-        item.product_id === parseInt(product.id || '0')
-      );
-      
-
-      if (existingItem) {
-        // Update existing item quantity
-        const updateResponse = await fetch(`${config.baseUrl}/api/carts/${cart.id}/items/${existingItem.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            quantity: existingItem.quantity + quantity,
-            note: '',
-            options: []
-          })
-        });
-
-        if (!updateResponse.ok) {
-          throw new Error('Failed to update cart item');
-        }
-
-        const result = await updateResponse.json();
-        
-        alert('Item quantity updated in cart!');
-      } else {
-        // Add new item to cart
-        
-        const addResponse = await fetch(`${config.baseUrl}/api/carts/${cart[0].id}/items`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            
-          },
-          body: JSON.stringify({
-            product_id: product.id,
-            quantity: quantity,
-            note: null,
-            options: []
-          })
-        });
-
-        if (!addResponse.ok) {
-          const errorText = await addResponse.text();
-         
-          throw new Error(`Failed to add item to cart: ${addResponse.status} - ${errorText}`);
-        }
-
-        const result = await addResponse.json();
-      
-        alert('Item added to cart successfully!');
-      }
+      alert('Order placed successfully!');
 
     } catch (error) {
-     
-      alert('Failed to add item to cart. Please try again.');
+      console.error('Add to order error:', error);
+      alert(`Failed to add item to order. Please try again.`);
       
     }
   };
@@ -476,7 +393,7 @@ const product = {
         <View className="bg-white dark:bg-neutral-800 ">
           <View className="relative" style={{ height: 420, margin: 10 }}>
             <Image
-              source={{ uri: product.images[currentImageIndex] }}
+              source={{ uri: config.image_url(product.images[currentImageIndex]) }}
               className="w-full h-full rounded-3xl"
               resizeMode="cover"
             />

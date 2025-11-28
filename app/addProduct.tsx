@@ -10,15 +10,14 @@ import { Camera, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Alert,
-  Image,
-  RefreshControl,
-  ScrollView,
-  StatusBar,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    Image,
+    ScrollView,
+    StatusBar,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -104,21 +103,10 @@ const AddProductScreen = () => {
     }
   };
 
-  const { data: categories = [], isLoading: categoriesLoading, refetch, isRefetching } = useQuery({
+  const { data: categories = [], isLoading: categoriesLoading  } = useQuery({
     queryKey: ['categories'],
     queryFn: getCategories,
   });
-
-  const [refreshing, setRefreshing] = useState(false);
-  const onRefresh = async () => {
-    console.log('[AddProduct] Pull-to-refresh triggered');
-    setRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setRefreshing(false);
-    }
-  };
 
   // Get subcategories for selected category
   const getSubcategories = (): SubcategoryOption[] => {
@@ -401,19 +389,7 @@ const AddProductScreen = () => {
 
       
 
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        alwaysBounceVertical
-        contentContainerStyle={{ flexGrow: 1 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing || !!isRefetching}
-            onRefresh={onRefresh}
-            tintColor={colorScheme === 'dark' ? '#9CA3AF' : '#6B7280'}
-          />
-        }
-      >
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="p-6">
           {/* Product Images */}
           <View className="mb-6">

@@ -1,10 +1,11 @@
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
+import { config } from '@/config';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Redirect, Tabs, useFocusEffect } from 'expo-router';
+import { Tabs, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,15 +14,46 @@ export default function TabLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { t } = useTranslation();
+  const [isProducer, setIsProducer] = useState<boolean>(false);
 
   const checkAuthStatus = async () => {
     try {
       const token = await AsyncStorage.getItem('auth_token');
       console.log('Checking auth status, token:', token ? 'exists' : 'not found');
       setIsAuthenticated(!!token);
+      if (token) {
+        // Try to fetch user profile to determine role
+        try {
+          const res = await fetch(`${config.baseUrl}${config.meUrl}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: 'application/json',
+            },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const user = data.data || data.user || data;
+            let roles: string[] = [];
+            if (Array.isArray(user?.roles)) roles = user.roles;
+            else if (typeof user?.role === 'string') roles = [user.role];
+            else if (Array.isArray(user?.data?.roles)) roles = user.data.roles;
+            const hasProducer = roles.some(r => r.toLowerCase().includes('producer'));
+            setIsProducer(hasProducer);
+          } else {
+            console.warn('Failed to fetch user profile for role detection:', res.status);
+            setIsProducer(false);
+          }
+        } catch (e) {
+          console.warn('Error determining producer role:', e);
+          setIsProducer(false);
+        }
+      } else {
+        setIsProducer(false);
+      }
     } catch (error) {
       console.error('Error checking auth status:', error);
       setIsAuthenticated(false);
+      setIsProducer(false);
     } finally {
       setIsLoading(false);
     }
@@ -42,6 +74,7 @@ export default function TabLayout() {
     return null; // or a loading spinner
   }
 
+  
    // if (!isAuthenticated) return <Redirect href="/(auth)/sign-in" />;
   
   return (
@@ -104,12 +137,15 @@ export default function TabLayout() {
       />
        
       <Tabs.Screen
-      name='shop'
-      options={{
-        title: t('tabs.shop'),
-        tabBarIcon: ({ color }) => <IconSymbol size={28} name="Store" color={color} />
-      }}
-      />
+  name="shop"
+  options={{
+    title: t('tabs.shop'),
+    tabBarIcon: ({ color }) => (
+      <IconSymbol size={28} name="Store" color={color} />
+    ),
+    href: isProducer ? "/shop" : null, // << هذا هو السر
+  }}
+/>
        <Tabs.Screen
       name='profile'
       options={{

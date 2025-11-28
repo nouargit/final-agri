@@ -379,7 +379,7 @@ export default function ShopScreen() {
 
             {/* Action Bar */}
             <View className="flex-row items-center justify-between mx-4 mb-2">
-              <Text className="text-2xl font-bold text-neutral-950 dark:text-white">My Shop</Text>
+            
               
               <View className="flex-row items-center gap-2">
                 {/* Add Product Button */}
