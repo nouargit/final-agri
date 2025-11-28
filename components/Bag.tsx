@@ -1,15 +1,30 @@
-import { router } from 'expo-router';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
-import { Package, ChevronRight, Calendar } from 'lucide-react-native';
 import { config } from '@/config';
-import { useTranslation } from 'react-i18next';
 import { getDateLocale } from '@/lib/i18n';
+import { router } from 'expo-router';
+import { Calendar, ChevronRight, Package } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 
 const statusColors: Record<string, { bg: string; text: string; border: string }> = {
   pending: {
     bg: 'bg-amber-100 dark:bg-amber-900/30',
     text: 'text-amber-700 dark:text-amber-300',
     border: 'border-amber-300 dark:border-amber-800',
+  },
+  rejected: {
+    bg: 'bg-red-100 dark:bg-red-900/30',
+    text: 'text-red-700 dark:text-red-300',
+    border: 'border-red-300 dark:border-red-800',
+  },
+  confirmed: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    border: 'border-emerald-300 dark:border-emerald-800',
+  },
+  on_delivery: {
+    bg: 'bg-blue-100 dark:bg-blue-900/30',
+    text: 'text-blue-700 dark:text-blue-300',
+    border: 'border-blue-300 dark:border-blue-800',
   },
   preparing: {
     bg: 'bg-orange-100 dark:bg-orange-900/30',
@@ -30,6 +45,16 @@ const statusColors: Record<string, { bg: string; text: string; border: string }>
     bg: 'bg-red-100 dark:bg-red-900/30',
     text: 'text-red-700 dark:text-red-300',
     border: 'border-red-300 dark:border-red-800',
+  },
+  'in-transit': {
+    bg: 'bg-blue-100 dark:bg-blue-900/30',
+    text: 'text-blue-700 dark:text-blue-300',
+    border: 'border-blue-300 dark:border-blue-800',
+  },
+  processing: {
+    bg: 'bg-orange-100 dark:bg-orange-900/30',
+    text: 'text-orange-700 dark:text-orange-300',
+    border: 'border-orange-300 dark:border-orange-800',
   },
   active: {
     bg: 'bg-emerald-100 dark:bg-emerald-900/30',
@@ -142,8 +167,8 @@ const Bag = ({ bag, shop, type }: BagProps) => {
           </View>
 
           {/* Total */}
-          <View className="ml-3  rounded-2xl py-2 ">
-            <Text className="font-gilroy-bold text-white text-md">{formatPrice(bag.total)}</Text>
+          <View className="ml-3 rounded-2xl py-2">
+            <Text className="font-gilroy-bold text-green-600 dark:text-green-400 text-lg">{formatPrice(bag.total)}</Text>
           </View>
         </View>
 
@@ -163,15 +188,15 @@ const Bag = ({ bag, shop, type }: BagProps) => {
               {bag.items.slice(0, 4).map((item) => (
                 
                 <View key={item.id} className="relative w-16 h-16 rounded-xl overflow-hidden">
-                  {item.product.images[0].url ? (
+                  {item.product.images?.[0] ? (
                     <Image
-                      source={{ uri: item.product.images[0].url }}
+                      source={{ uri: item.product.images[0] }}
                       className="w-full h-full"
                       resizeMode="cover"
                     />
                   ) : (
                     <View className="w-full h-full bg-gray-100 dark:bg-neutral-600 items-center justify-center">
-                      <Package size={24} color="#D1D5DBFF6F61" strokeWidth={1.5} />
+                      <Package size={24} color="#FF6F61" strokeWidth={1.5} />
                     </View>
                   )}
 
