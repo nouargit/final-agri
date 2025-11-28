@@ -264,7 +264,7 @@ export default function FarmMarketplaceHome() {
                   <View className="bg-green-50 rounded-2xl h-36 items-center justify-center mb-3 relative overflow-hidden">
                     {product.images && product.images.length > 0 ? (
                       <Image
-                        source={{ uri: product.images[0] }}
+                        source={{ uri: config.image_url(product.images[0]) }}
                         style={{ width: '100%', height: '100%' }}
                         resizeMode="cover"
                       />

@@ -1,16 +1,18 @@
 import CustomButton from '@/components/CustomButton';
 import { config } from '@/config';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import jsonToFormData, { defaultDetectFile } from '@/lib/jsonToFormData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { ArrowLeft, Camera, X } from 'lucide-react-native';
+import { Camera, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Image,
+  RefreshControl,
   ScrollView,
   StatusBar,
   Text,
@@ -102,10 +104,21 @@ const AddProductScreen = () => {
     }
   };
 
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+  const { data: categories = [], isLoading: categoriesLoading, refetch, isRefetching } = useQuery({
     queryKey: ['categories'],
     queryFn: getCategories,
   });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => {
+    console.log('[AddProduct] Pull-to-refresh triggered');
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Get subcategories for selected category
   const getSubcategories = (): SubcategoryOption[] => {
@@ -272,6 +285,7 @@ const AddProductScreen = () => {
 
     try {
       const token = await AsyncStorage.getItem('auth_token');
+      Alert.alert('Debug', `Token: ${token}`);
       if (!token) {
         Alert.alert('Error', 'Authentication required. Please sign in again.');
         router.replace('/sign-in');
@@ -297,14 +311,23 @@ const AddProductScreen = () => {
       console.log('URL:', `${config.baseUrl}${config.producerProductsUrl}`);
       console.log('Token:', token ? 'Present' : 'Missing');
 
+      // Build multipart form data including images
+      const fd = jsonToFormData(productData);
+      formData.images.forEach((asset) => {
+        const file = defaultDetectFile(asset);
+        if (file) {
+          // Use images[] so backend receives an array
+          fd.append('images', file as any);
+        }
+      });
+
       const response = await fetch(`${config.baseUrl}${config.producerProductsUrl}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          // Do NOT set Content-Type; RN sets the multipart boundary automatically
         },
-        body: JSON.stringify(productData),
+        body: fd,
       });
 
       console.log('Response status:', response.status);
@@ -378,7 +401,19 @@ const AddProductScreen = () => {
 
       
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        alwaysBounceVertical
+        contentContainerStyle={{ flexGrow: 1 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing || !!isRefetching}
+            onRefresh={onRefresh}
+            tintColor={colorScheme === 'dark' ? '#9CA3AF' : '#6B7280'}
+          />
+        }
+      >
         <View className="p-6">
           {/* Product Images */}
           <View className="mb-6">

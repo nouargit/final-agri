@@ -238,7 +238,7 @@ export default function ShopScreen() {
         <View className="relative">
           <Image
             source={product.images && product.images.length > 0 
-              ? { uri: product.images[0] } 
+              ? { uri: config.image_url(product.images[0]) } 
               : images.fallback
             }
             style={{ width: "100%", height: 300 }}
@@ -451,43 +451,7 @@ export default function ShopScreen() {
         }
       />
 
-      {/* Add Category Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="bg-white dark:bg-gray-800 rounded-t-3xl p-6 pb-8">
-            <View className="flex-row items-center justify-between mb-6">
-              <Text className="text-xl font-bold text-gray-900 dark:text-white">
-                {t('shop.addCategory') || 'Add Category'}
-              </Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <X size={24} color="#6B7280" />
-              </TouchableOpacity>
-            </View>
-
-            <TextInput
-              className="bg-gray-100 dark:bg-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white mb-4"
-              placeholder={t('shop.categoryName') || 'Category Name'}
-              placeholderTextColor="#9CA3AF"
-              value={newCategory}
-              onChangeText={setNewCategory}
-            />
-
-            <TouchableOpacity
-              onPress={handleAddCategory}
-              className="bg-primary rounded-xl py-3 items-center"
-            >
-              <Text className="text-white font-semibold text-base">
-                {t('shop.addCategoryBtn') || 'Add Category'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+     
     </View>
   );
 }

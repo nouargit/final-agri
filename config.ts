@@ -1,3 +1,5 @@
+import { images } from "./constants/imports";
+
 export const config = {
   baseUrl: 'https://agri-connect-api-six.vercel.app',
   
@@ -62,4 +64,6 @@ export const config = {
   orderItemsUrl: '/api/order-items',
   cartUrl: '/api/cart',
   cartItemsUrl: '/api/cart-items',
+  image_url: (id: string) => `https://minio-woc0wo00cg448scgww8kok4w.himmob.com/main/${id}`,
+
 };
