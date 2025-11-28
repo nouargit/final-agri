@@ -1,5 +1,7 @@
 import CustomButton from "@/components/CustomButton";
 import CustomInput from "@/components/CustomInput";
+import { config } from '@/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, router } from 'expo-router';
 import { Clock, MapPin, Truck } from "lucide-react-native";
 import { useState } from "react";
@@ -29,11 +31,45 @@ export default function Transporter() {
       return;
     }
 
-    // Navigate to transporter details screen
-    router.push({
-      pathname: "/transporterDetails",
-      params: { fullname: fullname.trim(), phone: phone.trim() },
-    });
+    setIsLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) {
+        Alert.alert('Session expired', 'Please sign in again.');
+        router.replace('/(auth)/sign-in');
+        return;
+      }
+
+      const res = await fetch(`${config.baseUrl}${config.transporterOnboardingStep1Url}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: fullname.trim(),
+          phone: phone.trim(),
+          role: 'transporter',
+        }),
+      });
+
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(`Onboarding step 1 failed (${res.status}): ${text.substring(0, 200)}`);
+      }
+
+      // Navigate to transporter details screen on success
+      router.push({
+        pathname: "/transporterDetails",
+        params: { fullname: fullname.trim(), phone: phone.trim() },
+      });
+    } catch (e) {
+      console.error('Onboarding step 1 error:', e);
+      Alert.alert('Error', 'Failed to start onboarding. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

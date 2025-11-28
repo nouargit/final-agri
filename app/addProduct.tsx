@@ -10,14 +10,14 @@ import { Camera, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-    Alert,
-    Image,
-    ScrollView,
-    StatusBar,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Image,
+  ScrollView,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -401,8 +401,10 @@ const AddProductScreen = () => {
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
               <View className="flex-row gap-3">
-                {formData.images.map((imageAsset, index) => (
-                  <View key={index} className="relative">
+                {formData.images.map((imageAsset, index) => {
+                  const stableKey = imageAsset.assetId || imageAsset.fileName || imageAsset.uri || `img-${index}`;
+                  return (
+                  <View key={stableKey} className="relative">
                     <Image
                       source={{ uri: imageAsset.uri }}
                       className="w-28 h-28 rounded-2xl"
@@ -415,7 +417,8 @@ const AddProductScreen = () => {
                       <X size={16} color="white" />
                     </TouchableOpacity>
                   </View>
-                ))}
+                  );
+                })}
                 <TouchableOpacity
                   onPress={pickImage}
                   className="w-28 h-28 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl items-center justify-center bg-gray-50 dark:bg-neutral-900"

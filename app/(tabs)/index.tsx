@@ -155,7 +155,7 @@ export default function FarmMarketplaceHome() {
         </View>
 
         {/* Menu Button */}
-        <TouchableOpacity className="absolute right-4 top-14 bg-gray-900 p-3 rounded-xl">
+        <TouchableOpacity className="absolute right-4 top-14 bg-gray-900 p-3 rounded-xl" >
           <Menu size={20} color="white" />
         </TouchableOpacity>
       </View>

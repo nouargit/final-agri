@@ -1,4 +1,5 @@
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { config } from '@/config';
 import { images } from '@/constants/imports';
 import { getDateLocale, setAppLanguage } from '@/lib/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -67,6 +68,29 @@ function Profile() {
   queryKey: ['userData'],
   queryFn: getUserData,
 })
+
+  const { data: meData } = useQuery({
+    queryKey: ['me'],
+    queryFn: async () => {
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) return null;
+      const res = await fetch(`${config.baseUrl}${config.meUrl}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(`Failed to fetch profile (${res.status}): ${text.substring(0, 200)}`);
+      }
+      try {
+        return JSON.parse(text);
+      } catch {
+        return text;
+      }
+    },
+  });
 
 
   useEffect(() => {
@@ -170,11 +194,19 @@ function Profile() {
             <Text className="text-sm text-neutral-400 dark:text-neutral-500 mt-2">
               {t('profile.memberSince', { date: formatJoinDate(data?.createdAt) })}
             </Text>
-            {!!data?.role && (
-              <Text className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-                {`Role: ${data.role}`}
-              </Text>
-            )}
+              {(() => {
+                const user = (meData as any)?.data || (meData as any)?.user || meData;
+                let roles: string[] = [];
+                if (Array.isArray(user?.roles)) roles = user.roles;
+                else if (typeof user?.role === 'string') roles = [user.role];
+                else if (Array.isArray(user?.data?.roles)) roles = user.data.roles;
+                const roleDisplay = roles && roles.length ? roles.join(', ') : (data?.role || undefined);
+                return roleDisplay ? (
+                  <Text className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                    {`Role: ${roleDisplay}`}
+                  </Text>
+                ) : null;
+              })()}
             {!!data?.producer?.a_address && (
               <Text className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
                 {data.producer.a_address}

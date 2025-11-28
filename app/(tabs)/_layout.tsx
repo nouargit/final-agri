@@ -143,7 +143,9 @@ export default function TabLayout() {
     tabBarIcon: ({ color }) => (
       <IconSymbol size={28} name="Store" color={color} />
     ),
-    href: isProducer ? "/shop" : null, // << هذا هو السر
+    // When href is null, screen is hidden from tab bar/router.
+    // Use undefined/default when producer so it displays.
+   
   }}
 />
        <Tabs.Screen

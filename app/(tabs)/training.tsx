@@ -4,7 +4,7 @@ import { FlatList, RefreshControl, TouchableOpacity } from "react-native";
 import { config } from '@/config';
 import categoriesEN from '@/constants/categories';
 import { images } from '@/constants/imports';
-
+import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MasonryList from "@react-native-seoul/masonry-list";
 import { useQuery } from '@tanstack/react-query';
@@ -77,7 +77,9 @@ const productsData = [
         </TouchableOpacity>
         <Text className="text-4xl font-gilroy-bold text-primary dark:text-primary">agri</Text>
         <View className="justify-end w-10 h-10 bg-slate-200 dark:bg-neutral-700 rounded-full p-2 items-center">
+          <TouchableOpacity onPress={() => router.push('/orders')} >
           <Search size={24} color="#52b649" strokeWidth={2} />
+          </TouchableOpacity>
         </View>
       </View>
       
