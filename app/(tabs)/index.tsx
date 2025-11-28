@@ -1,373 +1,290 @@
-// d:\AC\src\AuthSendOtpFormRN.tsx
-import CategoryCard from '@/components/CategorysCard';
-import PromoCard from '@/components/PromoCard';
-import categoriesEN from '@/constants/categories';
-import { images } from '@/constants/imports';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { Bell, MapPin, QrCode, Search, ShoppingBag, Sparkles, TrendingUp } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import {
-  Dimensions,
-  Image,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import Animated, {
-  Extrapolate,
-  FadeInDown,
-  interpolate,
-  useAnimatedScrollHandler,
-  useAnimatedStyle,
-  useSharedValue
-} from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Client } from "@/generated/openapi/client";
+import { Bell, Search } from 'lucide-react-native';
+import { useState } from 'react';
+import { Image, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-const { width } = Dimensions.get('window');
+// API client configured with the new base URL
+export const api = new Client({
+  baseUrl: "https://agri-connect-api-six.vercel.app/api",
+});
 
-// Mock data for featured products (since items.ts is empty)
-const featuredProducts = [
-  { id: 1, name: 'Fresh Potatoes', price: 250, image: images.potato, rating: 4.5, category: 'vegetables' },
-  { id: 2, name: 'Organic Oranges', price: 350, image: images.orange, rating: 4.8, category: 'Fruits' },
-  { id: 3, name: 'Fresh Salad', price: 180, image: images.salad, rating: 4.6, category: 'vegetables' },
-  { id: 4, name: 'Wheat Grains', price: 420, image: images.kameh, rating: 4.7, category: 'Grains' },
-];
+// Icon components as simple SVG replacements
+const ChevronDown = () => <Text style={{ fontSize: 12 }}>▼</Text>;
+const BellIcon = () => <Bell size={20} color="#4B5563" />;
 
-const trendingProducts = [
-  { id: 5, name: 'Premium Potatoes', price: 300, image: images.potato, rating: 4.9 },
-  { id: 6, name: 'Sweet Oranges', price: 380, image: images.orange, rating: 4.7 },
-];
 
-export default function HomeScreen() {
-  const [userName, setUserName] = useState('Guest');
-  const [searchQuery, setSearchQuery] = useState('');
-  const scrollY = useSharedValue(0);
-  const { t } = useTranslation();
+const CategoryIcon = ({ emoji, label }:any) => (
+  <View className="items-center mr-4">
+    <View className="w-14 h-14 bg-gray-100 rounded-full items-center justify-center mb-1">
+      <Text className="text-2xl">{emoji}</Text>
+    </View>
+    <Text className="text-xs text-gray-600">{label}</Text>
+  </View>
+);
 
-  useEffect(() => {
-    loadUserData();
-  }, []);
 
-  const loadUserData = async () => {
-    try {
-      const userData = await AsyncStorage.getItem('user_data');
-      if (userData) {
-        const parsed = JSON.parse(userData);
-        setUserName(parsed.name || 'Guest');
-      }
-    } catch (error) {
-      console.error('Error loading user data:', error);
-    }
-  };
 
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollY.value = event.contentOffset.y;
+const ProductCard = ({ image, name, price, oldPrice, discount }: any) => (
+  <View className="w-[48%] mb-5">
+    {/* Image + Badges */}
+    <View className="relative">
+      <View className="h-36 bg-gray-100 rounded-2xl overflow-hidden">
+        <Image
+          source={{ uri: image }}
+          className="w-full h-full rounded-2xl"
+          resizeMode="cover"
+        />
+      </View>
+
+      {/* Discount Badge */}
+      {discount && (
+        <View className="absolute top-2 left-2 bg-red-500/90 px-2 py-1 rounded-lg">
+          <Text className="text-white text-xs font-bold">{discount}</Text>
+        </View>
+      )}
+
+      {/* Wishlist Button */}
+      <TouchableOpacity className="absolute top-2 right-2 bg-white/90 w-7 h-7 rounded-full items-center justify-center shadow-sm">
+        <Text className="text-gray-600 text-base">♡</Text>
+      </TouchableOpacity>
+    </View>
+
+    {/* Product Name */}
+    <Text
+      numberOfLines={1}
+      className="mt-2 text-sm font-semibold text-gray-800"
+    >
+      {name}
+    </Text>
+
+    {/* Price + Add */}
+    <View className="flex-row items-center justify-between mt-1">
+      <View className="flex-row items-center">
+        <Text className="text-lg font-bold text-gray-900">${price}</Text>
+
+        {oldPrice && (
+          <Text className="text-xs text-gray-400 line-through ml-2">
+            ${oldPrice}
+          </Text>
+        )}
+      </View>
+
+      {/* Add to cart */}
+      <TouchableOpacity className="w-8 h-8 rounded-full bg-green-500 items-center justify-center shadow-sm">
+        <Text className="text-white text-lg font-bold ">+</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+);
+
+
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('today');
+
+  const categories = [
+    { emoji: '🥬', label: 'Vegetable' },
+    { emoji: '🍎', label: 'Fruit' },
+    { emoji: '🥩', label: 'Meat' },
+    { emoji: '🦞', label: 'Seafood' },
+    { emoji: '🍞', label: 'Proteins' },
+    { emoji: '🍎', label: 'Fruit' },
+  ];
+
+  const products = [
+    {
+      id: 1,
+      name: 'Chicken breast frozen',
+      price: '22.40',
+      oldPrice: '25.00',
+      discount: '-30%',
+      image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=400'
     },
-  });
+    {
+      id: 2,
+      name: 'Chicken breast frozen',
+      price: '13.00',
+      oldPrice: '15.00',
+      discount: '-20%',
+      image: 'https://images.unsplash.com/photo-1588347818036-4c87e8c0e1f7?w=400'
+    },
+    {
+      id: 3,
+      name: 'Beef meat for soup',
+      price: '20.00',
+      discount: '-20%',
+      image: 'https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=400'
+    },
+  ];
 
-  const headerAnimatedStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      scrollY.value,
-      [0, 100, 200],
-      [1, 0.8, 0.6],
-      Extrapolate.CLAMP
-    );
-
-    const translateY = interpolate(
-      scrollY.value,
-      [0, 200],
-      [0, -50],
-      Extrapolate.CLAMP
-    );
-
-    return {
-      opacity,
-      transform: [{ translateY }],
-    };
-  });
-
-  const vibration = () => {
-    // Haptic feedback can be added here
-  };
+  const todayChoices = [
+    {
+      id: 1,
+      image: 'https://images.unsplash.com/photo-1583275479036-54a9c481c4f7?w=400',
+      discount: '-20%'
+    },
+    {
+      id: 2,
+      image: 'https://images.unsplash.com/photo-1546548970-71785318a17b?w=400',
+      discount: '-10%'
+    },
+  ];
 
   return (
-    <View className="flex-1 bg-neutral-50 dark:bg-neutral-950">
-      <StatusBar style="auto" />
-      <SafeAreaView className="flex-1">
-        <Animated.ScrollView
-          onScroll={scrollHandler}
-          scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 100 }}
-        >
-          {/* Header Section with Gradient */}
-          <Animated.View style={headerAnimatedStyle}>
-            <View className="px-6 pt-4 pb-6 bg-primary/5 dark:bg-primary/10">
-              {/* Top Bar */}
-              <View className="flex-row justify-between items-center mb-6">
-                <View>
-                  <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-                    {t('common.welcome') || 'Welcome back'}
-                  </Text>
-                  <Text className="text-2xl font-gilroy-bold text-neutral-900 dark:text-white mt-1">
-                    {userName} 👋
-                  </Text>
-                </View>
-                
-                <TouchableOpacity 
-                  onPress={() => router.push('/profile')}
-                  className="bg-white dark:bg-neutral-800 p-3 rounded-full shadow-sm"
-                >
-                  <Bell size={24} className="text-primary" color="#22680C" />
-                </TouchableOpacity>
-              </View>
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
+      
+      <ScrollView className="flex-1">
+        {/* Header */}
+        <View className="px-4 pt-12 pb-4">
+          <View className="flex-row items-center justify-between mb-4">
+            <View className="flex-row items-center">
+              <Text className="text-green-600 text-lg mr-1">📍</Text>
+              <Text className="text-base font-semibold">Dexter's Home</Text>
+              <ChevronDown />
+            </View>
+            <View className="relative">
+              <BellIcon />
+              <View className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full" />
+            </View>
+          </View>
 
-              {/* Search Bar */}
-              <View className="flex-row items-center bg-white dark:bg-neutral-800 rounded-2xl px-4 py-3 shadow-sm border border-neutral-200 dark:border-neutral-700">
-                <Search size={20} color="#9CA3AF" />
-                <TextInput
-                  className="flex-1 ml-3 text-neutral-900 dark:text-white font-gilroy-medium"
-                  placeholder={t('common.search') || "Search for products..."}
-                  placeholderTextColor="#9CA3AF"
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  onSubmitEditing={() => router.push('/training')}
-                />
+          {/* Banner Images */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
+            <View className="w-80 h-40 bg-gray-900 rounded-2xl mr-3 overflow-hidden">
+              <Image 
+                source={{ uri: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=800' }}
+                className="w-full h-full opacity-70"
+                resizeMode="cover"
+              />
+              <View className="absolute bottom-4 left-4">
+                <Text className="text-white text-xs">-40% Discount</Text>
+                <Text className="text-white text-lg font-bold">On your first{'\n'}order</Text>
               </View>
             </View>
-          </Animated.View>
-
-          {/* Quick Actions */}
-          <Animated.View 
-            entering={FadeInDown.delay(100).duration(500)}
-            className="px-6 -mt-4 mb-6"
-          >
-            <View className="bg-white dark:bg-neutral-800 rounded-3xl p-4 shadow-lg border border-neutral-200 dark:border-neutral-700">
-              <View className="flex-row justify-between items-center">
-                {/* QR Scanner */}
-                <TouchableOpacity
-                  onPress={() => router.push('/qrCode')}
-                  className="items-center flex-1"
-                >
-                  <View className="bg-primary/10 p-4 rounded-2xl mb-2">
-                    <QrCode size={28} color="#22680C" />
-                  </View>
-                  <Text className="text-xs font-gilroy-semibold text-neutral-700 dark:text-neutral-300">
-                    {t('home.scanQR') || 'Scan QR'}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Orders */}
-                <TouchableOpacity
-                  onPress={() => router.push('/orders')}
-                  className="items-center flex-1"
-                >
-                  <View className="bg-primary/10 p-4 rounded-2xl mb-2">
-                    <ShoppingBag size={28} color="#22680C" />
-                  </View>
-                  <Text className="text-xs font-gilroy-semibold text-neutral-700 dark:text-neutral-300">
-                    {t('home.orders') || 'My Orders'}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Delivery */}
-                <TouchableOpacity
-                  onPress={() => router.push('/deleveryMap')}
-                  className="items-center flex-1"
-                >
-                  <View className="bg-primary/10 p-4 rounded-2xl mb-2">
-                    <MapPin size={28} color="#22680C" />
-                  </View>
-                  <Text className="text-xs font-gilroy-semibold text-neutral-700 dark:text-neutral-300">
-                    {t('home.track') || 'Track'}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Cart */}
-                <TouchableOpacity
-                  onPress={() => router.push('/cart')}
-                  className="items-center flex-1"
-                >
-                  <View className="bg-primary/10 p-4 rounded-2xl mb-2">
-                    <ShoppingBag size={28} color="#22680C" />
-                  </View>
-                  <Text className="text-xs font-gilroy-semibold text-neutral-700 dark:text-neutral-300">
-                    {t('home.cart') || 'Cart'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+            <View className="w-80 h-40 bg-gray-800 rounded-2xl overflow-hidden">
+              <Image 
+                source={{ uri: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=800' }}
+                className="w-full h-full opacity-70"
+                resizeMode="cover"
+              />
             </View>
-          </Animated.View>
+          </ScrollView>
 
-          {/* Promo Card */}
-          <Animated.View entering={FadeInDown.delay(200).duration(500)} className="px-6">
-            <PromoCard />
-          </Animated.View>
+          {/* Search Bar */}
+          <View className="flex-row items-center bg-gray-100 rounded-xl px-4 py-3 mb-4">
+           <Search />
+
+            <TextInput 
+              placeholder="What's your daily needs?"
+              placeholderTextColor="#999"
+              className="flex-1 ml-2 text-base"
+            />
+          </View>
 
           {/* Categories */}
-          <Animated.View entering={FadeInDown.delay(300).duration(500)} className="mt-6">
-            <View className="px-6 mb-4 flex-row justify-between items-center">
-              <View>
-                <Text className="text-xl font-gilroy-bold text-neutral-900 dark:text-white">
-                  {t('home.categories') || 'Categories'}
-                </Text>
-                <Text className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-                  {t('home.exploreProduce') || 'Explore fresh produce'}
-                </Text>
-              </View>
-              <TouchableOpacity>
-                <Text className="text-primary font-gilroy-semibold">
-                  {t('common.seeAll') || 'See All'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="text-base font-bold">Categories</Text>
+            <TouchableOpacity>
+              <Text className="text-green-600 text-sm">See all →</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
+            {categories.map((cat, idx) => (
+              <CategoryIcon key={idx} emoji={cat.emoji} label={cat.label} />
+            ))}
+          </ScrollView>
+        </View>
 
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 24 }}
+        {/* Flash Sale */}
+        <View className="px-4 mb-4">
+          <View className="flex-row items-center justify-between mb-3">
+            <View className="flex-row items-center">
+              <Text className="text-base font-bold mr-2">Flash sale</Text>
+              <Text className="text-red-500">🔥</Text>
+            </View>
+            <TouchableOpacity>
+              <Text className="text-green-600 text-sm">See all →</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View className="flex-row flex-wrap justify-between">
+            {products.map(product => (
+              <ProductCard key={product.id} {...product} />
+            ))}
+          </View>
+        </View>
+
+        {/* Flash Sale - Second Row */}
+        <View className="px-4 mb-4">
+          <View className="flex-row items-center justify-between mb-3">
+            <View className="flex-row items-center">
+              <Text className="text-base font-bold mr-2">Flash sale</Text>
+              <Text className="text-red-500">🔥</Text>
+            </View>
+            <TouchableOpacity>
+              <Text className="text-green-600 text-sm">See all →</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View className="flex-row flex-wrap justify-between">
+            {products.map(product => (
+              <ProductCard key={`second-${product.id}`} {...product} />
+            ))}
+          </View>
+        </View>
+
+        {/* Today's choices */}
+        <View className="px-4 mb-20">
+          <View className="flex-row border-b border-gray-200 mb-4">
+            <TouchableOpacity 
+              onPress={() => setActiveTab('today')}
+              className={`mr-6 pb-2 ${activeTab === 'today' ? 'border-b-2 border-green-600' : ''}`}
             >
-              {categoriesEN.map((category, index) => (
-                <Animated.View
-                  key={category.id}
-                  entering={FadeInDown.delay(300 + index * 100).duration(500)}
-                >
-                  <CategoryCard category={category} vibration={vibration} />
-                </Animated.View>
-              ))}
-            </ScrollView>
-          </Animated.View>
-
-          {/* Featured Products */}
-          <Animated.View entering={FadeInDown.delay(400).duration(500)} className="mt-6 px-6">
-            <View className="flex-row justify-between items-center mb-4">
-              <View className="flex-row items-center">
-                <Sparkles size={24} color="#22680C" />
-                <Text className="text-xl font-gilroy-bold text-neutral-900 dark:text-white ml-2">
-                  {t('home.featured') || 'Featured Products'}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={() => router.push('/productShop')}>
-                <Text className="text-primary font-gilroy-semibold">
-                  {t('common.viewAll') || 'View All'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <View className="flex-row flex-wrap justify-between">
-              {featuredProducts.map((product, index) => (
-                <Animated.View
-                  key={product.id}
-                  entering={FadeInDown.delay(450 + index * 100).duration(500)}
-                  style={{ width: (width - 48 - 12) / 2, marginBottom: 16 }}
-                >
-                  <TouchableOpacity
-                    onPress={() => router.push(`/product?id=${product.id}`)}
-                    className="bg-white dark:bg-neutral-800 rounded-3xl overflow-hidden border border-neutral-200 dark:border-neutral-700 shadow-sm"
-                    activeOpacity={0.8}
-                  >
-                    <View className="relative">
-                      <Image
-                        source={product.image}
-                        style={{ width: '100%', height: 140 }}
-                        resizeMode="cover"
-                      />
-                      <View className="absolute top-2 right-2 bg-primary px-3 py-1 rounded-full">
-                        <Text className="text-white text-xs font-gilroy-bold">
-                          ⭐ {product.rating}
-                        </Text>
-                      </View>
-                    </View>
-                    
-                    <View className="p-3">
-                      <Text 
-                        className="text-sm font-gilroy-bold text-neutral-900 dark:text-white"
-                        numberOfLines={1}
-                      >
-                        {product.name}
-                      </Text>
-                      <Text className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                        {product.category}
-                      </Text>
-                      <View className="flex-row justify-between items-center mt-2">
-                        <Text className="text-lg font-gilroy-bold text-primary">
-                          {product.price} DZD
-                        </Text>
-                        <TouchableOpacity className="bg-primary p-2 rounded-full">
-                          <ShoppingBag size={16} color="white" />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                </Animated.View>
-              ))}
-            </View>
-          </Animated.View>
-
-          {/* Trending Products */}
-          <Animated.View entering={FadeInDown.delay(600).duration(500)} className="mt-6 px-6 mb-6">
-            <View className="flex-row items-center mb-4">
-              <TrendingUp size={24} color="#22680C" />
-              <Text className="text-xl font-gilroy-bold text-neutral-900 dark:text-white ml-2">
-                {t('home.trending') || 'Trending Now'}
+              <Text className={`${activeTab === 'today' ? 'text-green-600 font-semibold' : 'text-gray-400'}`}>
+                Today's choices
               </Text>
-            </View>
-
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 12 }}
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={() => setActiveTab('limited')}
+              className={`mr-6 pb-2 ${activeTab === 'limited' ? 'border-b-2 border-green-600' : ''}`}
             >
-              {trendingProducts.map((product, index) => (
-                <Animated.View
-                  key={product.id}
-                  entering={FadeInDown.delay(650 + index * 100).duration(500)}
-                >
-                  <TouchableOpacity
-                    onPress={() => router.push(`/product?id=${product.id}`)}
-                    className="bg-white dark:bg-neutral-800 rounded-3xl overflow-hidden border border-neutral-200 dark:border-neutral-700 shadow-sm"
-                    style={{ width: width * 0.7 }}
-                    activeOpacity={0.8}
-                  >
-                    <View className="flex-row">
-                      <Image
-                        source={product.image}
-                        style={{ width: 120, height: 120 }}
-                        resizeMode="cover"
-                      />
-                      <View className="flex-1 p-4 justify-between">
-                        <View>
-                          <Text className="text-base font-gilroy-bold text-neutral-900 dark:text-white">
-                            {product.name}
-                          </Text>
-                          <View className="flex-row items-center mt-1">
-                            <Text className="text-xs text-yellow-500">⭐ {product.rating}</Text>
-                            <Text className="text-xs text-neutral-400 ml-2">(128 reviews)</Text>
-                          </View>
-                        </View>
-                        <View className="flex-row justify-between items-center">
-                          <Text className="text-lg font-gilroy-bold text-primary">
-                            {product.price} DZD
-                          </Text>
-                          <TouchableOpacity className="bg-primary px-4 py-2 rounded-full">
-                            <Text className="text-white text-xs font-gilroy-bold">Add</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                </Animated.View>
-              ))}
-            </ScrollView>
-          </Animated.View>
-        </Animated.ScrollView>
-      </SafeAreaView>
+              <Text className={`${activeTab === 'limited' ? 'text-green-600 font-semibold' : 'text-gray-400'}`}>
+                Limited discount
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={() => setActiveTab('cheapest')}
+              className={`pb-2 ${activeTab === 'cheapest' ? 'border-b-2 border-green-600' : ''}`}
+            >
+              <Text className={`${activeTab === 'cheapest' ? 'text-green-600 font-semibold' : 'text-gray-400'}`}>
+                Cheapest
+              </Text>
+            </TouchableOpacity>  
+          </View>
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {todayChoices.map(item => (
+               <View
+      key={item.id}
+      className="w-40 h-40 mr-3 rounded-2xl overflow-hidden relative"
+    >
+      <Image
+        source={{ uri: item.image }}
+        className="w-full h-full"
+        resizeMode="cover"
+      />
+      <View className="absolute top-2 left-2 bg-red-500 px-2 py-1 rounded">
+        <Text className="text-white text-xs font-bold">
+          {item.discount}
+        </Text>
+      </View>
+    </View>
+            ))}
+          </ScrollView>
+        </View>
+      </ScrollView>
     </View>
   );
 }

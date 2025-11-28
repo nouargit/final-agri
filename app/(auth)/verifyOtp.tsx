@@ -1,26 +1,36 @@
-import React, { useState, useRef,useEffect } from 'react';
+import { config } from '@/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import type { TextInput as TextInputType } from 'react-native';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import type { TextInput as TextInputType } from 'react-native';
-import { Colors } from '@/constants/Colors';
-import { authVerifyOTP } from '@/src/api/orval-client'; 
-import { AuthVerifyOTP200, AuthVerifyOTPBody } from '@/src/api/model';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
-import {api} from '@/api';
 
 const EmailVerificationScreen = () => {
   const [code, setCode] = useState(['', '', '', '', '', '']);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const inputRefs = useRef<(TextInputType | null)[]>([]);
-  const email = 'some-email@gmail.com';
+  
+  // Get email from route params
+  const params = useLocalSearchParams();
+  const email = params.email as string || '';
+
+  useEffect(() => {
+    if (!email) {
+      Alert.alert('Error', 'Email not found. Please sign in again.');
+      router.replace('/sign-in');
+    }
+  }, [email]);
 
   const handleCodeChange = (text: string, index: number) => {
     const numericText = text.replace(/[^0-9]/g, '');
@@ -41,45 +51,129 @@ const EmailVerificationScreen = () => {
       inputRefs.current[index - 1]?.focus();
     }
   };
-  useEffect(()=>{
+  useEffect(() => {
     const otp = code.join('');
-    if(otp.length === 6){
-        console.log(otp);
+    if (otp.length === 6) {
       handleVerifyOTP();
     }
-  },[code])
+  }, [code]);
 
-  const handleResend = () => {
-    // Reset code and focus first input
-    setCode(['', '', '', '', '', '']);
-    inputRefs.current[0]?.focus();
-    console.log('Resend code requested');
+  const handleResend = async () => {
+    if (!email) {
+      Alert.alert('Error', 'Email not found');
+      return;
+    }
+
+    setIsResending(true);
+    try {
+      const response = await fetch(`${config.baseUrl}${config.sendOtpUrl}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        Alert.alert('Error', 'Failed to resend OTP. Please try again.');
+        return;
+      }
+
+      // Reset code and focus first input
+      setCode(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
+      Alert.alert('Success', 'OTP has been resent to your email');
+    } catch (error) {
+      console.error('Error resending OTP:', error);
+      Alert.alert('Error', 'Failed to resend OTP. Please try again.');
+    } finally {
+      setIsResending(false);
+    }
   };
   
 
   const handleVerifyOTP = async () => {
     const otp = code.join('');
-    const email='abdenouar790@gmail.com';
+    
     if (otp.length !== 6) {
       Alert.alert('Error', 'Please enter a valid 6-digit OTP');
       return;
     }
- 
+
+    if (!email) {
+      Alert.alert('Error', 'Email not found');
+      return;
+    }
+
+    setIsVerifying(true);
     try {
-      const response = await api.postAuthVerifyOtp({ email:email, code: otp });
+      const response = await fetch(`${config.baseUrl}${config.verifyOtpUrl}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ email, code: otp }),
+      });
 
+      const data = await response.json();
 
- console.log(response);
- if (response && response.data && response.data.token) {
-        // Store token and navigate to home
-        await AsyncStorage.setItem('auth_token', String(response.data.token));
-        router.push('/(tabs)');
+      if (!response.ok) {
+        // Handle different error types
+        if (data && data.code === 'INVALID_OTP') {
+          Alert.alert('Error', 'Invalid OTP code. Please try again.');
+          setCode(['', '', '', '', '', '']);
+          inputRefs.current[0]?.focus();
+        } else if (data && data.code === 'VALIDATION_ERROR' && data.issues) {
+          const codeError = data.issues?.code?.[0];
+          Alert.alert('Error', codeError || 'Validation error');
+        } else {
+          Alert.alert('Error', data.message || 'OTP verification failed');
+        }
+        return;
+      }
+
+      if (data && data.token) {
+        // Store authentication token
+        await AsyncStorage.setItem('auth_token', String(data.token));
+        
+        // Fetch and store user data
+        try {
+          const userResponse = await fetch(`${config.baseUrl}${config.meUrl}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${data.token}`,
+              'Accept': 'application/json',
+            },
+          });
+
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            console.log(userData);
+            if (userData && userData.session) {
+              await AsyncStorage.setItem('user_data', JSON.stringify(userData.session));
+            }
+          }
+        } catch (userError) {
+          console.error('Error fetching user data:', userError);
+          // Continue to app even if user data fetch fails
+        }
+        
+        // Navigate to main app
+        router.replace('/agriRole');
+   
+
       } else {
-        Alert.alert('Error OTP verification failed');
+        Alert.alert('Error', 'Invalid response from server');
       }
     } catch (error) {
       console.error('Error verifying OTP:', error);
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+      setCode(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -95,7 +189,7 @@ const EmailVerificationScreen = () => {
         <View className="flex-1 px-8 justify-center">
           {/* Title */}
           <Text className="text-3xl font-bold text-center text-gray-900 mb-4">
-            Check out your email
+            Check your email
           </Text>
           
           {/* Description */}
@@ -110,8 +204,8 @@ const EmailVerificationScreen = () => {
               <View
                 key={index}
                 className={`
-                  w-14 h-16 border-2 rounded-xl  justify-center items-center 
-                  ${digit ? 'border-green-500 bg-green-50' : 'border-gray-300 bg-white'}
+                  w-14 h-16 border-2 rounded-xl justify-center items-center 
+                  ${digit ? 'border-primary bg-primary/10' : 'border-gray-300 bg-white'}
                 `}
               >
                 <TextInput
@@ -124,10 +218,19 @@ const EmailVerificationScreen = () => {
                   keyboardType="number-pad"
                   maxLength={1}
                   selectTextOnFocus
+                  editable={!isVerifying}
                 />
               </View>
             ))}
           </View>
+
+          {/* Verifying Indicator */}
+          {isVerifying && (
+            <View className="items-center mb-6">
+              <ActivityIndicator size="small" color="#22680C" />
+              <Text className="text-gray-600 mt-2">Verifying...</Text>
+            </View>
+          )}
 
           {/* Resend Code */}
           <View className="items-center">
@@ -137,10 +240,15 @@ const EmailVerificationScreen = () => {
             <TouchableOpacity 
               onPress={handleResend}
               className="active:opacity-70"
+              disabled={isResending || isVerifying}
             >
-              <Text className="text-primary font-semibold text-lg">
-                Resend
-              </Text>
+              {isResending ? (
+                <ActivityIndicator size="small" color="#22680C" />
+              ) : (
+                <Text className="text-primary font-semibold text-lg">
+                  Resend
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>

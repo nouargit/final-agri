@@ -1,14 +1,9 @@
-// app/signin.tsx (or wherever your SignInScreen is)
 import CustomButton from "@/components/CustomButton";
 import CustomInput from "@/components/CustomInput";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { config } from "@/config";
 import { Link, router } from "expo-router";
-import { Alert, Keyboard, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import { useState } from "react";
-import { api } from "@/api";
-
-// New API client (the one we generated)
-
+import { Alert, Keyboard, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 
 export default function SignInScreen() {
   const [email, setEmail] = useState("");
@@ -20,26 +15,46 @@ export default function SignInScreen() {
       return;
     }
 
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      Alert.alert("Error", "Please enter a valid email address");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const { data, error } = await api.postAuthSendOtp({ email });
+      const response = await fetch(`${config.baseUrl}${config.sendOtpUrl}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ email: email.trim() }),
+      });
 
-      if (error) {
-        const msg =  "Failed to send OTP";
-        Alert.alert("Error", msg);
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle validation errors from API
+        if (data && data.code === 'VALIDATION_ERROR' && data.issues) {
+          const emailError = data.issues?.email?.[0];
+          Alert.alert("Error", emailError || "Failed to send OTP");
+        } else {
+          Alert.alert("Error", data.message || "Failed to send OTP. Please try again.");
+        }
         return;
       }
 
       // Success!
-      Alert.alert("Success", "OTP sent to your email!");
       router.push({
         pathname: "/verifyOtp",
-        params: { email }, // Pass email to verify screen
+        params: { email: email.trim() },
       });
     } catch (err) {
       console.error("Unexpected error:", err);
-      Alert.alert("Error", "Something went wrong. Try again.");
+      Alert.alert("Error", "Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -59,6 +74,7 @@ export default function SignInScreen() {
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
+         
         
         />
 

@@ -1,11 +1,8 @@
 export const config = {
-  baseUrl: 'http://10.100.38.194:8000',
+  baseUrl: 'https://agri-connect-api-six.vercel.app',
   shopsUrl: '/api/shops',
   userUrl: '/api/user',
-    csrfTokenUrl: '/sanctum/csrf-cookie',
   productsUrl: '/api/products',
-  loginUrl: '/api//auth/login',
-  registerUrl: '/api/auth/register',
   logoutUrl: '/api/logout',
   profileUrl: '/api/profile',
   ordersUrl: '/api/orders',
@@ -13,4 +10,8 @@ export const config = {
   orderItemsUrl: '/api/order-items',
   cartUrl: '/api/cart',
   cartItemsUrl: '/api/cart-items',
+  // OTP authentication endpoints
+  sendOtpUrl: '/api/auth/opt/send',
+  verifyOtpUrl: '/api/auth/opt/verify',
+  meUrl: '/api/me',
 };
