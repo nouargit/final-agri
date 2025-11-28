@@ -137,7 +137,7 @@ const Bag = ({ bag, shop, type }: BagProps) => {
             {shop.logo_url ? (
                <Image source={{ uri: `${config.baseUrl}${shop.logo_url}` }} style={{ height: '100%', width: '100%' }}  resizeMode="cover" />
             ) : (
-              <Package size={30} color="#FF6F61" strokeWidth={1.5} />
+              <Package size={30} color="#22680C" strokeWidth={1.5} />
             )}
           </View>
 
@@ -151,7 +151,7 @@ const Bag = ({ bag, shop, type }: BagProps) => {
             </Text>
 
             <View className="flex-row items-center mb-2">
-              <Calendar size={14} color="#9CA3AF" strokeWidth={2} />
+              <Calendar size={14} color="#22680C" strokeWidth={2} />
               <Text className="text-gray-500 dark:text-gray-400 text-sm ml-1.5">
                 {formatDate(bag.created_at)}
               </Text>
@@ -181,7 +181,7 @@ const Bag = ({ bag, shop, type }: BagProps) => {
                   {itemsCount} {itemsCount === 1 ? t('common.item') : t('common.items')} • {totalQuantity} {t('common.total')}
                 </Text>
               </View>
-              <ChevronRight size={20} color="#9CA3AF" strokeWidth={2} />
+              <ChevronRight size={20} color="#22680C" strokeWidth={2} />
             </View>
 
             <View className="flex-row flex-wrap gap-2 rounded-2xl bg-gray-50 dark:bg-neutral-700/40 p-3 border border-gray-100 dark:border-neutral-600">
@@ -190,7 +190,7 @@ const Bag = ({ bag, shop, type }: BagProps) => {
                 <View key={item.id} className="relative w-16 h-16 rounded-xl overflow-hidden">
                   {item.product.images?.[0] ? (
                     <Image
-                      source={{ uri: item.product.images[0] }}
+                      source={ item.product.images[0] }
                       className="w-full h-full"
                       resizeMode="cover"
                     />

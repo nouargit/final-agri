@@ -1,5 +1,7 @@
 import CustomButton from "@/components/CustomButton";
 import CustomInput from "@/components/CustomInput";
+import { config } from "@/config";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, router } from 'expo-router';
 import { Leaf, TrendingUp, Users } from "lucide-react-native";
 import { useState } from "react";
@@ -29,11 +31,59 @@ export default function Producer() {
       return;
     }
 
-    // Navigate to producer details screen
-    router.push({
-      pathname: "/producerDetails",
-      params: { fullname: fullname.trim(), phone: phone.trim() },
-    });
+    setIsLoading(true);
+
+    try {
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) {
+        Alert.alert('Error', 'Authentication required. Please sign in again.');
+        router.replace('/sign-in');
+        return;
+      }
+
+      const response = await fetch(`${config.baseUrl}${config.onboardingStep1Url}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: fullname.trim(),
+          phone: phone.trim(),
+          role: 'producer',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.code === 'VALIDATION_ERROR' && data.issues) {
+          const errors = Object.values(data.issues).flat().join('\n');
+          Alert.alert('Validation Error', errors);
+        } else if (data.code === 'ON_BOARDING_STEP_1_ALREADY_COMPLETED') {
+          Alert.alert('Info', 'You have already completed this step. Proceeding to next step.');
+          router.push({
+            pathname: "/producerDetails",
+            params: { fullname: fullname.trim(), phone: phone.trim() },
+          });
+        } else {
+          Alert.alert('Error', data.message || 'Failed to complete onboarding');
+        }
+        return;
+      }
+
+      // Success - navigate to details screen
+      router.push({
+        pathname: "/producerDetails",
+        params: { fullname: fullname.trim(), phone: phone.trim() },
+      });
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

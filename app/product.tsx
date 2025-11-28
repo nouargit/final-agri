@@ -1,22 +1,20 @@
-import React, { useState, useCallback } from 'react';
-import { useNavigation } from "@react-navigation/native";
-import {
-  View,
-  Text,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  Dimensions,
-  
-  StatusBar,
-} from 'react-native';
-import { Heart, ArrowLeft, Star, Minus, Plus, ShoppingCart, ChevronLeft, ChevronRight, MapPin, Clock, Award } from 'lucide-react-native';
-import { useQuery } from '@tanstack/react-query';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { config } from '@/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from "@react-navigation/native";
+import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import { ArrowLeft, Award, ChevronLeft, ChevronRight, Clock, Heart, MapPin, Minus, Plus, ShoppingCart, Star } from 'lucide-react-native';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  Dimensions,
+  Image,
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 const { width } = Dimensions.get('window');
  const temp= {
     id:  1,
@@ -223,31 +221,31 @@ const processImages = (images: any) => {
 
 
 const product = {
-    id: productTemp?.id || 1,
-    shop_id: productTemp?.shop_id || 1,
-    name: productTemp?.name || "chokolate cake" ,
-    price: productTemp?.price || 12.99,
-    originalPrice: productTemp?.originalPrice || 15.99,
-    rating: productTemp?.rating || 4.8,
-    reviews: productTemp?.reviews || 124,
-    description: productTemp?.description ||
-      "Indulgent warm chocolate cake with a molten chocolate center. Served with vanilla ice cream and fresh berries. Perfect for chocolate lovers!",
-    preparationTime: productTemp?.preparationTime || "15-20 min",
-    calories: productTemp?.calories || "580 cal",
+    id: productTemp?.id || '1',
+    producerId: productTemp?.producerId || '',
+    name: productTemp?.name || 'Product',
+    description: productTemp?.description || 'No description provided',
+    pricePerKg: productTemp?.pricePerKg ?? 0,
+    quantityKg: productTemp?.quantityKg ?? 0,
+    minimumOrderKg: productTemp?.minimumOrderKg ?? 1,
+    subcategory: productTemp?.subcategory || '',
+    grade: productTemp?.grade || '',
+    harvestDate: productTemp?.harvestDate || '',
+    scheduleDate: productTemp?.scheduleDate || '',
     images: processImages(productTemp?.images),
-    ingredients: ["Dark Chocolate", "Butter", "Eggs", "Sugar", "Flour", "Vanilla Ice Cream"],
-    sizes: ["Small", "Medium", "Large"],
-    allergens: ["Eggs", "Dairy", "Gluten"],
+    rating: 4.8,
+    reviews: 124,
+    allergens: ["vegetarian", "organic"],
   };
 
   const seller = {
-    name: productTemp?.shop?.name || "Sweet Delights Bakery",
-    avatar: productTemp?.shop?.logo_url || "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=100&h=100&fit=crop",
+    name: productTemp?.producer?.user?.fullname || 'Producer',
+    avatar: productTemp?.producer?.user?.avatar || "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=100&h=100&fit=crop",
     rating: 4.9,
     reviews: 2840,
-    location: productTemp?.shop?.wilaya || "New York, NY",
-    memberSince: "2019",
-    responseTime: "Within 1 hour",
+    location: productTemp?.producer?.user?.wilaya || 'Algeria',
+    memberSince: '2019',
+    responseTime: 'Within 1 hour',
     verified: true
   };
 
@@ -291,7 +289,7 @@ const product = {
       }
 
       // First, try to get existing cart
-      const cartResponse = await fetch(`${config.baseUrl}/api/carts?shop_id=${product.shop_id}`, {
+      const cartResponse = await fetch(`${config.baseUrl}/api/carts?shop_id=${product.producerId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -324,7 +322,7 @@ const product = {
           },
           body: JSON.stringify({
             
-            shop_id: product.shop_id,   
+            shop_id: product.producerId,   
             status: 'open' 
           })
         });
@@ -478,7 +476,7 @@ const product = {
         <View className="bg-white dark:bg-neutral-800 ">
           <View className="relative" style={{ height: 420, margin: 10 }}>
             <Image
-              source={{ uri: temp.images[currentImageIndex] }}
+              source={{ uri: product.images[currentImageIndex] }}
               className="w-full h-full rounded-3xl"
               resizeMode="cover"
             />
@@ -504,7 +502,7 @@ const product = {
 
             {/* Image Indicators */}
             <View className="absolute bottom-4 left-0 right-0 flex-row justify-center gap-2 ">
-              {temp.images.map((_: any, index: number) => (
+              {product.images.map((_: any, index: number) => (
                 <TouchableOpacity
                   key={index}
                   onPress={() => setCurrentImageIndex(index)}
@@ -524,18 +522,18 @@ const product = {
         <View className="bg-white dark:bg-neutral-800 mt-2 p-4">
           <View className="flex-row items-center justify-between"></View>
           <View className="flex-row justify-between">
-          <Text className="text-4xl font-gilroy-bold text-neutral-900 dark:text-white mb-3">{temp.name}</Text>
-            <Text className="text-4xl font-gilroy-bold text-primary">DZD {temp.price}</Text>
+          <Text className="text-4xl font-gilroy-bold text-neutral-900 dark:text-white mb-3">{product.name}</Text>
+            <Text className="text-4xl font-gilroy-bold text-primary">DZD {product.pricePerKg}/kg</Text>
           </View>
           <View className="flex-row items-center mb-4 flex-wrap">
             <View className="flex-row items-center gap-1 mr-4">
               <Star size={18} color="#F59E0B" fill="#F59E0B" />
-              <Text className="text-neutral-900 dark:text-white font-gilroy-semibold">{temp.rating}</Text>
-              <Text className="text-neutral-500 dark:text-neutral-400">({temp.reviews} reviews)</Text>
+              <Text className="text-neutral-900 dark:text-white font-gilroy-semibold">{product.rating}</Text>
+              <Text className="text-neutral-500 dark:text-neutral-400">({product.reviews} reviews)</Text>
             </View>
             <View className="bg-green-100 dark:bg-green-900 px-3 py-1 rounded-lg">
               <Text className="text-green-800 dark:text-green-200 text-sm font-gilroy-semibold">
-                {temp.preparationTime}
+                {product.subcategory || 'Fresh Produce'}
               </Text>
             </View>
           </View>
@@ -547,7 +545,7 @@ const product = {
           </View>
 
           <Text className="text-gray-600 dark:text-neutral-300 leading-relaxed mb-6">
-            {temp.description}
+            {product.description}
           </Text>
 
          
@@ -561,7 +559,7 @@ const product = {
               {t('product.allergensHeader')}
             </Text>
             <View className="flex-row flex-wrap gap-2">
-              {temp.allergens.map((allergen, index) => (
+              {product.allergens.map((allergen, index) => (
                 <View
                   key={index}
                   className="bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 px-3 py-1 rounded-full"
@@ -582,36 +580,36 @@ const product = {
           <Text className="text-xl font-gilroy-bold text-neutral-900 dark:text-white mb-4">{t('product.sellerInfo')}</Text>
           <View className="flex-row gap-4">
             <Image
-              source={{ uri: sellert.avatar }}
+              source={{ uri: seller.avatar }}
               className="w-16 h-16 rounded-full"
               resizeMode="cover"
             />
             <View className="flex-1">
               <View className="flex-row items-center gap-2 mb-1">
-                <Text className="text-lg font-gilroy-bold text-neutral-900 dark:text-white">{sellert.name}</Text>
-                {sellert.verified && (
+                <Text className="text-lg font-gilroy-bold text-neutral-900 dark:text-white">{seller.name}</Text>
+                {seller.verified && (
                   <Award size={16} color="#3B82F6" fill="#3B82F6" />
                 )}
               </View>
               <View className="flex-row items-center gap-1 mb-2">
                 <Star size={14} color="#F59E0B" fill="#F59E0B" />
-                <Text className="text-sm font-gilroy-semibold text-gray-700 dark:text-neutral-300">{sellert.rating}</Text>
-                <Text className="text-sm text-gray-500 dark:text-neutral-400">{t('product.reviewsCount', { count: sellert.reviews })}</Text>
+                <Text className="text-sm font-gilroy-semibold text-gray-700 dark:text-neutral-300">{seller.rating}</Text>
+                <Text className="text-sm text-gray-500 dark:text-neutral-400">{t('product.reviewsCount', { count: seller.reviews })}</Text>
               </View>
               <View className="flex-row items-center gap-4 mb-2">
                 <View className="flex-row items-center gap-1">
                   <MapPin size={14} color="#6B7280" />
-                  <Text className="text-sm text-gray-600 dark:text-neutral-400">{sellert.location}</Text>
+                  <Text className="text-sm text-gray-600 dark:text-neutral-400">{seller.location}</Text>
                 </View>
               </View>
               <View className="flex-row items-center gap-1">
                 <Clock size={14} color="#6B7280" />
-                <Text className="text-sm text-gray-600 dark:text-neutral-400">{sellert.responseTime}</Text>
+                <Text className="text-sm text-gray-600 dark:text-neutral-400">{seller.responseTime}</Text>
               </View>
               <Text className="text-xs text-gray-500 dark:text-neutral-500 mt-2">{t('product.memberSince', { year: seller.memberSince })}</Text>
             </View>
           </View>
-          <TouchableOpacity className="mt-4 w-full bg-gray-100 dark:bg-neutral-800 py-3 rounded-xl items-center" onPress={() => router.push(`/productShop?shop_id=${temp.shop_id}`)}>
+          <TouchableOpacity className="mt-4 w-full bg-gray-100 dark:bg-neutral-800 py-3 rounded-xl items-center" onPress={() => router.push(`/productShop?producerId=${product.producerId}`)}>
             <Text className="text-gray-900 dark:text-white font-gilroy-bold">{t('product.visitStore')}</Text>
           </TouchableOpacity>
         </View>
@@ -729,7 +727,7 @@ const product = {
             >
               <ShoppingCart size={22} color="white" />
               <Text className="text-white font-gilroy-bold text-lg">
-                {t('product.addToCartTotal', { total: (temp.price * quantity).toFixed(2) })}
+                {t('product.addToCartTotal', { total: (product.pricePerKg * quantity).toFixed(2) })}
               </Text>
             </TouchableOpacity>
           </View>

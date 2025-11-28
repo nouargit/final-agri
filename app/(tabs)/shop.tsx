@@ -1,15 +1,13 @@
-import ProfileItemCard from '@/components/ProfileItemCard';
 import { config } from '@/config';
 import { images } from '@/constants/imports';
-import items from '@/constants/items';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { ChevronDown, Plus, Search, X, Package } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { Package, Plus, Search, ShoppingBag, X } from 'lucide-react-native';
+import { useState } from 'react';
 
-import { Alert, Image, Modal, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Alert, Image, Modal, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native';
 import Animated, {
   Extrapolate,
   interpolate,
@@ -20,125 +18,136 @@ import Animated, {
 
 
 
+
 const HEADER_IMAGE_HEIGHT = 250;
 const AVATAR_SIZE = 120;
-const PROFILE_OVERLAP = 100; // How much the profile section overlaps the image
+const PROFILE_OVERLAP = 100;
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  images: string[];
+  category_id: string;
+  producer_id: string;
+  stock: number;
+}
+
+interface Category {
+  id: string;
+  name: string;
+}
+
+interface UserData {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+}
 
 export default function ShopScreen() {
   const [activeTab, setActiveTab] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [newCategory, setNewCategory] = useState('');
-  const [tabs, setTabs] = useState<string[]>(['All']);
-  const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
-  const [shopSelectionVisible, setShopSelectionVisible] = useState(false);
   const scrollY = useSharedValue(0);
-  const [shopItems] = useState([...items]);
   const theme = useColorScheme();
   const { t } = useTranslation();
 
-  const getShopCategories = async () => {
-    const token = await AsyncStorage.getItem('auth_token');
-    if (!token) {
-      throw new Error('No authentication token found. Please login first.');
-    }
-    
-    if (!selectedShopId) {
-      return [];
-    }
-    
-    const url = `${config.baseUrl}/api/categories?shop_id=${selectedShopId}`;
-    
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (response.ok) {
-      const categories = await response.json();
-
-      if (Array.isArray(categories.data)) {
-        const mappedCategories = categories.data.map((category: { name: string; id: string }) => ({
-          label: category.name,
-          value: category.id,
-          id: category.id
-        }));
-
-        setTabs(['All', ...categories.data.map((category: { name: string }) => category.name)]);
-        return mappedCategories;
+  // Fetch user data
+  const getUserData = async (): Promise<UserData | null> => {
+    try {
+      const userData = await AsyncStorage.getItem('user_data');
+      if (userData) {
+        return JSON.parse(userData);
       }
-      return [];
-    } else {
-      throw new Error('Failed to fetch shop categories');
+      return null;
+    } catch (error) {
+      console.error('Error getting user data:', error);
+      return null;
     }
   };
 
-  const getShopData = async () => {
+  // Fetch categories
+  const getCategories = async (): Promise<Category[]> => {
     try {
       const token = await AsyncStorage.getItem('auth_token');
       if (!token) {
-        throw new Error('No authentication token found. Please login first.');
+        throw new Error('No authentication token found');
       }
       
-      const response = await fetch(`${config.baseUrl}${config.shopsUrl}`, {
+      const response = await fetch(`${config.baseUrl}${config.categoriesUrl}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
-          'Content-Type': 'application/json',
         },
       });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
-      }
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const responseText = await response.text();
-        throw new Error(`Expected JSON, got ${contentType}. Response: ${responseText}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch categories');
       }
 
       const data = await response.json();
-      return data;
+      return Array.isArray(data) ? data : [];
     } catch (error) {
-      throw error;
+      console.error('Error fetching categories:', error);
+      return [];
     }
   };
 
-  const { data: shopData } = useQuery({
-    queryKey: ['shop'],
-    queryFn: getShopData,
-    retry: 1,
-    retryDelay: 1000,
-  });
+  // Fetch producer products
+  const getProducerProducts = async (): Promise<Product[]> => {
+    try {
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch(`${config.baseUrl}${config.preducerProductsUrl}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
 
-  const { refetch: refetchCategories } = useQuery({
-    queryKey: ['categories', selectedShopId],
-    queryFn: getShopCategories,
-    retry: 1,
-    retryDelay: 1000,
-    enabled: !!selectedShopId,
-  });
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
 
-  useEffect(() => {
-    if (selectedShopId) {
-      refetchCategories();
-    } else {
-      setTabs(['All']);
+      const data = await response.json();
+      console.log('Fetched products:', data);
+      return data.products || [];
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      return [];
     }
-  }, [selectedShopId, refetchCategories]);
+  };
 
-  const filteredItems = shopItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = activeTab === 'All' || item.category === activeTab;
+  const { data: userData } = useQuery({
+    queryKey: ['userData'],
+    queryFn: getUserData,
+  });
+
+  const { data: categories = [], refetch: refetchCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategories,
+  });
+
+  const { data: products = [], isLoading: productsLoading, refetch: refetchProducts } = useQuery({
+    queryKey: ['producerProducts'],
+    queryFn: getProducerProducts,
+  });
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTab = activeTab === 'All' || product.category_id === activeTab;
     return matchesSearch && matchesTab;
   });
+
+  const tabs = ['All', ...categories.map(cat => cat.name)];
 
   // Animated styles for the entire header section
   const headerAnimatedStyle = useAnimatedStyle(() => {
@@ -183,19 +192,15 @@ export default function ShopScreen() {
   });
 
   const handleAddCategory = async () => {
-    if (newCategory.trim() && !tabs.includes(newCategory.trim())) {
-      if (!selectedShopId) {
-        Alert.alert(t('shop.error'), t('shop.pleaseSelectShop'));
-        return;
-      }
-
+    if (newCategory.trim()) {
       try {
         const token = await AsyncStorage.getItem('auth_token');
         if (!token) {
-          throw new Error('No authentication token found. Please login first.');
+          Alert.alert(t('shop.error') || 'Error', 'Authentication required');
+          return;
         }
 
-        const response = await fetch(`${config.baseUrl}/api/categories`, {
+        const response = await fetch(`${config.baseUrl}${config.categoriesUrl}`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -204,8 +209,6 @@ export default function ShopScreen() {
           },
           body: JSON.stringify({
             name: newCategory.trim(),
-            shop_id: selectedShopId,
-            slug: newCategory.trim().toLowerCase().replace(/\s+/g, '-'),
           }),
         });
 
@@ -213,29 +216,74 @@ export default function ShopScreen() {
           await refetchCategories();
           setNewCategory('');
           setModalVisible(false);
-          Alert.alert(t('common.today') ? t('common.today') && t('shop.selectShop') ? 'Success' : 'Success' : 'Success', t('shop.addCategorySuccess'));
+          Alert.alert(t('common.success') || 'Success', t('shop.addCategorySuccess') || 'Category added successfully');
         } else {
           const errorData = await response.json();
-          Alert.alert(t('shop.error'), errorData.message || t('shop.addCategoryError'));
+          Alert.alert(t('shop.error') || 'Error', errorData.message || t('shop.addCategoryError') || 'Failed to add category');
         }
       } catch (error) {
-        Alert.alert(t('shop.error'), t('shop.addCategoryError'));
+        Alert.alert(t('shop.error') || 'Error', t('shop.addCategoryError') || 'Failed to add category');
       }
     }
   };
+
+  const ProductCard = ({ product }: { product: Product }) => (
+    <TouchableOpacity 
+      activeOpacity={0.8}
+      style={{ width: "100%" }}
+      className="mb-2 px-2"
+      onPress={() => router.push(`/product?id=${product.id}`)}
+    >
+      <View className="bg-white dark:bg-neutral-800 rounded-3xl shadow-lg dark:shadow-neutral-900/30 overflow-hidden border border-neutral-100 dark:border-neutral-700">
+        <View className="relative">
+          <Image
+            source={product.images && product.images.length > 0 
+              ? { uri: product.images[0] } 
+              : images.fallback
+            }
+            style={{ width: "100%", height: 300 }}
+            className="rounded-t-3xl"
+            resizeMode='cover'
+          />
+          <View className="absolute top-2 right-2 bg-primary px-3 py-1 rounded-full">
+            <Text className="text-white font-bold">${product.price}</Text>
+          </View>
+          {product.stock <= 0 && (
+            <View className="absolute inset-0 bg-black/50 items-center justify-center">
+              <Text className="text-white font-bold text-lg">Out of Stock</Text>
+            </View>
+          )}
+        </View>
+
+        <View className="p-4">
+          <Text className="text-lg font-bold text-neutral-900 dark:text-white leading-tight mb-1">
+            {product.name}
+          </Text>
+          <Text className="text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={2}>
+            {product.description || 'No description'}
+          </Text>
+          <View className="flex-row justify-between items-center mt-2">
+            <Text className="text-xs text-neutral-400">Stock: {product.stock}</Text>
+            <TouchableOpacity 
+              onPress={() => router.push(`/product?id=${product.id}`)}
+              className="bg-primary/10 px-3 py-1 rounded-full"
+            >
+              <Text className="text-primary text-xs font-semibold">Edit</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <View className="flex-1 bg-white dark:bg-neutral-950">
       <StatusBar barStyle="light-content" />
 
       <Animated.FlatList
-        data={filteredItems}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View className="flex-1 px-2 pb-4 mt-3">
-            <ProfileItemCard item={item} />
-          </View>
-        )}
+        data={filteredProducts}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <ProductCard product={item} />}
         numColumns={2}
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
@@ -243,36 +291,40 @@ export default function ShopScreen() {
         contentContainerStyle={{ paddingTop: 0 }}
         ListEmptyComponent={
           <View className="items-center justify-center py-20">
-            <Text className="text-gray-500 dark:text-gray-400 text-center">
-              {t('shop.noItems')}
-            </Text>
+            {productsLoading ? (
+              <ActivityIndicator size="large" color="#22680C" />
+            ) : (
+              <>
+                <ShoppingBag size={64} color="#9CA3AF" />
+                <Text className="text-gray-500 dark:text-gray-400 text-center mt-4 text-lg">
+                  {t('shop.noProducts') || 'No products yet'}
+                </Text>
+                <Text className="text-gray-400 dark:text-gray-500 text-center mt-2 px-8">
+                  {t('shop.addFirstProduct') || 'Tap the + button to add your first product'}
+                </Text>
+              </>
+            )}
           </View>
         }
         ListHeaderComponent={
           <>
             {/* Header Container with Image and Overlapping Profile */}
-            <Animated.View style={headerAnimatedStyle} >
+            <Animated.View style={headerAnimatedStyle}>
               {/* Background Image */}
-              
-               <View style={{ height: HEADER_IMAGE_HEIGHT, overflow: 'hidden', }}>
-                
+              <View style={{ height: HEADER_IMAGE_HEIGHT, overflow: 'hidden' }}>
                 <Animated.View style={[{ width: '100%', height: '100%' }, imageAnimatedStyle]}>
                   <Image
-                       source={theme === 'dark' ? images.shopBgBlue : images.shopBgPink}
+                    source={images.fallback}
                     className="w-full h-full opacity-80"
                   />
-                 
                 </Animated.View>
               </View>
-              
-             
 
               {/* Profile Section - Overlapping the image */}
               <View 
                 className="bg-white dark:bg-neutral-950 rounded-t-3xl px-4 pt-16 pb-4"
                 style={{ marginTop: -PROFILE_OVERLAP }}
               >
-                
                 {/* Avatar - Positioned to overlap both sections */}
                 <View 
                   className="absolute mx-5 left-1/2 items-center"
@@ -281,90 +333,75 @@ export default function ShopScreen() {
                     transform: [{ translateX: -AVATAR_SIZE / 2 }]
                   }}
                 >
-                  <Image
-                    source={images.shopAvatar}
+                  <View
                     style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
-                    className="rounded-full border-4 border-white dark:border-neutral-950"
-                  />
+                    className="rounded-full border-4 border-white dark:border-neutral-950 bg-primary/20 items-center justify-center"
+                  >
+                    <Text className="text-4xl font-bold text-primary">
+                      {userData?.fullName?.charAt(0)?.toUpperCase() || 'P'}
+                    </Text>
+                  </View>
                 </View>
 
-               
-             
-                {/* Shop Name */}
+                {/* Producer Name */}
                 <View className="items-center mb-4">
                   <Text className="text-lg font-bold text-neutral-900 dark:text-white mt-2">
-                    {Array.isArray(shopData)
-                      ? shopData[0]?.name || 'No Shop Name'
-                      : shopData?.name || 'No Shop Name'}
+                    {userData?.fullName || 'Producer'}
+                  </Text>
+                  <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+                    {userData?.role === 'producer' ? 'Agricultural Producer' : userData?.role || 'Producer'}
                   </Text>
                 </View>
 
                 {/* Stats */}
                 <View className="flex-row justify-around mb-4">
                   <View className="items-center">
-                    <Text className="text-lg font-bold text-neutral-900 dark:text-white">128</Text>
-                    <Text className="text-sm text-neutral-500 dark:text-neutral-400">Following</Text>
+                    <Text className="text-lg font-bold text-neutral-900 dark:text-white">
+                      {products.length}
+                    </Text>
+                    <Text className="text-sm text-neutral-500 dark:text-neutral-400">Products</Text>
                   </View>
                   <View className="items-center">
-                    <Text className="text-lg font-bold text-neutral-900 dark:text-white">10.5k</Text>
-                    <Text className="text-sm text-neutral-500 dark:text-neutral-400">Followers</Text>
+                    <Text className="text-lg font-bold text-neutral-900 dark:text-white">
+                      {categories.length}
+                    </Text>
+                    <Text className="text-sm text-neutral-500 dark:text-neutral-400">Categories</Text>
                   </View>
                   <View className="items-center">
-                    <Text className="text-lg font-bold text-neutral-900 dark:text-white">89</Text>
-                    <Text className="text-sm text-neutral-500 dark:text-neutral-400">Likes</Text>
+                    <Text className="text-lg font-bold text-neutral-900 dark:text-white">
+                      {products.reduce((sum, p) => sum + p.stock, 0)}
+                    </Text>
+                    <Text className="text-sm text-neutral-500 dark:text-neutral-400">Stock</Text>
                   </View>
                 </View>
-
-                {/* Description */}
-                <Text className="text-center text-neutral-600 dark:text-neutral-400 px-8">
-                  {Array.isArray(shopData)
-                    ? shopData[0]?.description || 'No Shop Description'
-                    : shopData?.description || 'No Shop Description'}
-                </Text>
               </View>
             </Animated.View>
 
-               {/* Action Bar */}
-                <View className="flex-row items-center justify-between mx-4">
-                  <Text className="text-2xl font-bold text-neutral-950 dark:text-white"></Text>
-                  
-                  <View className="flex-row items-center gap-2">
-                    {/* Shop Selection Dropdown */}
-                    <TouchableOpacity
-                      onPress={() => setShopSelectionVisible(true)}
-                      className="bg-gray-100 dark:bg-neutral-700 px-3 py-2 rounded-full flex-row items-center"
-                    >
-                      <Text className="text-sm text-gray-700 dark:text-gray-300 mr-1">
-                        {selectedShopId 
-                      ? (Array.isArray(shopData) 
-                          ? shopData.find(shop => shop.id === selectedShopId)?.name || t('shop.selectShop')
-                          : shopData?.name || t('shop.selectShop'))
-                          : t('shop.selectShop')
-                        }
-                      </Text>
-                      <ChevronDown size={16} color="#6B7280" />
-                    </TouchableOpacity>
+            {/* Action Bar */}
+            <View className="flex-row items-center justify-between mx-4 mb-2">
+              <Text className="text-2xl font-bold text-neutral-950 dark:text-white">My Shop</Text>
+              
+              <View className="flex-row items-center gap-2">
+                {/* Add Product Button */}
+                <TouchableOpacity
+                  onPress={() => router.push('/addProduct')}
+                  className="bg-primary px-4 py-2 rounded-full flex-row items-center"
+                >
+                  <Plus size={20} color="white" />
+                  <Text className="text-white font-semibold ml-1">Product</Text>
+                </TouchableOpacity>
 
-                    {/* Add Category Button */}
-                   
-
-                    {/* Add Product Button */}
-                    <TouchableOpacity
-                      onPress={() => router.push('/addProduct')}
-                      className="bg-gray-100 dark:bg-neutral-700 p-2 rounded-full"
-                    >
-                      <Plus size={24} color="#6B7280" />
-                    </TouchableOpacity>
-                  </View>
-                   <TouchableOpacity className="p-2 bg-slate-200 rounded-full dark:bg-neutral-700" onPress={() => {
-
-                  router.navigate(`../shopOrdersScreen?shop_id=${selectedShopId}`)
-                }}>
+                {/* Orders Button */}
+                <TouchableOpacity 
+                  className="p-2 bg-slate-200 rounded-full dark:bg-neutral-700" 
+                  onPress={() => router.push('/shopOrdersScreen')}
+                >
                   <Package size={24} color="#6B7280" />
                 </TouchableOpacity>
-                </View>
+              </View>
+            </View>
                 
-            {/* Search & Tabs - This stays visible when scrolling */}
+            {/* Search & Tabs */}
             <View className="bg-white dark:bg-neutral-950 px-4 pt-2 pb-2 border-b border-gray-200 dark:border-gray-700">
               {/* Search Bar */}
               <View className="flex-row items-center bg-gray-100 dark:bg-neutral-800 rounded-full px-3 my-3">
@@ -386,30 +423,28 @@ export default function ShopScreen() {
               {/* Category Tabs */}
               <ScrollView horizontal showsHorizontalScrollIndicator={false} className="my-2">
                 {tabs.map((tab) => (
-                 <TouchableOpacity
-                key={tab}
-                onPress={() => setActiveTab(tab)}
-                className={`px-6 py-2 mx-1 border  dark:border-white rounded-3xl mb-2 ${
-                 activeTab === tab ?  'border-2 border-primary dark:border-primary bg-primary/10' : 'border-gray-600 dark:border-gray-400'
-                }`}
-              >
-                <Text
-                  className={`text-sm font-medium ${
-                    activeTab === tab ? 'text-primary dark:text-primary' : 'text-gray-700 dark:text-gray-300'
-                  }`}
-                >
-                  {tab}
-                </Text>
-                
-              </TouchableOpacity>
-              
-                ))}
-                 <TouchableOpacity
-                      onPress={() => setModalVisible(true)}
-                      className="p-2 bg-gray-100 dark:bg-neutral-700 rounded-full ml-1"
+                  <TouchableOpacity
+                    key={tab}
+                    onPress={() => setActiveTab(tab)}
+                    className={`px-6 py-2 mx-1 border dark:border-white rounded-3xl mb-2 ${
+                      activeTab === tab ? 'border-2 border-primary dark:border-primary bg-primary/10' : 'border-gray-600 dark:border-gray-400'
+                    }`}
+                  >
+                    <Text
+                      className={`text-sm font-medium ${
+                        activeTab === tab ? 'text-primary dark:text-primary' : 'text-gray-700 dark:text-gray-300'
+                      }`}
                     >
-                      <Plus size={24} color="#6B7280" />
-                    </TouchableOpacity>
+                      {tab}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity
+                  onPress={() => setModalVisible(true)}
+                  className="p-2 bg-gray-100 dark:bg-neutral-700 rounded-full ml-1"
+                >
+                  <Plus size={24} color="#6B7280" />
+                </TouchableOpacity>
               </ScrollView>
             </View>
           </>
@@ -426,7 +461,9 @@ export default function ShopScreen() {
         <View className="flex-1 justify-end bg-black/50">
           <View className="bg-white dark:bg-gray-800 rounded-t-3xl p-6 pb-8">
             <View className="flex-row items-center justify-between mb-6">
-              <Text className="text-xl font-bold text-gray-900 dark:text-white">{t('shop.addCategory')}</Text>
+              <Text className="text-xl font-bold text-gray-900 dark:text-white">
+                {t('shop.addCategory') || 'Add Category'}
+              </Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <X size={24} color="#6B7280" />
               </TouchableOpacity>
@@ -434,7 +471,7 @@ export default function ShopScreen() {
 
             <TextInput
               className="bg-gray-100 dark:bg-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white mb-4"
-              placeholder={t('shop.categoryName')}
+              placeholder={t('shop.categoryName') || 'Category Name'}
               placeholderTextColor="#9CA3AF"
               value={newCategory}
               onChangeText={setNewCategory}
@@ -445,62 +482,9 @@ export default function ShopScreen() {
               className="bg-primary rounded-xl py-3 items-center"
             >
               <Text className="text-white font-semibold text-base">
-                {t('shop.addCategoryBtn')}
+                {t('shop.addCategoryBtn') || 'Add Category'}
               </Text>
             </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Shop Selection Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={shopSelectionVisible}
-        onRequestClose={() => setShopSelectionVisible(false)}
-      >
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="bg-white dark:bg-gray-800 rounded-t-3xl p-6 pb-8">
-            <View className="flex-row items-center justify-between mb-6">
-              <Text className="text-xl font-bold text-gray-900 dark:text-white">{t('shop.selectShop')}</Text>
-              <TouchableOpacity onPress={() => setShopSelectionVisible(false)}>
-                <X size={24} color="#6B7280" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView className="max-h-80">
-              {Array.isArray(shopData) && shopData.map((shop) => (
-                <TouchableOpacity
-                  key={shop.id}
-                  onPress={() => {
-                    setSelectedShopId(shop.id);
-                    setShopSelectionVisible(false);
-                  }}
-                  className={`p-4 rounded-xl mb-2 ${
-                    selectedShopId === shop.id 
-                      ? 'bg-gray-900 dark:bg-white' 
-                      : 'bg-gray-100 dark:bg-gray-700'
-                  }`}
-                >
-                  <Text className={`font-bold text-3xl m-5 ${
-                    selectedShopId === shop.id 
-                      ? 'text-white dark:text-gray-900' 
-                      : 'text-gray-900 dark:text-white'
-                  }`}>
-                    {shop.name}
-                  </Text>
-                  {shop.description && (
-                    <Text className={`text-sm mt-1 ${
-                      selectedShopId === shop.id 
-                        ? 'text-gray-200 dark:text-gray-600' 
-                        : 'text-gray-600 dark:text-gray-400'
-                    }`}>
-                      {shop.description}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
           </View>
         </View>
       </Modal>

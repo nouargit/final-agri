@@ -30,6 +30,8 @@ export const config = {
   shopsUrl: '/api/shops',
   userUrl: '/api/user',
   productsUrl: '/api/products',
+
+  preducerProductsUrl: '/api/producer/products',
   logoutUrl: '/api/logout',
   profileUrl: '/api/profile',
   ordersUrl: '/api/orders',

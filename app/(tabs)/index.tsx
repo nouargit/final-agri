@@ -1,12 +1,114 @@
-import { Grid, Heart, Home, Leaf, Menu, Search, ShoppingBag, Star } from 'lucide-react-native';
+import { config } from '@/config';
+import { images } from '@/constants/imports';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQuery } from '@tanstack/react-query';
+import { router } from 'expo-router';
+import { Grid, Heart, Home, Leaf, Menu, Search, ShoppingBag } from 'lucide-react-native';
 import { useState } from 'react';
-import { ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  pricePerKg: number;
+  quantityKg: number;
+  minimumOrderKg: number;
+  images?: string[];
+  subcategory: string;
+  producer_id?: string;
+  producerId: string;
+  grade: string;
+  harvestDate: string;
+  scheduleDate?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+}
 
 export default function FarmMarketplaceHome() {
   const [activeCategory, setActiveCategory] = useState('All');
-  const [favorites, setFavorites] = useState<Record<number, boolean>>({});
+  const [favorites, setFavorites] = useState<Record<string, boolean>>({});
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const categories = ['All', 'Fresh', 'Vegetables', 'Fruits', 'Dairy'];
+  // Fetch categories
+  const getCategories = async (): Promise<Category[]> => {
+    try {
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch(`${config.baseUrl}${config.categoriesUrl}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch categories');
+      }
+
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      return [];
+    }
+  };
+
+  // Fetch all products (from all producers)
+  const getAllProducts = async (): Promise<Product[]> => {
+    try {
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      // Using the legacy products endpoint for consumer view
+      const response = await fetch(`${config.baseUrl}${config.productsUrl}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+
+      const data = await response.json();
+      console.log('Fetched products data:', data);
+      return data.products || [];
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      return [];
+    }
+  };
+
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategories,
+  });
+
+  const { data: products = [], isLoading: productsLoading } = useQuery({
+    queryKey: ['allProducts'],
+    queryFn: getAllProducts,
+  });
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = activeCategory === 'All' || product.subcategory === activeCategory;
+    return matchesSearch && matchesCategory && product.quantityKg > 0;
+  });
 
   const promosBanners = [
     { id: 1, title: 'Fresh Harvest', subtitle: '30% OFF', description: 'Organic Vegetables', emoji: '🥬', color: 'bg-green-400' },
@@ -15,17 +117,13 @@ export default function FarmMarketplaceHome() {
     { id: 4, title: 'Dairy Delight', subtitle: '20% OFF', description: 'Fresh From Farm', emoji: '🥛', color: 'bg-yellow-400' },
   ];
 
-  const products = [
-    { id: 1, name: 'Fresh Tomatoes', originalPrice: 4, price: 3, unit: 'kg', image: '🍅', rating: 4.5 },
-    { id: 2, name: 'Organic Carrots', originalPrice: 3, price: 2, unit: 'kg', image: '🥕', rating: 4.8 },
-    { id: 3, name: 'Farm Eggs', originalPrice: 6, price: 5, unit: 'dozen', image: '🥚', rating: 4.9 },
-    { id: 4, name: 'Fresh Apples', originalPrice: 8, price: 6, unit: 'kg', image: '🍎', rating: 4.7 },
-    { id: 5, name: 'Sweet Corn', originalPrice: 5, price: 4, unit: 'kg', image: '🌽', rating: 4.6 },
-    { id: 6, name: 'Fresh Milk', originalPrice: 4, price: 3, unit: 'liter', image: '🥛', rating: 4.8 },
-  ];
-
-  const toggleFavorite = (id: number) => {
+  const toggleFavorite = (id: string) => {
     setFavorites(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const getCategoryName = (categoryId: string): string => {
+    const category = categories.find(cat => cat.id === categoryId);
+    return category?.name || 'All';
   };
 
   return (
@@ -48,9 +146,11 @@ export default function FarmMarketplaceHome() {
         <View className="flex-row items-center bg-gray-100 rounded-xl px-4 py-3 mb-4">
           <Search size={20} color="#9CA3AF" />
           <TextInput
-            placeholder="Search"
+            placeholder="Search products..."
             placeholderTextColor="#9CA3AF"
             className="flex-1 ml-2 text-gray-900"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
           />
         </View>
 
@@ -91,67 +191,133 @@ export default function FarmMarketplaceHome() {
           showsHorizontalScrollIndicator={false}
           className="px-4 mt-6 mb-4"
         >
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category}
-              onPress={() => setActiveCategory(category)}
-              className={`mr-3 px-5 py-2.5 rounded-full ${
-                activeCategory === category
-                  ? 'bg-white border-2 border-gray-900'
-                  : 'bg-white border border-gray-200'
-              }`}
-            >
-              <Text
-                className={`${
-                  activeCategory === category
-                    ? 'text-gray-900 font-semibold'
-                    : 'text-gray-500'
+          {categoriesLoading ? (
+            <ActivityIndicator size="small" color="#16A34A" />
+          ) : (
+            <>
+              <TouchableOpacity
+                onPress={() => setActiveCategory('All')}
+                className={`mr-3 px-5 py-2.5 rounded-full ${
+                  activeCategory === 'All'
+                    ? 'bg-white border-2 border-gray-900'
+                    : 'bg-white border border-gray-200'
                 }`}
               >
-                {category}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text
+                  className={`${
+                    activeCategory === 'All'
+                      ? 'text-gray-900 font-semibold'
+                      : 'text-gray-500'
+                  }`}
+                >
+                  All
+                </Text>
+              </TouchableOpacity>
+              {categories.map((category) => (
+                <TouchableOpacity
+                  key={category.id}
+                  onPress={() => setActiveCategory(category.id)}
+                  className={`mr-3 px-5 py-2.5 rounded-full ${
+                    activeCategory === category.id
+                      ? 'bg-white border-2 border-gray-900'
+                      : 'bg-white border border-gray-200'
+                  }`}
+                >
+                  <Text
+                    className={`${
+                      activeCategory === category.id
+                        ? 'text-gray-900 font-semibold'
+                        : 'text-gray-500'
+                    }`}
+                  >
+                    {category.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </>
+          )}
         </ScrollView>
 
         {/* Products Grid */}
         <View className="px-4 flex-row flex-wrap justify-between pb-24">
-          {products.map((product) => (
-            <View key={product.id} className="w-[48%] mb-4">
-              <View className="bg-white rounded-2xl p-4 shadow-sm">
-                {/* Product Image */}
-                <View className="bg-green-50 rounded-2xl h-36 items-center justify-center mb-3 relative">
-                  <Text className="text-6xl">{product.image}</Text>
-                  
-                  {/* Favorite Button */}
-                  <TouchableOpacity
-                    onPress={() => toggleFavorite(product.id)}
-                    className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-sm"
-                  >
-                    <Heart
-                      size={18}
-                      color={favorites[product.id] ? '#EF4444' : '#9CA3AF'}
-                      fill={favorites[product.id] ? '#EF4444' : 'none'}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                {/* Product Info */}
-                <Text className="text-gray-900 font-semibold mb-1">{product.name}</Text>
-                <View className="flex-row items-center justify-between mb-1">
-                  <View className="flex-row items-center">
-                    
-                    <Text className="text-green-600 font-bold">${product.price}</Text>
-                  </View>
-                  <View className="flex-row items-center">
-                    <Star size={14} color="#FCD34D" fill="#FCD34D" />
-                    <Text className="text-gray-600 text-xs ml-1">{product.rating}</Text>
-                  </View>
-                </View>
-                <Text className="text-gray-500 text-xs">per {product.unit}</Text>
-              </View>
+          {productsLoading ? (
+            <View className="w-full items-center justify-center py-20">
+              <ActivityIndicator size="large" color="#16A34A" />
+              <Text className="text-gray-500 mt-4">Loading products...</Text>
             </View>
-          ))}
+          ) : filteredProducts.length === 0 ? (
+            <View className="w-full items-center justify-center py-20">
+              <ShoppingBag size={64} color="#9CA3AF" />
+              <Text className="text-gray-500 mt-4 text-lg">No products found</Text>
+              <Text className="text-gray-400 text-sm mt-2">Try adjusting your search or filters</Text>
+            </View>
+          ) : (
+            filteredProducts.map((product) => (
+              <TouchableOpacity 
+                key={product.id} 
+                className="w-[48%] mb-4"
+                onPress={() => router.push(`/product?id=${product.id}`)}
+                activeOpacity={0.7}
+              >
+                <View className="bg-white rounded-2xl p-4 shadow-sm">
+                  {/* Product Image */}
+                  <View className="bg-green-50 rounded-2xl h-36 items-center justify-center mb-3 relative overflow-hidden">
+                    {product.images && product.images.length > 0 ? (
+                      <Image
+                        source={{ uri: product.images[0] }}
+                        style={{ width: '100%', height: '100%' }}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <Image
+                        source={images.fallback}
+                        style={{ width: '100%', height: '100%' }}
+                        resizeMode="cover"
+                      />
+                    )}
+                    
+                    {/* Favorite Button */}
+                    <TouchableOpacity
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(product.id);
+                      }}
+                      className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-sm"
+                    >
+                      <Heart
+                        size={18}
+                        color={favorites[product.id] ? '#EF4444' : '#9CA3AF'}
+                        fill={favorites[product.id] ? '#EF4444' : 'none'}
+                      />
+                    </TouchableOpacity>
+
+                    {/* Stock Badge */}
+                    <View className="absolute bottom-2 left-2 bg-white/90 px-2 py-1 rounded-full">
+                      <Text className="text-xs text-gray-700">{product.quantityKg}kg</Text>
+                    </View>
+                  </View>
+
+                  {/* Product Info */}
+                  <Text className="text-gray-900 font-semibold mb-1" numberOfLines={1}>
+                    {product.name}
+                  </Text>
+                  <Text className="text-gray-500 text-xs mb-2" numberOfLines={2}>
+                    {product.description || 'Fresh from local farms'}
+                  </Text>
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-green-600 font-bold text-lg">
+                      ${product.pricePerKg}/kg
+                    </Text>
+                    <View className="bg-green-50 px-2 py-1 rounded-full">
+                      <Text className="text-green-700 text-xs font-semibold">
+                        {product.subcategory}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
       </ScrollView>
 
