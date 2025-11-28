@@ -1,47 +1,55 @@
 import { ImageSourcePropType } from "react-native";
-import {CakeSlice,CupSoda} from 'lucide-react-native'
+import {Carrot,Cherry,Sprout,Wheat,TextAlignJustify} from 'lucide-react-native'
 interface Category {
   id: number;
   name: string;
-  image: ImageSourcePropType;
+
   bgColor: string;
-icon:any;
+    icon:any;
   pp: number;
 }
 
 const categoriesEN: Category[] = [
   {
+    id: 0,
+    name: 'All',
+
+    bgColor: '#7AD47A', // butter yellow
+    pp: -20,
+    icon: TextAlignJustify
+  },
+  {
     id: 1,
-    name: 'Cakes',
-    image: require('@/assets/images/pngwing.com (1).png'),
-    bgColor: '#E48C6B', // warm caramel-orange
+    name: 'vegetables',
+
+    bgColor: '#ffc072', // warm caramel-orange
 
     pp: -35,
-    icon: CakeSlice as any
+    icon: Carrot as any
   },
   {
     id: 2,
-    name: 'Bevergerge',
-    image: require('@/assets/images/bakion.png'),
-    bgColor: '#F7D96E', // butter yellow
+    name: 'Fruits',
+       
+    bgColor: '#e28a86', // butter yellow
     pp: -20,
-    icon: CupSoda
+    icon: Cherry
   },
   {
     id: 3,
-    name: 'Macaron',
-    image: require('@/assets/images/macaron.png'),
-    bgColor: '#D980C7', // lavender-pink
+    name: 'Seeds',
+
+    bgColor: '#F7D96E', // lavender-pink
     pp: -35,
-    icon: CakeSlice
+    icon: Sprout
   },
   {
     id: 4,
-    name: 'Snacks',
-    image: require('@/assets/images/pngwing.com.png'),
+    name: 'Grains',
+       
     bgColor: '#7AD47A', // mint green
     pp: -40,
-    icon: CakeSlice
+    icon: Wheat 
   },
 ];
 

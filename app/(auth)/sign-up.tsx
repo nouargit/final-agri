@@ -125,7 +125,7 @@ export default function SignUpScreen() {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View className="flex-1 bg-white justify-center px-6">
-          <Text className="text-2xl font-bold mb-10 text-center">Create Account</Text>
+          <Text className="text-6xl text-primary font-gilroy-bold mb-10 text-center">agro</Text>
 
           {error ? <Text className="text-red-500 text-center mb-3">{error}</Text> : null}
 
@@ -159,7 +159,7 @@ export default function SignUpScreen() {
             <Text className="text-gray-600">Already have an account? </Text>
             <Link href="/sign-in" asChild>
               <TouchableOpacity>
-                <Text className="text-[#ff6370] font-semibold">Sign In</Text>
+                <Text className="text-primary font-semibold">Sign In</Text>
               </TouchableOpacity>
             </Link>
           </View>

@@ -28,7 +28,7 @@ export default function AuthLayout() {
   if (isLoading) {
     return null; // or a loading spinner
   }
-
+//------------------------------------------------------------------reversed condition
   if (isAuthenticated) return <Redirect href="/(tabs)" />;
 
 

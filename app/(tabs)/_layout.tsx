@@ -42,7 +42,7 @@ export default function TabLayout() {
     return null; // or a loading spinner
   }
 
-  if (!isAuthenticated) return <Redirect href="/(auth)/sign-in" />;
+   // if (!isAuthenticated) return <Redirect href="/(auth)/sign-in" />;
   
   return (
     <Tabs

@@ -1,18 +1,19 @@
+import { useColorScheme } from '@/hooks/useColorScheme';
+import i18n, { initializeI18n } from '@/lib/i18n';
+import { NavigationContainer } from '@react-navigation/native';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-import './globals.css';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
+import { Text, TextInput } from 'react-native';
 import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import i18n, { initializeI18n } from '@/lib/i18n';
-import { useEffect, useState } from 'react';
-import { Text } from 'react-native';
-import { TextInput } from 'react-native';
+import 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import './globals.css';
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -79,6 +80,7 @@ export default function RootLayout() {
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">
         <QueryClientProvider client={queryClient}>
           <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            
             <Stack
               screenOptions={{
                 animation: 'slide_from_right',
@@ -127,6 +129,7 @@ export default function RootLayout() {
                   animation: 'slide_from_bottom'
                 }} 
               />
+              
             </Stack>
             <StatusBar style="auto" />
           </ThemeProvider>

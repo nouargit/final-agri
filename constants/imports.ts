@@ -11,22 +11,17 @@ search
 
 }
 export const images={
-    loginGraphic:require("../assets/images/login-graphic.png"),
-    avatar:require("../assets/images/avatar.png"),
-   bluePudding:require("../assets/images/bluePudding.jpg"),
-   patesry:require("../assets/images/patesry.jpg"),
-   panCake:require("../assets/images/panCake.jpg"),
-   cake:require("../assets/images/c1.jpg"),
-   cake2:require("../assets/images/c3.jpg"),
-   shopAvatar:require("../assets/images/shopAvatar.jpg"),
-   logo:require("../assets/images/textLogo.webp"),
-   baklawa:require("../assets/images/baklawa.jpg"),
-   beghrir:require("../assets/images/beghrir.jpg"),
-   shopBg:require("../assets/images/408.png"),
-   shopBgBlue:require("../assets/images/shopBgBlue.png"),
-   shopBgPink:require("../assets/images/shopBgPink.png"),
-   shopMarker:require("../assets/images/store.png"),
-   zamel:require("../assets/images/zamel.jpg"),
+    
+   fallback:require("../assets/images/fallback.jpg"),
+   potato:require("../assets/images/potato.jpg"),
+   orange:require("../assets/images/orange.jpg"),
+   salad:require("../assets/images/salad.webp"),
+   kameh:require("../assets/images/kameh.webp"),
+   branche:require("../assets/images/branche.png"),
+   frame:require("../assets/images/frame.png"),
+   truck:require("../assets/images/truck.png"),
+   
+
 
 
    

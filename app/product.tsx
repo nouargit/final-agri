@@ -18,15 +18,77 @@ import { router, useLocalSearchParams } from 'expo-router';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 const { width } = Dimensions.get('window');
- const temp={images: [
-      "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800&h=600&fit=crop"
+ const temp= {
+    id:  1,
+    shop_id: 1,
+    name: "potato" ,
+    price: 12.99,
+    originalPrice: 15.99,
+    rating:  4.8,
+    reviews: 124,
+    description: 
+      "Pommes de terre biologiques fraîches de fermes locales dans la région de Chaouia. Cultivées naturellement sans pesticides chimiques, riches en vitamines et minéraux",
+    preparationTime: "15-20 min",
+    calories: "580 cal",
+    images: [
+      "https://images.unsplash.com/photo-1547514701-42782101795e?w=800&h=600&fit=crop", // Mixed fresh vegetables
+  "https://images.unsplash.com/photo-1604719312566-4a44d5c36d5f?w=800&h=600&fit=crop", // Colorful bell peppers
+  "https://images.unsplash.com/photo-1598170845058-32b9d6a5da03?w=800&h=600&fit=crop", // Fresh tomatoes & greens
+  "https://images.unsplash.com/photo-1607305387299-c3e26e305a56?w=800&h=600&fit=crop", // Carrots, broccoli, cauliflower
+  "https://images.unsplash.com/photo-1615485290382-1c792f195175?w=800&h=600&fit=crop", // Vibrant vegetable basket
+  "https://images.unsplash.com/photo-1596049869095-8e8c13e09c43?w=800&h=600&fit=crop", // Farm-fresh produce close-up
+  "https://images.unsplash.com/photo-1619566636858-029ced50d502?w=800&h=600&fit=crop", // Rainbow carrots
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop", // Fresh salad ingredients
+  "https://images.unsplash.com/photo-1518841124067-47d4c9c49177?w=800&h=600&fit=crop", // Heirloom tomatoes
+  "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&h=600&fit=crop", // Broccoli & greens
+  "https://images.unsplash.com/photo-1590779033100-9f60a05a013d?w=800&h=600&fit=crop", // Avocado & veggies
+  "https://images.unsplash.com/photo-1604902395341-1257e05d4448?w=800&h=600&fit=crop",
     ],
-    ingredients: ["Dark Chocolate", "Butter", "Eggs", "Sugar", "Flour", "Vanilla Ice Cream"],
-    sizes: ["Small", "Medium", "Large"],
-    allergens: ["Eggs", "Dairy", "Gluten"],}
+
+
+    allergens: ["vegetarian", "organic"],
+  };
+
+  const sellert = {
+    name: "Sweet Delights Bakery",
+    avatar: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=100&h=100&fit=crop",
+    rating: 4.9,
+    reviews: 2840,
+    location: "New York, NY",
+    memberSince: "2019",
+    responseTime: "Within 1 hour",
+    verified: true
+  };
+
+  const comments = [
+    {
+      id: 1,
+      user: "Sarah Johnson",
+      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=50&h=50&fit=crop",
+      rating: 5,
+      date: "2 days ago",
+      comment: "Absolutely divine! The molten center was perfectly gooey and the ice cream complemented it beautifully. Will definitely order again!",
+      helpful: 24
+    },
+    {
+      id: 2,
+      user: "Michael Chen",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop",
+      rating: 5,
+      date: "1 week ago",
+      comment: "Best chocolate lava cake I've ever had! Rich, decadent, and the portion size is generous. Highly recommend!",
+      helpful: 18
+    },
+    {
+      id: 3,
+      user: "Emma Davis",
+      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop",
+      rating: 4,
+      date: "2 weeks ago",
+      comment: "Really good but a bit too sweet for my taste. The presentation was beautiful and delivery was quick.",
+      helpful: 12
+    }
+  ];
 
 // Helper function to process images from database
 const processImages = (images: any) => {
@@ -76,9 +138,7 @@ const ProductScreen = () => {
   const getProducts = useCallback(async () => {
   try {
      const token = await AsyncStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('No authentication token found. Please login first.');
-      }
+      
      
     const response = await fetch(`${config.baseUrl}/api/products/${productId}`,{
       method:'GET',
@@ -160,6 +220,7 @@ const processImages = (images: any) => {
     "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800&h=600&fit=crop"
   ];
 };
+
 
 const product = {
     id: productTemp?.id || 1,
@@ -369,7 +430,7 @@ const product = {
   console.log("product",product.images[0])
 
   // Add loading and error states
-  if (isLoading) {
+  /*if (isLoading) {
     return (
       <SafeAreaView className="bg-gray-50 flex-1 dark:bg-neutral-900 pt-7 justify-center items-center">
         <Text className="text-gray-600 dark:text-gray-400">{t('product.loadingProduct')}</Text>
@@ -384,7 +445,7 @@ const product = {
         <Text className="text-gray-600 dark:text-gray-400 mt-2">{error.message}</Text>
       </SafeAreaView>
     );
-  }
+  }*/
 
 
   
@@ -417,7 +478,7 @@ const product = {
         <View className="bg-white dark:bg-neutral-800 ">
           <View className="relative" style={{ height: 420, margin: 10 }}>
             <Image
-              source={{ uri: product.images[currentImageIndex] }}
+              source={{ uri: temp.images[currentImageIndex] }}
               className="w-full h-full rounded-3xl"
               resizeMode="cover"
             />
@@ -443,7 +504,7 @@ const product = {
 
             {/* Image Indicators */}
             <View className="absolute bottom-4 left-0 right-0 flex-row justify-center gap-2 ">
-              {product.images.map((_: any, index: number) => (
+              {temp.images.map((_: any, index: number) => (
                 <TouchableOpacity
                   key={index}
                   onPress={() => setCurrentImageIndex(index)}
@@ -463,18 +524,18 @@ const product = {
         <View className="bg-white dark:bg-neutral-800 mt-2 p-4">
           <View className="flex-row items-center justify-between"></View>
           <View className="flex-row justify-between">
-          <Text className="text-4xl font-gilroy-bold text-neutral-900 dark:text-white mb-3">{product.name}</Text>
-            <Text className="text-4xl font-gilroy-bold text-primary">${product.price}</Text>
+          <Text className="text-4xl font-gilroy-bold text-neutral-900 dark:text-white mb-3">{temp.name}</Text>
+            <Text className="text-4xl font-gilroy-bold text-primary">DZD {temp.price}</Text>
           </View>
           <View className="flex-row items-center mb-4 flex-wrap">
             <View className="flex-row items-center gap-1 mr-4">
               <Star size={18} color="#F59E0B" fill="#F59E0B" />
-              <Text className="text-neutral-900 dark:text-white font-gilroy-semibold">{product.rating}</Text>
-              <Text className="text-neutral-500 dark:text-neutral-400">({product.reviews} reviews)</Text>
+              <Text className="text-neutral-900 dark:text-white font-gilroy-semibold">{temp.rating}</Text>
+              <Text className="text-neutral-500 dark:text-neutral-400">({temp.reviews} reviews)</Text>
             </View>
             <View className="bg-green-100 dark:bg-green-900 px-3 py-1 rounded-lg">
               <Text className="text-green-800 dark:text-green-200 text-sm font-gilroy-semibold">
-                {product.preparationTime}
+                {temp.preparationTime}
               </Text>
             </View>
           </View>
@@ -486,46 +547,13 @@ const product = {
           </View>
 
           <Text className="text-gray-600 dark:text-neutral-300 leading-relaxed mb-6">
-            {product.description}
+            {temp.description}
           </Text>
 
-          {/* Size Selection */}
-          <View className="mb-6">
-            <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-3">{t('product.size')}</Text>
-            <View className="flex-row gap-3">
-              {product.sizes.map((size) => (
-                <TouchableOpacity
-                  key={size}
-                  onPress={() => setSelectedSize(size)}
-                  className={`px-6 py-2 rounded-xl border-2 ${
-                    selectedSize === size
-                      ? "border-primary bg-orange-50 dark:bg-orange-900/20"
-                      : "border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800"
-                  }`}
-                >
-                  <Text
-                    className={`font-mediumgilroy-semibold ${
-                      selectedSize === size ? "text-orange-600" : "text-gray-700 dark:text-neutral-200"
-                    }`}
-                  >
-                    {size}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+         
+          
 
-          {/* Ingredients */}
-          <View className="mb-6">
-            <Text className="text-lg font-gilroy-semibold text-neutral-900 dark:text-white mb-3">{t('product.ingredients')}</Text>
-            <View className="flex-row flex-wrap gap-2">
-              {product.ingredients.map((ingredient, index) => (
-                <View key={index} className="bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full">
-                  <Text className="text-blue-800 dark:text-blue-200 text-sm">{ingredient}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
+         
 
           {/* Allergen Info */}
          <View className="mb-6">
@@ -533,13 +561,13 @@ const product = {
               {t('product.allergensHeader')}
             </Text>
             <View className="flex-row flex-wrap gap-2">
-              {product.allergens.map((allergen, index) => (
+              {temp.allergens.map((allergen, index) => (
                 <View
                   key={index}
                   className="bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 px-3 py-1 rounded-full"
                 >
                   <Text className="text-yellow-800 dark:text-yellow-200 text-sm font-gilroy-semibold">
-                    {t('product.contains', { item: allergen })}
+                    {allergen}
                   </Text>
                 </View>
               ))}
@@ -554,36 +582,36 @@ const product = {
           <Text className="text-xl font-gilroy-bold text-neutral-900 dark:text-white mb-4">{t('product.sellerInfo')}</Text>
           <View className="flex-row gap-4">
             <Image
-              source={{ uri: seller.avatar }}
+              source={{ uri: sellert.avatar }}
               className="w-16 h-16 rounded-full"
               resizeMode="cover"
             />
             <View className="flex-1">
               <View className="flex-row items-center gap-2 mb-1">
-                <Text className="text-lg font-gilroy-bold text-neutral-900 dark:text-white">{seller.name}</Text>
-                {seller.verified && (
+                <Text className="text-lg font-gilroy-bold text-neutral-900 dark:text-white">{sellert.name}</Text>
+                {sellert.verified && (
                   <Award size={16} color="#3B82F6" fill="#3B82F6" />
                 )}
               </View>
               <View className="flex-row items-center gap-1 mb-2">
                 <Star size={14} color="#F59E0B" fill="#F59E0B" />
-                <Text className="text-sm font-gilroy-semibold text-gray-700 dark:text-neutral-300">{seller.rating}</Text>
-                <Text className="text-sm text-gray-500 dark:text-neutral-400">{t('product.reviewsCount', { count: seller.reviews })}</Text>
+                <Text className="text-sm font-gilroy-semibold text-gray-700 dark:text-neutral-300">{sellert.rating}</Text>
+                <Text className="text-sm text-gray-500 dark:text-neutral-400">{t('product.reviewsCount', { count: sellert.reviews })}</Text>
               </View>
               <View className="flex-row items-center gap-4 mb-2">
                 <View className="flex-row items-center gap-1">
                   <MapPin size={14} color="#6B7280" />
-                  <Text className="text-sm text-gray-600 dark:text-neutral-400">{seller.location}</Text>
+                  <Text className="text-sm text-gray-600 dark:text-neutral-400">{sellert.location}</Text>
                 </View>
               </View>
               <View className="flex-row items-center gap-1">
                 <Clock size={14} color="#6B7280" />
-                <Text className="text-sm text-gray-600 dark:text-neutral-400">{seller.responseTime}</Text>
+                <Text className="text-sm text-gray-600 dark:text-neutral-400">{sellert.responseTime}</Text>
               </View>
               <Text className="text-xs text-gray-500 dark:text-neutral-500 mt-2">{t('product.memberSince', { year: seller.memberSince })}</Text>
             </View>
           </View>
-          <TouchableOpacity className="mt-4 w-full bg-gray-100 dark:bg-neutral-800 py-3 rounded-xl items-center" onPress={() => router.push(`/productShop?shop_id=${product.shop_id}`)}>
+          <TouchableOpacity className="mt-4 w-full bg-gray-100 dark:bg-neutral-800 py-3 rounded-xl items-center" onPress={() => router.push(`/productShop?shop_id=${temp.shop_id}`)}>
             <Text className="text-gray-900 dark:text-white font-gilroy-bold">{t('product.visitStore')}</Text>
           </TouchableOpacity>
         </View>
@@ -601,13 +629,13 @@ const product = {
           <View className="bg-gray-50 dark:bg-neutral-900 rounded-xl p-6 mb-6">
             <View className="flex-row gap-8">
               <View className="items-center">
-                <Text className="text-5xl font-gilroy-bold text-neutral-900 dark:text-white mb-2">{product.rating}</Text>
+                <Text className="text-5xl font-gilroy-bold text-neutral-900 dark:text-white mb-2">{temp.rating}</Text>
                 <View className="flex-row gap-1 mb-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star key={star} size={20} color="#F59E0B" fill="#F59E0B" />
                   ))}
                 </View>
-                <Text className="text-sm text-gray-600 dark:text-neutral-400">{t('product.reviewsCount', { count: product.reviews })}</Text>
+                <Text className="text-sm text-gray-600 dark:text-neutral-400">{t('product.reviewsCount', { count: temp.reviews })}</Text>
               </View>
               <View className="flex-1 gap-2">
                 {[5, 4, 3, 2, 1].map((stars) => (
@@ -701,7 +729,7 @@ const product = {
             >
               <ShoppingCart size={22} color="white" />
               <Text className="text-white font-gilroy-bold text-lg">
-                {t('product.addToCartTotal', { total: (product.price * quantity).toFixed(2) })}
+                {t('product.addToCartTotal', { total: (temp.price * quantity).toFixed(2) })}
               </Text>
             </TouchableOpacity>
           </View>

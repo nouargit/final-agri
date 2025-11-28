@@ -30,7 +30,7 @@ const [isFocused,setIsFocused] = useState(false);
         keyboardType={keyboardType}
 
 
-        className={cn( 'h-[50px] border border-[#ddd] rounded-xl px-4 mb-4 text-base bg-[#f9f9f9] paragraph-semibold',isFocused?'border-primary':'border-gray-300')}
+        className={cn( 'h-[50px]  rounded-xl px-4 mb-4 text-base bg-[#f3f3f3] paragraph-semibold',isFocused?'border-primary':'border-gray-300')}
 
       />
     </View>

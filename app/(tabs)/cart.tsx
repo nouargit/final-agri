@@ -1,285 +1,285 @@
-import { useState } from 'react'
-import Bag from '@/components/Bag'
-import { config } from '@/config'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useQuery } from '@tanstack/react-query'
-import { Search, ShoppingCart, AlertCircle, Package, Clock } from 'lucide-react-native'
-import { 
-  FlatList, 
-  Text, 
-  TextInput, 
-  View, 
-  ActivityIndicator,
-  RefreshControl,
-  TouchableOpacity,
-  Animated
-} from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { useTranslation } from 'react-i18next'
+// app/(tabs)/shop.tsx
+import React, { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { ShoppingCart, Package, Clock, CheckCircle, XCircle } from 'lucide-react-native';
 
-const Cart = () => {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'bags' | 'orders'>('bags')
-  const { t } = useTranslation()
+export default function ShopScreen() {
+  const [activeTab, setActiveTab] = useState('carts');
 
-  const getCarts = async () => {
-    try {
-      const token = await AsyncStorage.getItem('auth_token')
-      if (!token) {
-        throw new Error('No token found')
-      }
-
-      const response = await fetch(`${config.baseUrl}/api/carts`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch cart: ${response.status}`)
-      }
-
-      const data = await response.json()
-      //console.log('Fetched cart :', data)
-      return data.data || []
-    } catch (error) {
-      console.error('Error fetching cart:', error)
-      throw error
+  const cartItems = [
+    {
+      id: 1,
+      name: 'Wireless Headphones',
+      price: 89.99,
+      quantity: 1,
+      image: '🎧',
+      color: 'Black'
+    },
+    {
+      id: 2,
+      name: 'Smart Watch',
+      price: 249.99,
+      quantity: 2,
+      image: '⌚',
+      color: 'Silver'
+    },
+    {
+      id: 3,
+      name: 'Phone Case',
+      price: 19.99,
+      quantity: 1,
+      image: '📱',
+      color: 'Blue'
     }
-  }
+  ];
 
-  const getOrders = async () => {
-    try {
-      const token = await AsyncStorage.getItem('auth_token')
-      if (!token) {
-        throw new Error('No token found')
-      }
-
-      const response = await fetch(`${config.baseUrl}/api/orders`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch orders: ${response.status}`)
-      }
-
-      const data = await response.json()
-      return data.data || []
-    } catch (error) {
-      console.error('Error fetching orders:', error)
-      throw error
+  const orders = [
+    {
+      id: 'ORD-001',
+      date: '2024-11-20',
+      status: 'delivered',
+      total: 156.99,
+      items: 3,
+      tracking: 'TRK123456'
+    },
+    {
+      id: 'ORD-002',
+      date: '2024-11-18',
+      status: 'in-transit',
+      total: 89.99,
+      items: 1,
+      tracking: 'TRK123457'
+    },
+    {
+      id: 'ORD-003',
+      date: '2024-11-15',
+      status: 'processing',
+      total: 320.50,
+      items: 5,
+      tracking: 'TRK123458'
     }
-  }
+  ];
 
-  const { data: carts = [], isLoading: isLoadingCarts, error: cartsError, refetch: refetchCarts } = useQuery({
-    queryKey: ['carts'],
-    queryFn: getCarts,
-    enabled: activeTab === 'bags',
-  })
+  const getStatusClasses = (status: string) => {
+    switch (status) {
+      case 'delivered':
+        return 'bg-green-100';
+      case 'in-transit':
+        return 'bg-blue-100';
+      case 'processing':
+        return 'bg-yellow-100';
+      case 'cancelled':
+        return 'bg-red-100';
+      default:
+        return 'bg-gray-100';
+    }
+  };
 
-  const { data: orders = [], isLoading: isLoadingOrders, error: ordersError, refetch: refetchOrders } = useQuery({
-    queryKey: ['orders'],
-    queryFn: getOrders,
-    enabled: activeTab === 'orders',
-  })
+  const getStatusTextClasses = (status: string) => {
+    switch (status) {
+      case 'delivered':
+        return 'text-green-700';
+      case 'in-transit':
+        return 'text-blue-700';
+      case 'processing':
+        return 'text-yellow-700';
+      case 'cancelled':
+        return 'text-red-700';
+      default:
+        return 'text-gray-700';
+    }
+  };
 
-  const isLoading = activeTab === 'bags' ? isLoadingCarts : isLoadingOrders
-  const error = activeTab === 'bags' ? cartsError : ordersError
-  const refetch = activeTab === 'bags' ? refetchCarts : refetchOrders
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'delivered':
+        return <CheckCircle size={16} color="#15803d" />;
+      case 'in-transit':
+        return <Package size={16} color="#1d4ed8" />;
+      case 'processing':
+        return <Clock size={16} color="#a16207" />;
+      case 'cancelled':
+        return <XCircle size={16} color="#b91c1c" />;
+      default:
+        return null;
+    }
+  };
 
-  // Filter data based on search query
-  const currentData = activeTab === 'bags' ? carts : orders
-  const filteredData = currentData.filter((item: any) => {
-    if (!searchQuery) return true
-    const shopName = item?.shop?.name?.toLowerCase() || ''
-    return shopName.includes(searchQuery.toLowerCase())
-  })
-
-  const renderEmptyState = () => (
-    <View className="flex-1 items-center justify-center px-6 py-12">
-      {activeTab === 'bags' ? (
-        <ShoppingCart size={72} color="#D1D5DB" strokeWidth={1.5} />
-      ) : (
-        <Package size={72} color="#D1D5DB" strokeWidth={1.5} />
-      )}
-      <Text className="text-2xl font-bold text-gray-900 dark:text-white mt-6">
-        {activeTab === 'bags' ? t('cart.emptyCartTitle') : t('cart.emptyOrdersTitle')}
-      </Text>
-      <Text className="text-gray-500 dark:text-gray-400 text-center mt-3 text-base max-w-sm">
-        {activeTab === 'bags' 
-          ? t('cart.emptyCartDesc') 
-          : t('cart.emptyOrdersDesc')}
-      </Text>
-    </View>
-  )
-
-  const renderErrorState = () => (
-    <View className="flex-1 items-center justify-center px-6">
-      <View className="bg-red-50 dark:bg-red-900/20 rounded-full p-6">
-        <AlertCircle size={64} color="#EF4444" strokeWidth={1.5} />
-      </View>
-      <Text className="text-xl font-bold text-gray-900 dark:text-white mt-6">
-        {t('cart.oops')}
-      </Text>
-      <Text className="text-gray-500 dark:text-gray-400 text-center mt-3 text-base max-w-sm">
-        {error?.message || t('cart.unableToLoad')}
-      </Text>
-      <TouchableOpacity 
-        onPress={() => refetch()}
-        className="mt-6 bg-primary px-6 py-3 rounded-full"
-      >
-        <Text className="text-white font-semibold">{t('common.tryAgain')}</Text>
-      </TouchableOpacity>
-    </View>
-  )
-
-  const renderLoadingState = () => (
-    <View className="flex-1 items-center justify-center">
-      <ActivityIndicator size="large" color="#3B82F6" />
-      <Text className="text-gray-500 dark:text-gray-400 mt-4 text-base">
-        {t('common.loading')}
-      </Text>
-    </View>
-  )
+  const cartTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <SafeAreaView className="flex-1 bg-gradient-to-b from-gray-50 to-white dark:from-neutral-950 dark:to-neutral-900">
+    <View className="flex-1 bg-gray-50">
       {/* Header */}
-      <View className="px-6 pt-2 pb-4">
-        <Text className="text-3xl font-bold text-gray-900 dark:text-white">
-          {t('cart.header')}
-        </Text>
-        {filteredData.length > 0 && (
-          <Text className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {t('cart.itemsFound', { count: filteredData.length, unit: filteredData.length === 1 ? t('common.item') : t('common.items') })}
-          </Text>
-        )}
-      </View>
-
-      {/* Tabs */}
-      <View className="px-6 pb-4">
-        <View className="flex-row bg-gray-100 dark:bg-neutral-800 rounded-2xl p-1">
+      <View className="bg-white pt-12 pb-4 px-6 border-b border-gray-200">
+        <Text className="text-3xl font-bold text-gray-900 mb-4">My Orders</Text>
+        
+        {/* Tabs */}
+        <View className="flex-row space-x-2">
           <TouchableOpacity
-            onPress={() => setActiveTab('bags')}
-            className={`flex-1 flex-row items-center justify-center py-3 rounded-xl ${
-              activeTab === 'bags' 
-                ? 'bg-white dark:bg-neutral-700 shadow-sm' 
-                : ''
+            onPress={() => setActiveTab('carts')}
+            className={`flex-1 py-3 rounded-lg ${
+              activeTab === 'carts' ? 'bg-primary' : 'bg-gray-100'
             }`}
           >
-            <ShoppingCart 
-              size={20} 
-              color={activeTab === 'bags' ? '#FF6F61' : '#FF6F61'} 
-              strokeWidth={2}
-            />
-            <Text className={`ml-2 font-semibold ${
-              activeTab === 'bags'
-                ? 'text-primary dark:text-primary'
-                : 'text-gray-500 dark:text-gray-400'
-            }`}>
-              {t('cart.tabCart')}
-            </Text>
-            {carts.length > 0 && activeTab === 'bags' && (
-              <View className="ml-2 bg-primary rounded-full px-2 py-0.5 min-w-[24px] items-center">
-                <Text className="text-white text-xs font-bold">{carts.length}</Text>
-              </View>
-            )}
+            <View className="flex-row items-center justify-center space-x-2">
+              <ShoppingCart
+                size={20}
+                color={activeTab === 'carts' ? '#ffffff' : '#6b7280'}
+              />
+              <Text
+                className={`font-semibold ${
+                  activeTab === 'carts' ? 'text-white' : 'text-gray-600'
+                }`}
+              >
+                Cart ({cartItems.length})
+              </Text>
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => setActiveTab('orders')}
-            className={`flex-1 flex-row items-center justify-center py-3 rounded-xl ${
-              activeTab === 'orders' 
-                ? 'bg-white dark:bg-neutral-700 shadow-sm' 
-                : ''
+            className={`flex-1 py-3 rounded-lg ${
+              activeTab === 'orders' ? 'bg-primary' : 'bg-gray-100'
             }`}
           >
-            <Clock 
-              size={20} 
-              color={activeTab === 'orders' ? '#3B82F6' : '#9CA3AF'} 
-              strokeWidth={2}
-            />
-            <Text className={`ml-2 font-semibold ${
-              activeTab === 'orders'
-                ? 'text-primary dark:text-blue-400'
-                : 'text-gray-500 dark:text-gray-400'
-            }`}>
-              {t('cart.tabOrders')}
-            </Text>
-            {orders.length > 0 && activeTab === 'orders' && (
-              <View className="ml-2 bg-primary rounded-full px-2 py-0.5 min-w-[24px] items-center">
-                <Text className="text-white text-xs font-bold">{orders.length}</Text>
-              </View>
-            )}
+            <View className="flex-row items-center justify-center space-x-2">
+              <Package
+                size={20}
+                color={activeTab === 'orders' ? '#ffffff' : '#6b7280'}
+              />
+              <Text
+                className={`font-semibold ${
+                  activeTab === 'orders' ? 'text-white' : 'text-gray-600'
+                }`}
+              >
+                Orders ({orders.length})
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Search Bar */}
-      <View className="px-6 pb-4">
-        <View className="flex-row items-center bg-white dark:bg-neutral-800 rounded-2xl px-5 py-4 border border-gray-200 dark:border-neutral-700 shadow-sm">
-          <Search size={10} color="#9CA3AF" strokeWidth={2} />
-          <TextInput
-            className="flex-1 ml-3 text-gray-900 dark:text-white text-base"
-            placeholder={t('cart.searchPlaceholder')}
-            placeholderTextColor="#9CA3AF"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-      </View>
-
       {/* Content */}
-      {isLoading ? (
-        renderLoadingState()
-      ) : error ? (
-        renderErrorState()
-      ) : filteredData.length === 0 ? (
-        searchQuery ? (
-          <View className="flex-1 items-center justify-center px-6">
-            <Search size={64} color="#D1D5DB" strokeWidth={1.5} />
-            <Text className="text-xl font-semibold text-gray-900 dark:text-white mt-4">
-              {t('common.noResultsFound')}
-            </Text>
-            <Text className="text-gray-500 dark:text-gray-400 text-center mt-2">
-              {t('common.trySearching')}
-            </Text>
+      <ScrollView className="flex-1">
+        {activeTab === 'carts' ? (
+          <View className="p-4">
+            {/* Cart Items */}
+            {cartItems.map((item) => (
+              <View
+                key={item.id}
+                className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100"
+              >
+                <View className="flex-row space-x-4">
+                  <View className="w-20 h-20 bg-gray-100 rounded-lg items-center justify-center">
+                    <Text className="text-4xl">{item.image}</Text>
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-lg font-semibold text-gray-900 mb-1">
+                      {item.name}
+                    </Text>
+                    <Text className="text-sm text-gray-500 mb-2">
+                      Color: {item.color}
+                    </Text>
+                    <View className="flex-row items-center justify-between">
+                      <Text className="text-xl font-bold text-primary">
+                        ${item.price}
+                      </Text>
+                      <View className="flex-row items-center bg-gray-100 rounded-lg px-3 py-1 space-x-3">
+                        <TouchableOpacity>
+                          <Text className="text-lg font-bold text-gray-600">−</Text>
+                        </TouchableOpacity>
+                        <Text className="text-base font-semibold text-gray-900">
+                          {item.quantity}
+                        </Text>
+                        <TouchableOpacity>
+                          <Text className="text-lg font-bold text-gray-600">+</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            ))}
+
+            {/* Cart Summary */}
+            <View className="bg-white rounded-xl p-4 mt-2 shadow-sm border border-gray-100">
+              <View className="flex-row justify-between mb-3">
+                <Text className="text-gray-600">Subtotal</Text>
+                <Text className="font-semibold text-gray-900">
+                  ${cartTotal.toFixed(2)}
+                </Text>
+              </View>
+              <View className="flex-row justify-between mb-3">
+                <Text className="text-gray-600">Shipping</Text>
+                <Text className="font-semibold text-gray-900">$5.00</Text>
+              </View>
+              <View className="border-t border-gray-200 pt-3 flex-row justify-between mb-4">
+                <Text className="text-lg font-bold text-gray-900">Total</Text>
+                <Text className="text-lg font-bold text-primary">
+                  ${(cartTotal + 5).toFixed(2)}
+                </Text>
+              </View>
+              <TouchableOpacity className="bg-primary py-4 rounded-lg">
+                <Text className="text-white text-center font-bold text-base">
+                  Proceed to Checkout
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ) : (
-          renderEmptyState()
-        )
-      ) : (
-        <FlatList
-          data={filteredData}
-          renderItem={({ item }) => (
-            <Bag 
-              bag={item} 
-              shop={item.shop} 
-              type={activeTab}
-            />
-          )}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isLoading}
-              onRefresh={refetch}
-              tintColor="#3B82F6"
-            />
-          }
-        />
-      )}
-    </SafeAreaView>
-  )
-}
+          <View className="p-4">
+            {/* Orders List */}
+            {orders.map((order) => (
+              <TouchableOpacity
+                key={order.id}
+                className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100"
+              >
+                <View className="flex-row justify-between items-start mb-3">
+                  <View>
+                    <Text className="text-lg font-bold text-gray-900 mb-1">
+                      {order.id}
+                    </Text>
+                    <Text className="text-sm text-gray-500">{order.date}</Text>
+                  </View>
+                  <View className={`flex-row items-center px-3 py-1 rounded-full ${getStatusClasses(order.status)} space-x-1`}>
+                    {getStatusIcon(order.status)}
+                    <Text className={`text-xs font-semibold capitalize ${getStatusTextClasses(order.status)}`}>
+                      {order.status.replace('-', ' ')}
+                    </Text>
+                  </View>
+                </View>
 
-export default Cart
+                <View className="border-t border-gray-100 pt-3">
+                  <View className="flex-row justify-between mb-2">
+                    <Text className="text-gray-600">Items</Text>
+                    <Text className="font-medium text-gray-900">
+                      {order.items} items
+                    </Text>
+                  </View>
+                  <View className="flex-row justify-between mb-2">
+                    <Text className="text-gray-600">Total Amount</Text>
+                    <Text className="font-bold text-gray-900">
+                      ${order.total.toFixed(2)}
+                    </Text>
+                  </View>
+                  <View className="flex-row justify-between">
+                    <Text className="text-gray-600">Tracking</Text>
+                    <Text className="font-medium text-primary">
+                      {order.tracking}
+                    </Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity className="mt-4 py-2 border border-primary rounded-lg">
+                  <Text className="text-primary text-center font-semibold">
+                    View Details
+                  </Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  );
+}

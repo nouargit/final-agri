@@ -15,7 +15,7 @@ const CustomButton = ({onPress,title,style,textStyle,isLoading=false,leftIcon}: 
 
 
   return (
-    <TouchableOpacity onPress={onPress} className={cn('h-[50px] bg-[#ff6370] rounded-xl justify-center items-center mb-4 pb-6',style)}>
+    <TouchableOpacity onPress={onPress} className={cn('h-[50px] bg-primary rounded-xl justify-center items-center mb-4 pb-6',style)}>
 {leftIcon}
 <View className='flex-center flex-row'>
   {isLoading ? (

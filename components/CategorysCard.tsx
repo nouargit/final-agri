@@ -1,11 +1,11 @@
-import { View, Text, Image, ImageSourcePropType, TouchableOpacity } from 'react-native'
+import { View, Image,Text, ImageSourcePropType, TouchableOpacity } from 'react-native'
 
 
 interface Category {
   icon: any
   id: number
   name: string
-  image: ImageSourcePropType
+  
   bgColor: string
   pp:number
   
@@ -18,11 +18,12 @@ type CategoryCardProps = {
 
 const CategoryCard = ({ category,vibration }: CategoryCardProps) => {
   return (
+    
     <TouchableOpacity
       className="  dark:border   rounded-3xl  justify-between mx-2 overflow-hidden px-2 "
       style={{  backgroundColor:`${category.bgColor}30`,
     borderColor: category.bgColor,
-    borderWidth: 4,
+    borderWidth: 4,shadowColor: category.bgColor,
      }}
      onPress={()=>vibration()}
     > 

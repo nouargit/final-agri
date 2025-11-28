@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "mob",
-    "slug": "mob",
+    "name": "agro",
+    "slug": "agro",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/sweeta.png",
-    "scheme": "mob",
+    "icon": "./assets/images/agro.png",
+    "scheme": "agro",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/agro.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -35,7 +35,8 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-maps"
+      "expo-maps",
+      "expo-barcode-scanner"
     ],
     "experiments": {
       "typedRoutes": true

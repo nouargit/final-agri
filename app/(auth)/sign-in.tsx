@@ -1,150 +1,84 @@
+// app/signin.tsx (or wherever your SignInScreen is)
 import CustomButton from "@/components/CustomButton";
 import CustomInput from "@/components/CustomInput";
-import { config } from '@/config';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Link, router } from 'expo-router';
-import { Keyboard, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Link, router } from "expo-router";
+import { Alert, Keyboard, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import { useState } from "react";
+import { api } from "@/api";
+
+// New API client (the one we generated)
+
 
 export default function SignInScreen() {
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
-  const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  
-  
-  
-  const submit = async () => {
-    if (!form.email || !form.password) {
-      setError("Please fill in all fields");
+  const handleSubmit = async () => {
+    if (!email.trim()) {
+      Alert.alert("Error", "Please enter your email");
       return;
     }
 
-    setIsSubmitting(true);
-    setError("");
+    setIsLoading(true);
 
     try {
-      console.log("Step 1: Fetching CSRF token...");
-      
-      // Step 1: Get CSRF token
-      const csrfResponse = await fetch(`${config.baseUrl}${config.csrfTokenUrl}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-      
-      console.log("CSRF Response status:", csrfResponse.status);
-      
-      if (!csrfResponse.ok) {
-        throw new Error(`CSRF fetch failed: ${csrfResponse.status}`);
+      const { data, error } = await api.postAuthSendOtp({ email });
+
+      if (error) {
+        const msg =  "Failed to send OTP";
+        Alert.alert("Error", msg);
+        return;
       }
 
-      console.log("Step 2: Attempting login...");
-      
-      // Step 2: Login request
-      const loginResponse = await fetch(`${config.baseUrl}${config.loginUrl}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        credentials: 'include', // crucial for cookies!
-        body: JSON.stringify({
-          email: form.email,
-          password: form.password,
-        }),
+      // Success!
+      Alert.alert("Success", "OTP sent to your email!");
+      router.push({
+        pathname: "/verifyOtp",
+        params: { email }, // Pass email to verify screen
       });
-
-      console.log("Login Response status:", loginResponse.status);
-      const loginData = await loginResponse.json();
-      console.log("Login Response data:", loginData);
-
-      if (loginResponse.ok && loginData.data && loginData.data.token) {
-        console.log("Step 3: Login successful, storing token...");
-        
-        // Store the token
-        await AsyncStorage.setItem('auth_token', loginData.data.token);
-        
-        console.log("Step 4: Fetching user data...");
-        
-        // Step 3: Get user data
-        const userResponse = await fetch(`${config.baseUrl}${config.userUrl}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${loginData.data.token}`,
-            'Accept': 'application/json',
-          },
-        });
-
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          console.log("User data fetched successfully:", userData);
-          
-          // Store user data
-          await AsyncStorage.setItem('user_data', JSON.stringify(userData));
-          
-          // Navigate to main app
-          router.replace('/(tabs)');
-        } else {
-          setError("Failed to get user information");
-        }
-      } else {
-        console.log("Login failed:", loginData.message || "Invalid credentials");
-        setError(loginData.message || "Invalid email or password");
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      Alert.alert("Error", "Something went wrong. Try again.");
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View className="flex-1 bg-white justify-center px-6">
+        {/* Title */}
+        <Text className="text-6xl font-gilroy-bold text-primary mb-56 text-center">
+          agro
+        </Text>
 
-    <View className="flex-1 bg-white justify-center px-6">
-      {/* Title */}
-      <Text className="text-2xl font-bold mb-8 text-center">Sign In</Text>
+        {/* Email Input */}
+        <CustomInput
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+        
+        />
 
-      {/* Error message */}
-      {error ? (
-        <View className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          <Text className="text-red-700">{error}</Text>
+        {/* Submit Button */}
+        <CustomButton
+          title="Sign in"
+          onPress={handleSubmit}
+          isLoading={isLoading}
+        />
+
+        {/* Sign Up Link */}
+        <View className="flex-row justify-center mt-8">
+          <Text className="text-gray-600">Don't have an account? </Text>
+          <Link href="/agriRole" asChild>
+            <TouchableOpacity>
+              <Text className="text-primary font-semibold">Sign Up</Text>
+            </TouchableOpacity>
+          </Link>
         </View>
-      ) : null}
-
-      {/* Input fields */}
-      <CustomInput
-  placeholder="Email"
-  value={form.email}
-  onChangeText={(text) => setForm((prev) => ({ ...prev, email: text }))}
-/>
-
-<CustomInput
-  placeholder="Password"
-  value={form.password}
-  secureTextEntry
-  onChangeText={(text) => setForm((prev) => ({ ...prev, password: text }))}
-/>
-    <CustomButton title="Sign in" onPress={submit} isLoading={isSubmitting}/>
-  
-
-
-   <View className="flex-row justify-center">
-        <Text className="text-gray-600">Don't have an account? </Text>
-        <Link href="/sign-up" asChild>
-          <TouchableOpacity>
-            <Text className="text-[#ff6370] font-semibold">Sign Up</Text>
-          </TouchableOpacity>
-        </Link>
       </View>
-    </View>
     </TouchableWithoutFeedback>
-
   );
 }
