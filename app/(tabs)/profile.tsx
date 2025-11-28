@@ -1,38 +1,74 @@
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { images } from '@/constants/imports';
+import { getDateLocale, setAppLanguage } from '@/lib/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, Image, ScrollView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
-import { getDateLocale, setAppLanguage } from '@/lib/i18n';
+
+interface ProducerInfo {
+  cityId?: number;
+  a_longitude?: number;
+  a_latitude?: number;
+  a_address?: string;
+  farmerLicensePhoto?: string;
+}
 
 interface UserData {
-  
-   
-      name?: string;
-      email?: string;
-      created_at?: string;
-   
-  
+  id?: string;
+  email?: string;
+  fullname?: string;
+  role?: string;
+  createdAt?: string;
+  producer?: ProducerInfo | null;
 }
 
-async function getUserData(): Promise<UserData> {
-  const jsonValue = await AsyncStorage.getItem('user_data');
-  return jsonValue ? JSON.parse(jsonValue) : {};
-}
+
 
 
 function Profile() {
+
+
+  
+  async function getUserData(): Promise<UserData> {
+    const jsonValue = await AsyncStorage.getItem('user_data');
+    console.log('User Data from AsyncStorage:', jsonValue);
+    if (!jsonValue) return {};
+
+    try {
+      const raw = JSON.parse(jsonValue);
+      const u = raw?.userWithInfo ?? raw?.user ?? raw;
+      const normalized: UserData = {
+        id: u?.id,
+        email: u?.email,
+        fullname: u?.fullname,
+        role: u?.role,
+        createdAt: u?.createdAt,
+        producer: u?.producer ?? null,
+      };
+      return normalized;
+    } catch (e) {
+      console.warn('Failed parsing user_data; returning empty object');
+      return {};
+    }
+  }
+
+
+
   const [userData, setUserData] = useState<UserData>({});
   const [isLoading, setIsLoading] = useState(true);
   const { t, i18n } = useTranslation();
-const {data}=useQuery({
+
+
+  const {data}=useQuery({
   queryKey: ['userData'],
   queryFn: getUserData,
 })
+
+
   useEffect(() => {
     if (data) {
       setUserData(data);
@@ -117,7 +153,7 @@ const {data}=useQuery({
           <View className="items-center">
             <View className="relative">
               <Image
-                source={images.avatar}
+                source={images.fallback}
                 className="w-28 h-28 rounded-full border-4 border-white dark:border-neutral-700"
               />
               <TouchableOpacity className="absolute bottom-0 right-0 bg-primary p-2 rounded-full">
@@ -126,17 +162,24 @@ const {data}=useQuery({
             </View>
             
             <Text className="text-2xl font-gilroy-semibold text-neutral-900 dark:text-white mt-4">
-              {data?.name || t('profile.guestUser')}
+              {data?.fullname || t('profile.guestUser')}
             </Text>
             <Text className="text-neutral-500 dark:text-neutral-400 mt-1">
               {data?.email || t('profile.noEmail')}
             </Text>
             <Text className="text-sm text-neutral-400 dark:text-neutral-500 mt-2">
-              {t('profile.memberSince', { date: formatJoinDate(data?.created_at) })}
+              {t('profile.memberSince', { date: formatJoinDate(data?.createdAt) })}
             </Text>
-            <Text className="text-sm font-dubai-regular text-neutral-400 dark:text-neutral-500 mt-2">
-              لا اعلم
-            </Text>
+            {!!data?.role && (
+              <Text className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                {`Role: ${data.role}`}
+              </Text>
+            )}
+            {!!data?.producer?.a_address && (
+              <Text className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                {data.producer.a_address}
+              </Text>
+            )}
           </View>
 
           {/* Quick Stats */}

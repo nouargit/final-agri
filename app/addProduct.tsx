@@ -87,7 +87,7 @@ const AddProductScreen = () => {
       }
 
       const data = await response.json();
-      console.log('Fetched categories:', data);
+      console.log('Fetched ,,,,,,,,, categories:', data);
       
       // Handle the nested structure: { categories: [...] }
       if (data.categories && Array.isArray(data.categories)) {
@@ -196,12 +196,43 @@ const AddProductScreen = () => {
       );
       return false;
     }
+    // Business rules
+    const qty = Number(formData.quantityKg);
+    const minOrder = Number(formData.minimumOrderKg);
+    if (minOrder > qty) {
+      Alert.alert(
+        t('addProduct.validationError') || 'Validation Error',
+        'Minimum order (kg) cannot exceed available quantity (kg)'
+      );
+      return false;
+    }
     if (!formData.harvestDate) {
       Alert.alert(
         t('addProduct.validationError') || 'Validation Error', 
         'Harvest date is required'
       );
       return false;
+    }
+    // Harvest date should not be in the future
+    const today = new Date();
+    const harvest = new Date(formData.harvestDate);
+    if (!isNaN(harvest.getTime()) && harvest > new Date(today.toISOString().split('T')[0])) {
+      Alert.alert(
+        t('addProduct.validationError') || 'Validation Error',
+        'Harvest date cannot be in the future'
+      );
+      return false;
+    }
+    // If scheduleDate provided, ensure it's not before harvestDate
+    if (formData.scheduleDate) {
+      const schedule = new Date(formData.scheduleDate);
+      if (!isNaN(schedule.getTime()) && !isNaN(harvest.getTime()) && schedule < harvest) {
+        Alert.alert(
+          t('addProduct.validationError') || 'Validation Error',
+          'Schedule date cannot be before the harvest date'
+        );
+        return false;
+      }
     }
     if (!formData.grade) {
       Alert.alert(
@@ -344,16 +375,8 @@ const AddProductScreen = () => {
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
       
-      {/* Header */}
-      <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-neutral-800">
-        <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-          <ArrowLeft size={24} color={colorScheme === 'dark' ? '#FFFFFF' : '#000000'} />
-        </TouchableOpacity>
-        <Text className="text-xl font-bold text-gray-900 dark:text-white">
-          {t('addProduct.header') || 'Add New Product'}
-        </Text>
-        <View className="w-10" />
-      </View>
+
+      
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="p-6">

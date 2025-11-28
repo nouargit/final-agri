@@ -150,9 +150,12 @@ const EmailVerificationScreen = () => {
 
           if (userResponse.ok) {
             const userData = await userResponse.json();
-            console.log(userData);
+            console.log("this is user data",userData);
             if (userData && userData.session) {
               await AsyncStorage.setItem('user_data', JSON.stringify(userData.session));
+            }
+            if (userData && userData.session && userData.session.userWithInfo.role) {
+              router.replace('/(tabs)'); // Navigate based on role if needed
             }
           }
         } catch (userError) {

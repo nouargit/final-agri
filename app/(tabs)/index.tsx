@@ -86,7 +86,7 @@ export default function FarmMarketplaceHome() {
       }
 
       const data = await response.json();
-      console.log('Fetched products data:', data);
+      
       return data.products || [];
     } catch (error) {
       console.error('Error fetching products:', error);

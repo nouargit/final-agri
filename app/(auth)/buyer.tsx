@@ -11,7 +11,7 @@ export default function Buyer() {
   const [fullname, setFullname] = useState("");
   const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const role = "buyer"; // Fixed role for this screen
+  const role = "buyer"; // Backend expects "buyer" for this screen
 
   const handleSubmit = async () => {
     if (!fullname.trim()) {
@@ -51,7 +51,7 @@ export default function Buyer() {
         body: JSON.stringify({
           fullName: fullname.trim(),
           phone: phone.trim(),
-          role: 'consumer',
+          role
         }),
       });
 
