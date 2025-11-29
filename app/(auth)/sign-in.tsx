@@ -85,15 +85,8 @@ export default function SignInScreen() {
           isLoading={isLoading}
         />
 
-        {/* Sign Up Link */}
-        <View className="flex-row justify-center mt-8">
-          <Text className="text-gray-600">Don't have an account? </Text>
-          <Link href="/agriRole" asChild>
-            <TouchableOpacity>
-              <Text className="text-primary font-semibold">Sign Up</Text>
-            </TouchableOpacity>
-          </Link>
-        </View>
+      
+        
       </View>
     </TouchableWithoutFeedback>
   );

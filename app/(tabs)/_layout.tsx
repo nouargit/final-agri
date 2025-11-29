@@ -152,16 +152,36 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="search" color={color} />,
         }}
       />
-      <Tabs.Screen
+       <Tabs.Screen
       name='cart'
       options={{
         title: t('tabs.cart'),
         tabBarIcon: ({ color }) => <IconSymbol size={28} name="Handbag" color={color} />,
-        // Cart is visible only for buyers
-        href: isBuyer ? undefined : null,
+        // Cart is hidden - replaced by buyerOrders for buyers
+        href: null,
       }}
       />
+
+      <Tabs.Screen
+        name="buyerOrders"
+        options={{
+          title: t('tabs.orders'),
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="list" color={color} />,
+          // Buyer orders visible only for buyers
+          href: isBuyer ? undefined : null,
+        }}
+      />
        
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: t('tabs.map'),
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="location" color={color} />,
+          // Map is visible only for transporters
+          href: isTransporter ? undefined : null,
+        }}
+      />
+
       <Tabs.Screen
   name="shop"
   options={{
@@ -173,6 +193,17 @@ export default function TabLayout() {
     href: isProducer ? undefined : null,
   }}
 />
+
+      <Tabs.Screen
+        name="preducerOrders"
+        options={{
+          title: t('tabs.orders'),
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="list" color={color} />,
+          // Producer orders visible only for producers
+          href: isProducer ? undefined : null,
+        }}
+      />
+
        <Tabs.Screen
       name='profile'
       options={{
