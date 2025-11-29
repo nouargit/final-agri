@@ -288,20 +288,18 @@ const FarmForkScreen = () => {
             <View className="flex-row items-center">
               <MapPin size={16} color="#22C55E" />
               <Text className="text-gray-600 dark:text-neutral-400 ml-2 text-sm">
-                From: {product.producer?.user?.fullname || 'Local Producer'} •{' '}
-                {product.producer?.user?.wilaya || 'Algeria'}
+                {`From: ${product.producer?.user?.fullname || 'Local Producer'} • ${product.producer?.user?.wilaya || 'Algeria'}`}
               </Text>
             </View>
             {product.harvestDate && (
               <View className="flex-row items-center mt-2">
                 <Calendar size={16} color="#22C55E" />
                 <Text className="text-gray-600 dark:text-neutral-400 ml-2 text-sm">
-                  Harvested:{' '}
-                  {new Date(product.harvestDate).toLocaleDateString('en-US', {
+                  {`Harvested: ${new Date(product.harvestDate).toLocaleDateString('en-US', {
                     month: 'long',
                     day: 'numeric',
                     year: 'numeric',
-                  })}
+                  })}`}
                 </Text>
               </View>
             )}
@@ -383,21 +381,21 @@ const FarmForkScreen = () => {
                     >
                       {event.title}
                     </Text>
-                    {event.completed && (
+                    {event.completed && !event.current ? (
                       <View className="bg-green-100 dark:bg-green-900/40 px-2 py-1 rounded-full flex-row items-center">
                         <Check size={12} color="#22C55E" />
                         <Text className="text-green-700 dark:text-green-300 text-xs ml-1">
                           Completed
                         </Text>
                       </View>
-                    )}
-                    {event.current && (
+                    ) : null}
+                    {event.current ? (
                       <View className="bg-blue-100 dark:bg-blue-900/40 px-2 py-1 rounded-full">
                         <Text className="text-blue-700 dark:text-blue-300 text-xs">
                           Current
                         </Text>
                       </View>
-                    )}
+                    ) : null}
                   </View>
 
                   <Text

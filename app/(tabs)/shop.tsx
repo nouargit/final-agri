@@ -235,43 +235,43 @@ export default function ShopScreen() {
   const ProductCard = ({ product }: { product: Product }) => (
     <TouchableOpacity 
       activeOpacity={0.8}
-      style={{ width: "100%" }}
-      className="mb-2 px-2"
+      style={{ width: "50%" }}
+      className="my-2 px-2"
       onPress={() => router.push(`/product?id=${product.id}`)}
     >
-      <View className="bg-white dark:bg-neutral-800 rounded-3xl shadow-lg dark:shadow-neutral-900/30 overflow-hidden border border-neutral-100 dark:border-neutral-700">
+      <View className="bg-white dark:bg-neutral-800 rounded-2xl  overflow-hidden border border-neutral-100 dark:border-neutral-700">
         <View className="relative">
           <Image
             source={product.images && product.images.length > 0 
               ? { uri: config.image_url(product.images[0]) } 
               : images.fallback
             }
-            style={{ width: "100%", height: 300 }}
-            className="rounded-t-3xl"
+            style={{ width: "100%", height: 150 }}
+            className="rounded-t-2xl"
             resizeMode='cover'
           />
-          <View className="absolute top-2 right-2 bg-primary px-3 py-1 rounded-full">
-            <Text className="text-white font-bold">${product.price}</Text>
+          <View className="absolute top-2 right-2 bg-primary px-2 py-1 rounded-full">
+            <Text className="text-white font-bold text-xs">${product.price}</Text>
           </View>
           {product.stock <= 0 && (
             <View className="absolute inset-0 bg-black/50 items-center justify-center">
-              <Text className="text-white font-bold text-lg">Out of Stock</Text>
+              <Text className="text-white font-bold text-sm">Out of Stock</Text>
             </View>
           )}
         </View>
 
-        <View className="p-4">
-          <Text className="text-lg font-bold text-neutral-900 dark:text-white leading-tight mb-1">
+        <View className="p-3">
+          <Text className="text-sm font-bold text-neutral-900 dark:text-white leading-tight mb-1" numberOfLines={1}>
             {product.name}
           </Text>
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={2}>
+          <Text className="text-xs text-neutral-500 dark:text-neutral-400" numberOfLines={2}>
             {product.description || 'No description'}
           </Text>
           <View className="flex-row justify-between items-center mt-2">
             <Text className="text-xs text-neutral-400">Stock: {product.stock}</Text>
             <TouchableOpacity 
               onPress={() => router.push(`/product?id=${product.id}`)}
-              className="bg-primary/10 px-3 py-1 rounded-full"
+              className="bg-primary/10 px-2 py-1 rounded-full"
             >
               <Text className="text-primary text-xs font-semibold">Edit</Text>
             </TouchableOpacity>
