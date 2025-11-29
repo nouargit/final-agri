@@ -4,14 +4,14 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native'
 import MapView, { Marker } from 'react-native-maps'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -48,10 +48,10 @@ interface OrderPayload {
 async function fetchOrder(orderId: string) {
   const token = await AsyncStorage.getItem('auth_token')
   if (!token) throw new Error('Not authenticated')
-  const res = await fetch(`${config.baseUrl}${config.orderItemsUrl}?order_id=${orderId}`, {
+  const res = await fetch(`${config.baseUrl}${config.orderItemsUrl}/${orderId}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
   })
-  if (!res.ok) throw new Error(`Failed ${res.status}`)
+  if (!res.ok) throw new Error(`Failed ${res.status}`)  
   const data = await res.json()
   const order: OrderPayload | undefined = (data as any)?.order || data
   const details: OrderDetailItem[] = Array.isArray(order?.orderDetails) ? order!.orderDetails : []
@@ -61,21 +61,41 @@ async function fetchOrder(orderId: string) {
 async function submitOrder(orderId: string, deliveryAddress: string, paymentMethod: string) {
   const token = await AsyncStorage.getItem('auth_token')
   if (!token) throw new Error('Not authenticated')
-  const res = await fetch(`${config.baseUrl}/orders/${orderId}/submit`, {
+  const res = await fetch(`${config.baseUrl}/api/buyer/orders/${orderId}/submit`, {
     method: 'POST',
     headers: { 
       Authorization: `Bearer ${token}`, 
       'Content-Type': 'application/json',
       Accept: 'application/json' 
     },
-    body: JSON.stringify({ 
-      deliveryAddress, 
-      paymentMethod 
-    })
+    body: JSON.stringify({
+      paymentMethod: paymentMethod,
+    }),
   })
   if (!res.ok) throw new Error(`Failed ${res.status}`)
   return res.json()
 }
+
+
+const mySubmitOrder = async (orderId: string) => {
+  const token = await AsyncStorage.getItem('auth_token')
+  if (!token) throw new Error('Not authenticated')
+  const res = await fetch(`${config.baseUrl}/api/buyer/orders/${orderId}/submit`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`, 
+      'Content-Type': 'application/json',
+      Accept: 'application/json' 
+    },
+  })
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}))
+    const errorMsg = errorData?.message || `Failed ${res.status}`
+    throw new Error(errorMsg)
+  }
+  return res.json()
+}
+
 
 export default function OrderCheckoutScreen() {
   const params = useLocalSearchParams()
@@ -85,6 +105,7 @@ export default function OrderCheckoutScreen() {
   const [showMap, setShowMap] = useState(false)
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [selectedPayment, setSelectedPayment] = useState<'card' | 'cash'>('card')
+  const [selectedLocation, setSelectedLocation] = useState<{ latitude: number; longitude: number } | null>(null)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['orders:items', orderId],
@@ -120,13 +141,7 @@ export default function OrderCheckoutScreen() {
   const tax = subtotal * 0.08
   const total = subtotal + transportFee + tax
 
-  const handleCheckout = () => {
-    if (!deliveryAddress || deliveryAddress === 'Unknown address') {
-      Alert.alert('Error', 'Please enter a valid delivery address')
-      return
-    }
-    submitMutation.mutate()
-  }
+  
 
   if (isLoading) {
     return (
@@ -164,7 +179,7 @@ export default function OrderCheckoutScreen() {
         {/* Delivery Address */}
         <View className="mt-3 px-5 py-5 bg-white dark:bg-neutral-900 border-y border-gray-100 dark:border-neutral-800">
           <Text className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-            📍 Delivery Address
+             Delivery Address
           </Text>
           <TextInput
             value={deliveryAddress}
@@ -180,7 +195,7 @@ export default function OrderCheckoutScreen() {
             className="mt-3 flex-row items-center"
           >
             <Text className="text-sm text-primary font-medium">
-              {showMap ? '🗺️ Hide Map' : '🗺️ View Route Map'}
+              {showMap ? ' Hide Map' : ' View Route Map'}
             </Text>
           </TouchableOpacity>
           
@@ -204,13 +219,33 @@ export default function OrderCheckoutScreen() {
                 latitudeDelta: 0.3,
                 longitudeDelta: 0.3,
               }}
+              onPress={(e) => {
+                const { latitude, longitude } = e.nativeEvent.coordinate
+                setSelectedLocation({ latitude, longitude })
+                setDeliveryAddress(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`)
+              }}
             >
               <Marker 
                 coordinate={{ latitude: producerLat || 36.7538, longitude: producerLng || 3.0588 }} 
                 title="Producer" 
+                pinColor="green"
                 description={order?.producer?.a_address || 'Producer location'} 
               />
-              {(buyerLat !== 0 && buyerLng !== 0) && (
+              {selectedLocation && (
+                <Marker 
+                  coordinate={selectedLocation} 
+                  title="Delivery Location" 
+                  pinColor="red"
+                  description={deliveryAddress || 'Your selected location'}
+                  draggable
+                  onDragEnd={(e) => {
+                    const { latitude, longitude } = e.nativeEvent.coordinate
+                    setSelectedLocation({ latitude, longitude })
+                    setDeliveryAddress(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`)
+                  }}
+                />
+              )}
+              {!selectedLocation && (buyerLat !== 0 && buyerLng !== 0) && (
                 <Marker 
                   coordinate={{ latitude: buyerLat, longitude: buyerLng }} 
                   title="Delivery Location" 
@@ -220,11 +255,20 @@ export default function OrderCheckoutScreen() {
             </MapView>
           </View>
         )}
+        
+        {/* Map Instructions */}
+        {showMap && (
+          <View className="mx-4 mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+            <Text className="text-sm text-blue-700 dark:text-blue-300 text-center">
+               Tap on the map to select your delivery location. You can also drag the marker to adjust.
+            </Text>
+          </View>
+        )}
 
         {/* Order Items */}
         <View className="mt-3 px-5 py-5 bg-white dark:bg-neutral-900 border-y border-gray-100 dark:border-neutral-800">
           <Text className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            📦 Order Items ({items.length})
+             Order Items ({items.length})
           </Text>
           {items.map((item, idx) => (
             <View 
@@ -251,17 +295,17 @@ export default function OrderCheckoutScreen() {
                 <View className="flex-row items-center justify-end gap-2">
                   {/* Quantity Badge */}
                   <View className="bg-gray-200 dark:bg-neutral-700 px-3 py-1 rounded-full flex-row items-center">
-                    <Text style={{ fontSize: 14 }}>⚖️</Text>
+                  
                     <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">
-                      {item.quantity} كيلو
-                    </Text>
+                      {item.quantity}و 
+                    </Text>   
                   </View>
                   
                   {/* Price Badge */}
                   <View className="bg-cyan-100 dark:bg-cyan-900/30 px-3 py-1 rounded-full flex-row items-center">
-                    <Text style={{ fontSize: 14 }}>💵</Text>
+                    <Text style={{ fontSize: 14 }}>DZD</Text>
                     <Text className="text-sm font-bold text-cyan-600 dark:text-cyan-400 ml-1">
-                      {((item.quantity ?? 0) * (item.price ?? 0)).toFixed(2)} دولار
+                      {((item.quantity ?? 0) * (item.price ?? 0)).toFixed(2)}
                     </Text>
                   </View>
                 </View>
@@ -396,7 +440,7 @@ export default function OrderCheckoutScreen() {
         }}
       >
         <TouchableOpacity
-          onPress={handleCheckout}
+          onPress={()=>mySubmitOrder(orderId)}
           disabled={submitMutation.isPending}
           className={`py-4 rounded-xl flex-row items-center justify-center ${
             submitMutation.isPending ? 'bg-gray-400' : 'bg-primary'

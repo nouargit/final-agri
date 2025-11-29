@@ -7,7 +7,7 @@ import { Package, Plus, Search, ShoppingBag, X } from 'lucide-react-native';
 import { useState } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Image, Modal, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, RefreshControl, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native';
 import Animated, {
   Extrapolate,
   interpolate,
@@ -131,15 +131,20 @@ export default function ShopScreen() {
     queryFn: getUserData,
   });
 
-  const { data: categories = [], refetch: refetchCategories } = useQuery({
+  const { data: categories = [], refetch: refetchCategories, isRefetching: isRefetchingCategories } = useQuery({
     queryKey: ['categories'],
     queryFn: getCategories,
   });
 
-  const { data: products = [], isLoading: productsLoading, refetch: refetchProducts } = useQuery({
+  const { data: products = [], isLoading: productsLoading, refetch: refetchProducts, isRefetching: isRefetchingProducts } = useQuery({
     queryKey: ['producerProducts'],
     queryFn: getProducerProducts,
   });
+
+  const onRefresh = () => {
+    refetchCategories();
+    refetchProducts();
+  };
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -289,6 +294,14 @@ export default function ShopScreen() {
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingTop: 0 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetchingProducts || isRefetchingCategories}
+            onRefresh={onRefresh}
+            tintColor="#43cd32"
+            colors={['#43cd32']}
+          />
+        }
         ListEmptyComponent={
           <View className="items-center justify-center py-20">
             {productsLoading ? (
@@ -314,7 +327,7 @@ export default function ShopScreen() {
               <View style={{ height: HEADER_IMAGE_HEIGHT, overflow: 'hidden' }}>
                 <Animated.View style={[{ width: '100%', height: '100%' }, imageAnimatedStyle]}>
                   <Image
-                    source={images.fallback}
+                    source={images.bg}
                     className="w-full h-full opacity-80"
                   />
                 </Animated.View>

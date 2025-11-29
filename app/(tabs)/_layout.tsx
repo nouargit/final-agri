@@ -9,12 +9,19 @@ import { Tabs, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+type UserRole = 'producer' | 'buyer' | 'transporter' | null;
+
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { t } = useTranslation();
-  const [isProducer, setIsProducer] = useState<boolean>(false);
+  const [userRole, setUserRole] = useState<UserRole>(null);
+
+  // Derived role booleans for conditional rendering
+  const isProducer = userRole === 'producer';
+  const isBuyer = userRole === 'buyer';
+  const isTransporter = userRole === 'transporter';
 
   const checkAuthStatus = async () => {
     try {
@@ -33,27 +40,44 @@ export default function TabLayout() {
           if (res.ok) {
             const data = await res.json();
             const user = data.data || data.user || data;
-            let roles: string[] = [];
-            if (Array.isArray(user?.roles)) roles = user.roles;
-            else if (typeof user?.role === 'string') roles = [user.role];
-            else if (Array.isArray(user?.data?.roles)) roles = user.data.roles;
-            const hasProducer = roles.some(r => r.toLowerCase().includes('producer'));
-            setIsProducer(hasProducer);
+            
+            // Extract role from various possible response structures
+            let role: string | null = null;
+            if (typeof user?.role === 'string') {
+              role = user.role.toLowerCase();
+            } else if (Array.isArray(user?.roles) && user.roles.length > 0) {
+              role = user.roles[0].toLowerCase();
+            } else if (Array.isArray(user?.data?.roles) && user.data.roles.length > 0) {
+              role = user.data.roles[0].toLowerCase();
+            } else if (data.session?.userWithInfo?.role) {
+              role = data.session.userWithInfo.role.toLowerCase();
+            }
+            
+            // Map to known roles
+            if (role?.includes('producer')) {
+              setUserRole('producer');
+            } else if (role?.includes('buyer')) {
+              setUserRole('buyer');
+            } else if (role?.includes('transporter')) {
+              setUserRole('transporter');
+            } else {
+              setUserRole(null);
+            }
           } else {
             console.warn('Failed to fetch user profile for role detection:', res.status);
-            setIsProducer(false);
+            setUserRole(null);
           }
         } catch (e) {
-          console.warn('Error determining producer role:', e);
-          setIsProducer(false);
+          console.warn('Error determining user role:', e);
+          setUserRole(null);
         }
       } else {
-        setIsProducer(false);
+        setUserRole(null);
       }
     } catch (error) {
       console.error('Error checking auth status:', error);
       setIsAuthenticated(false);
-      setIsProducer(false);
+      setUserRole(null);
     } finally {
       setIsLoading(false);
     }
@@ -132,7 +156,9 @@ export default function TabLayout() {
       name='cart'
       options={{
         title: t('tabs.cart'),
-        tabBarIcon: ({ color }) => <IconSymbol size={28} name="Handbag" color={color} />
+        tabBarIcon: ({ color }) => <IconSymbol size={28} name="Handbag" color={color} />,
+        // Cart is visible only for buyers
+        href: isBuyer ? undefined : null,
       }}
       />
        
@@ -143,9 +169,8 @@ export default function TabLayout() {
     tabBarIcon: ({ color }) => (
       <IconSymbol size={28} name="Store" color={color} />
     ),
-    // When href is null, screen is hidden from tab bar/router.
-    // Use undefined/default when producer so it displays.
-   
+    // Shop is visible only for producers
+    href: isProducer ? undefined : null,
   }}
 />
        <Tabs.Screen

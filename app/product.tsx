@@ -4,18 +4,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Award, ChevronLeft, ChevronRight, Clock, Heart, MapPin, Minus, Plus, ShoppingCart, Star } from 'lucide-react-native';
+import { ArrowLeft, Award, ChevronLeft, ChevronRight, Clock, Heart, MapPin, Minus, Plus, QrCode, ShoppingCart, Star } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dimensions,
   Image,
+  Modal,
   ScrollView,
   StatusBar,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
 const { width } = Dimensions.get('window');
  const temp= {
     id:  1,
@@ -123,6 +125,7 @@ const ProductScreen = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedSize, setSelectedSize] = useState('Medium');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showQRCode, setShowQRCode] = useState(false);
   const navigation = useNavigation();
   const { id } = useLocalSearchParams();
   const { t } = useTranslation();
@@ -310,7 +313,7 @@ const product = {
         },
         body: JSON.stringify({
           items: [{ productId: String(product.id), quantityKg: Number(quantity) }],
-          delivery,
+         
         }),
       });
       if (!buyerRes.ok) {
@@ -375,18 +378,66 @@ const product = {
             <ArrowLeft size={20} color="#374151" />
           </TouchableOpacity>
           <Text className="text-2xl font-gilroy-bold text-neutral-900 dark:text-white">{t('product.productDetails')}</Text>
-          <TouchableOpacity
-            className="p-2 rounded-full bg-gray-100 dark:bg-neutral-800"
-            onPress={() => setIsFavorite(!isFavorite)}
-          >
-            <Heart
-              size={20}
-              color={isFavorite ? "#EF4444" : "#374151"}
-              fill={isFavorite ? "#EF4444" : "none"}
-            />
-          </TouchableOpacity>
+          <View className="flex-row items-center gap-2">
+            <TouchableOpacity
+              className="p-2 rounded-full bg-gray-100 dark:bg-neutral-800"
+              onPress={() => setShowQRCode(true)}
+            >
+              <QrCode size={20} color="#22C55E" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="p-2 rounded-full bg-gray-100 dark:bg-neutral-800"
+              onPress={() => setIsFavorite(!isFavorite)}
+            >
+              <Heart
+                size={20}
+                color={isFavorite ? "#EF4444" : "#374151"}
+                fill={isFavorite ? "#EF4444" : "none"}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
+
+      {/* QR Code Modal */}
+      <Modal
+        visible={showQRCode}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowQRCode(false)}
+      >
+        <TouchableOpacity
+          className="flex-1 bg-black/50 items-center justify-center"
+          activeOpacity={1}
+          onPress={() => setShowQRCode(false)}
+        >
+          <View className="bg-white dark:bg-neutral-800 p-6 rounded-3xl items-center mx-6">
+            <Text className="text-xl font-gilroy-bold text-neutral-900 dark:text-white mb-4">
+              Product QR Code
+            </Text>
+            <View className="bg-white p-4 rounded-2xl">
+              <QRCode
+                value={`product:${product.id}`}
+                size={200}
+                color="#22C55E"
+                backgroundColor="white"
+              />
+            </View>
+            <Text className="text-sm text-gray-500 dark:text-neutral-400 mt-4 text-center">
+              Scan to view product details
+            </Text>
+            <Text className="text-xs text-gray-400 dark:text-neutral-500 mt-1">
+              ID: {product.id}
+            </Text>
+            <TouchableOpacity
+              className="mt-4 bg-primary px-6 py-3 rounded-xl"
+              onPress={() => setShowQRCode(false)}
+            >
+              <Text className="text-white font-gilroy-bold">Close</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Image Carousel */}

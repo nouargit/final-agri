@@ -273,7 +273,7 @@ const AddProductScreen = () => {
 
     try {
       const token = await AsyncStorage.getItem('auth_token');
-      Alert.alert('Debug', `Token: ${token}`);
+    
       if (!token) {
         Alert.alert('Error', 'Authentication required. Please sign in again.');
         router.replace('/sign-in');

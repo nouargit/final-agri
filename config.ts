@@ -45,6 +45,37 @@ export const config = {
   
   // Buyer - Orders
   buyerOrdersUrl: '/api/buyer/orders',
+  buyerOrderUrl: (id: string) => `/api/buyer/orders/${id}`,
+  buyerOrderSubmitUrl: (id: string) => `/api/buyer/orders/${id}/submit`,
+  buyerOrderTransporterUrl: (id: string) => `/api/buyer/orders/${id}/transporter`,
+  buyerOrderItemsUrl: (id: string) => `/api/buyer/orders/${id}/items`,
+  buyerOrderDeleteUrl: (id: string) => `/api/buyer/orders/${id}`,
+  buyerTransportersUrl: '/api/buyer/transporters',
+  buyerOrderEstimateUrl: '/api/buyer/orders/estimate',
+
+  // Transporter - Orders
+  transporterAvailableOrdersUrl: '/api/transporter/orders',
+  transporterMyOrdersUrl: '/api/transporter/orders/my',
+  transporterOrderAcceptUrl: (id: string) => `/api/transporter/orders/${id}/accept`,
+
+  // User Profile (Update & Delete)
+  meProfileUrl: '/api/me/profile',
+  meAccountDeleteUrl: '/api/me/account',
+
+  // Producer Profile Update
+  producerProfileUrl: '/api/producer/profile',
+
+  // Public Profiles
+  publicProducerProfileUrl: (id: string) => `/api/profiles/producer/${id}`,
+  publicBuyerProfileUrl: (id: string) => `/api/profiles/buyer/${id}`,
+  publicTransporterProfileUrl: (id: string) => `/api/profiles/transporter/${id}`,
+
+  // AI Services
+  aiWhisperUrl: '/api/ai/whisper',
+  aiProductSummaryUrl: '/api/ai/product-summary',
+
+  // Price Suggestion
+  producerPriceSuggestionUrl: '/api/producer/products/price-suggestion',
 
   // Carts (consumer)
   cartsUrl: '/api/carts',
@@ -67,7 +98,7 @@ export const config = {
   cartUrl: '/api/cart',
   cartItemsUrl: '/api/cart-items',
   image_url: (id: string) => `${config.baseUrl}/api/images/${id}`,
-
+  submitOrderUrl: '/api/buyer/orders',
 };
 
 export async function createBuyerOrder(token: string, payload: {

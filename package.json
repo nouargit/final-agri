@@ -10,7 +10,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "gen:client": "node ./scripts/generate-client.js",
-   "gen": "openapi-typescript https://template-lemon-nine.vercel.app/api/spec.json --output ./generated/openapi/schema.ts && openapi-fetch-gen --input ./generated/openapi/schema.ts --output ./generated/openapi/client.ts",
+    "gen": "openapi-typescript https://template-lemon-nine.vercel.app/api/spec.json --output ./generated/openapi/schema.ts && openapi-fetch-gen --input ./generated/openapi/schema.ts --output ./generated/openapi/client.ts",
     "gen:watch": "orval --watch"
   },
   "dependencies": {

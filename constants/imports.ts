@@ -20,6 +20,7 @@ export const images={
    branche:require("../assets/images/branche.png"),
    frame:require("../assets/images/frame.png"),
    truck:require("../assets/images/truck.png"),
+   bg:require("../assets/images/dc8ebb4df892d12a50decd6909322c83.jpg"),
    
 
 

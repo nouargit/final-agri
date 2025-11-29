@@ -1,16 +1,14 @@
+import { config } from "@/config";
+import { images } from "@/constants/imports";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
-import { Dropdown } from "react-native-element-dropdown";
 import { router, useLocalSearchParams } from "expo-router";
-import { Image } from "react-native";
 import { getDistance } from 'geolib';
 import { useEffect, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
 import { useTranslation } from 'react-i18next';
+import { Text, TouchableOpacity, View } from "react-native";
+import { Dropdown } from "react-native-element-dropdown";
 import MapView, { Marker } from "react-native-maps";
-import cart from "./(tabs)/cart";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { images } from "@/constants/imports";
-import { config } from "@/config";
 interface LocationCoordinate {
   latitude: number;
   longitude: number;
@@ -54,60 +52,83 @@ export default function MapScreen() {
     setSelectedLocation({ latitude, longitude });
     // callback removed – onLocationSelected is not defined in scope
   }
-  const order=async ()=>{
-  const token =await AsyncStorage.getItem('auth_token');
-  if(!token){
-   alert(t('checkout.loginRequired'));
-  }
-
-  //console.log('shop_id',parsedCart.items[0].product.shop.id)
-  console.log('items',parsedCart.items.map((item: { product: { id: number; }; quantity: number; }) => ({
-          product_id: item.product.id,
-          quantity: item.quantity,
-        })),)
-        console.log('total',parseFloat(Array.isArray(total) ? total[0] : total))
-        console.log( 'location', selectedLocation)
-        console.log( 'type', selectedType)
-
-  try{
-    const response = await fetch(`${config.baseUrl}/api/orders`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({
-        shop_id: parsedCart.items[0].product.shop.id,
-        items: parsedCart.items.map((item: { product: { id: number; }; quantity: number; }) => ({
-          product_id: item.product.id,
-          quantity: item.quantity,
-        })),
-        total: parseFloat(Array.isArray(total) ? total[0] : total),
-        subtotal:parseFloat(Array.isArray(total) ? total[0] : total),
-        delivery_fee: selectedLocation && shopLocation
-          ? parseFloat(((getDistance(shopLocation, selectedLocation) / 1000) * 200).toFixed(3))
-          : 0,
-        location: JSON.stringify(selectedLocation),
-        type: selectedType,
-      }),
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  const order = async () => {
+    const token = await AsyncStorage.getItem('auth_token');
+    if (!token) {
+      alert(t('checkout.loginRequired'));
+      return;
     }
-    if (!response.ok) {
-      alert(t('checkout.successOrder'))
+
+    if (!selectedLocation) {
+      alert(t('checkout.selectLocation') || 'Please select a delivery location');
+      return;
     }
-    const data = await response.json();
-    console.log('Raw API response:', data);
-    return data.data || data;
-  } catch (error) {
-    console.error('Error placing order:', error);
 
-  }
+    try {
+      // Step 1: Create cart/order with not_submitted status using POST /buyer/orders
+      const createResponse = await fetch(`${config.baseUrl}/api/buyer/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          items: parsedCart.items.map((item: { product: { id: string | number }; quantity: number }) => ({
+            productId: String(item.product.id),
+            quantityKg: item.quantity,
+          })),
+          delivery: {
+            longitude: selectedLocation.longitude,
+            latitude: selectedLocation.latitude,
+            address: `${selectedLocation.latitude.toFixed(4)}, ${selectedLocation.longitude.toFixed(4)}`,
+          },
+        }),
+      });
 
-  
+      if (!createResponse.ok) {
+        const errorText = await createResponse.text();
+        throw new Error(`Failed to create order: ${createResponse.status} - ${errorText}`);
+      }
 
+      const createData = await createResponse.json();
+      const orderId = createData?.order?.id || createData?.id || createData?.data?.id;
+
+      if (!orderId) {
+        throw new Error('Order created but no ID returned');
+      }
+
+      console.log('Order created with ID:', orderId);
+
+      // Step 2: Submit the order using POST /buyer/orders/:id/submit
+      const submitResponse = await fetch(`${config.baseUrl}/api/buyer/orders/${orderId}/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentMethod: selectedType,
+        }),
+      });
+
+      if (!submitResponse.ok) {
+        const errorText = await submitResponse.text();
+        throw new Error(`Failed to submit order: ${submitResponse.status} - ${errorText}`);
+      }
+
+      const submitData = await submitResponse.json();
+      console.log('Order submitted successfully:', submitData);
+
+      alert(t('checkout.successOrder') || 'Order placed successfully!');
+      router.back();
+      
+      return submitData;
+    } catch (error) {
+      console.error('Error placing order:', error);
+      alert(`${t('checkout.errorOrder') || 'Failed to place order'}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   if (!userLocation) {
@@ -147,7 +168,7 @@ export default function MapScreen() {
             title={t('map.markerTitle')}
             description={t('map.markerDesc')}
             
-            image={images.shopMarker}
+           
         
           />
         {selectedLocation && (

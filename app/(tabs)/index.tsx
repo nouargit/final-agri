@@ -1,11 +1,10 @@
 import { config } from '@/config';
 import { images } from '@/constants/imports';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Grid, Heart, Home, Leaf, Menu, Search, ShoppingBag } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, RefreshControl, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 interface Product {
   id: string;
@@ -27,8 +26,9 @@ interface Product {
 }
 
 interface Category {
-  id: string;
+  key: string;
   name: string;
+  subcategories: string[];
 }
 
 export default function FarmMarketplaceHome() {
@@ -39,25 +39,22 @@ export default function FarmMarketplaceHome() {
   // Fetch categories
   const getCategories = async (): Promise<Category[]> => {
     try {
-      const token = await AsyncStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-      
       const response = await fetch(`${config.baseUrl}${config.categoriesUrl}`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         },
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Categories API error:', response.status, errorText);
         throw new Error('Failed to fetch categories');
       }
 
       const data = await response.json();
-      return Array.isArray(data) ? data : [];
+      // API returns { categories: [...] }
+      return data.categories || [];
     } catch (error) {
       console.error('Error fetching categories:', error);
       return [];
@@ -67,26 +64,21 @@ export default function FarmMarketplaceHome() {
   // Fetch all products (from all producers)
   const getAllProducts = async (): Promise<Product[]> => {
     try {
-      const token = await AsyncStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-      
-      // Using the legacy products endpoint for consumer view
+      // Products endpoint is public, no auth required
       const response = await fetch(`${config.baseUrl}${config.productsUrl}`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         },
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Products API error:', response.status, errorText);
         throw new Error('Failed to fetch products');
       }
 
       const data = await response.json();
-      
       return data.products || [];
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -94,19 +86,29 @@ export default function FarmMarketplaceHome() {
     }
   };
 
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+  const { data: categories = [], isLoading: categoriesLoading, refetch: refetchCategories, isRefetching: isRefetchingCategories } = useQuery({
     queryKey: ['categories'],
     queryFn: getCategories,
   });
 
-  const { data: products = [], isLoading: productsLoading } = useQuery({
+  const { data: products = [], isLoading: productsLoading, refetch: refetchProducts, isRefetching: isRefetchingProducts } = useQuery({
     queryKey: ['allProducts'],
     queryFn: getAllProducts,
   });
 
+  const isRefreshing = isRefetchingCategories || isRefetchingProducts;
+
+  const onRefresh = () => {
+    refetchCategories();
+    refetchProducts();
+  };
+
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === 'All' || product.subcategory === activeCategory;
+    // Find if active category contains this product's subcategory
+    const selectedCategory = categories.find(cat => cat.key === activeCategory);
+    const matchesCategory = activeCategory === 'All' || 
+      (selectedCategory && selectedCategory.subcategories.includes(product.subcategory));
     return matchesSearch && matchesCategory && product.quantityKg > 0;
   });
 
@@ -121,9 +123,10 @@ export default function FarmMarketplaceHome() {
     setFavorites(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const getCategoryName = (categoryId: string): string => {
-    const category = categories.find(cat => cat.id === categoryId);
-    return category?.name || 'All';
+  const getCategoryName = (subcategory: string): string => {
+    // Find which category contains this subcategory
+    const category = categories.find(cat => cat.subcategories.includes(subcategory));
+    return category?.name || subcategory;
   };
 
   return (
@@ -154,13 +157,20 @@ export default function FarmMarketplaceHome() {
           />
         </View>
 
-        {/* Menu Button */}
-        <TouchableOpacity className="absolute right-4 top-14 bg-gray-900 p-3 rounded-xl" >
-          <Menu size={20} color="white" />
-        </TouchableOpacity>
+        
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            tintColor="#16A34A"
+            colors={['#16A34A']}
+          />
+        }
+      >
         {/* Promo Banners - Horizontal Scroll */}
         <ScrollView 
           horizontal 
@@ -215,17 +225,17 @@ export default function FarmMarketplaceHome() {
               </TouchableOpacity>
               {categories.map((category) => (
                 <TouchableOpacity
-                  key={category.id}
-                  onPress={() => setActiveCategory(category.id)}
+                  key={category.key}
+                  onPress={() => setActiveCategory(category.key)}
                   className={`mr-3 px-5 py-2.5 rounded-full ${
-                    activeCategory === category.id
+                    activeCategory === category.key
                       ? 'bg-white border-2 border-gray-900'
                       : 'bg-white border border-gray-200'
                   }`}
                 >
                   <Text
                     className={`${
-                      activeCategory === category.id
+                      activeCategory === category.key
                         ? 'text-gray-900 font-semibold'
                         : 'text-gray-500'
                     }`}
