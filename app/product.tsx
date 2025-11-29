@@ -254,35 +254,42 @@ const product = {
     verified: true
   };
 
-  const comments = [
-    {
-      id: 1,
-      user: "Sarah Johnson",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=50&h=50&fit=crop",
-      rating: 5,
-      date: "2 days ago",
-      comment: "Absolutely divine! The molten center was perfectly gooey and the ice cream complemented it beautifully. Will definitely order again!",
-      helpful: 24
-    },
-    {
-      id: 2,
-      user: "Michael Chen",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop",
-      rating: 5,
-      date: "1 week ago",
-      comment: "Best chocolate lava cake I've ever had! Rich, decadent, and the portion size is generous. Highly recommend!",
-      helpful: 18
-    },
-    {
-      id: 3,
-      user: "Emma Davis",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop",
-      rating: 4,
-      date: "2 weeks ago",
-      comment: "Really good but a bit too sweet for my taste. The presentation was beautiful and delivery was quick.",
-      helpful: 12
-    }
-  ];
+  const produceComments = [
+  {
+    id: 1,
+    user: "Amira Bensalah",
+    avatar:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=50&h=50&fit=crop",
+    rating: 5,
+    date: "3 days ago",
+    comment:
+      "The strawberries were super fresh and sweet! Perfect for smoothies. Definitely ordering again.",
+    helpful: 21,
+  },
+  {
+    id: 2,
+    user: "Youssef Karim",
+    avatar:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop",
+    rating: 4,
+    date: "1 week ago",
+    comment:
+      "The tomatoes were very tasty and juicy. One or two were slightly soft, but overall great quality.",
+    helpful: 14,
+  },
+  {
+    id: 3,
+    user: "Lina Haddad",
+    avatar:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop",
+    rating: 5,
+    date: "2 weeks ago",
+    comment:
+      "Loved the organic cucumbers! Crisp, clean, and perfect for salads. Delivery was quick too.",
+    helpful: 10,
+  },
+];
+
   const addProductToCart = async () => {
     try {
       const token = await AsyncStorage.getItem('auth_token');

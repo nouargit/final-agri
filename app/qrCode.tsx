@@ -1,6 +1,7 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { View, Text } from "react-native";
 import { useState } from "react";
+import { useRouter,router } from "expo-router";
 
 export default function App() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -24,8 +25,12 @@ export default function App() {
   const handleScan = (result: { data: string; }) => {
     if (!scanned) {
       setScanned(true);
-      alert("QR Data: " + result.data);
+      //alert("QR Data: " + result.data);
+      router.push(`/farm_fork?id=${result.data}`);
       setTimeout(() => setScanned(false), 1500); // إعادة التفعيل بعد ثانية ونصف
+    }
+    else {
+    router.push(`/farm_fork?id=${result.data}`);
     }
   };
 

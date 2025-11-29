@@ -140,9 +140,11 @@ export default function FarmMarketplaceHome() {
             <Text className="text-gray-600 text-sm">Fresh From</Text>
             <Text className="text-xl font-bold text-gray-900">Local Farms</Text>
           </View>
+          <TouchableOpacity onPress={()=>router.push('../qrCode')}>
           <View className="w-12 h-12 bg-green-600 rounded-full items-center justify-center">
             <Leaf size={24} color="white" />
           </View>
+          </TouchableOpacity>
         </View>
 
         {/* Search Bar */}

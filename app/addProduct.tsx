@@ -4,12 +4,14 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import jsonToFormData, { defaultDetectFile } from '@/lib/jsonToFormData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery } from '@tanstack/react-query';
+import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { Camera, X } from 'lucide-react-native';
+import { Camera, Mic, MicOff, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   ScrollView,
@@ -52,6 +54,11 @@ const AddProductScreen = () => {
   const colorScheme = useColorScheme();
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Voice recording states
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
   
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
@@ -381,6 +388,124 @@ const AddProductScreen = () => {
     }
   };
 
+  // Voice Recording Functions
+  const startRecording = async () => {
+    try {
+      const permission = await Audio.requestPermissionsAsync();
+      if (permission.status !== 'granted') {
+        Alert.alert('Permission Required', 'Microphone permission is needed to record audio');
+        return;
+      }
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+
+      setRecording(recording);
+      setIsRecording(true);
+    } catch (err) {
+      console.error('Error starting recording:', err);
+      Alert.alert('Error', 'Failed to start recording');
+    }
+  };
+
+  const stopRecording = async () => {
+    if (!recording) return;
+
+    setIsRecording(false);
+    setIsProcessingVoice(true);
+
+    try {
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
+      setRecording(null);
+
+      if (uri) {
+        await sendAudioToWhisper(uri);
+      }
+    } catch (err) {
+      console.error('Error stopping recording:', err);
+      Alert.alert('Error', 'Failed to stop recording');
+    } finally {
+      setIsProcessingVoice(false);
+    }
+  };
+
+  const sendAudioToWhisper = async (audioUri: string) => {
+    try {
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) {
+        Alert.alert('Error', 'Authentication required');
+        return;
+      }
+;
+
+      const formDataAudio = new FormData();
+      formDataAudio.append('audio', {
+        uri: audioUri,
+        name: 'recording.m4a',
+        type: 'audio/m4a',
+      } as any)
+
+      const response = await fetch(`${config.baseUrl}${config.aiWhisperUrl}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formDataAudio,
+      });
+
+      const responseText = await response.text();
+      console.log('Whisper raw response:', responseText);
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseErr) {
+        console.error('Failed to parse Whisper response:', responseText);
+        Alert.alert('Error', `Server error: ${responseText.substring(0, 100)}`);
+        return;
+      }
+      
+      console.log('Whisper response:', data);
+
+      if (response.ok && data.json?.object) {
+        const productInfo = data.json.object;
+        
+        // Auto-fill form with AI-extracted data
+        if (productInfo.name) updateFormData('name', productInfo.name);
+        if (productInfo.description) updateFormData('description', productInfo.description);
+        if (productInfo.pricePerKg) updateFormData('pricePerKg', String(productInfo.pricePerKg));
+        if (productInfo.quantityKg) updateFormData('quantityKg', String(productInfo.quantityKg));
+        if (productInfo.minimumOrderKg) updateFormData('minimumOrderKg', String(productInfo.minimumOrderKg));
+        if (productInfo.harvestDate) updateFormData('harvestDate', productInfo.harvestDate);
+        if (productInfo.grade) updateFormData('grade', productInfo.grade);
+        if (productInfo.scheduleDate) updateFormData('scheduleDate', productInfo.scheduleDate);
+        if (productInfo.subcategory) {
+          // Find matching category for the subcategory
+          const matchingCategory = categories.find(cat => 
+            cat.subcategories?.includes(productInfo.subcategory)
+          );
+          if (matchingCategory) {
+            updateFormData('category_key', matchingCategory.key);
+            updateFormData('subcategory', productInfo.subcategory);
+          }
+        }
+
+        Alert.alert('Success', 'Product information extracted from your voice recording!');
+      } else {
+        Alert.alert('Error', data.message || 'Failed to process audio');
+      }
+    } catch (err) {
+      console.error('Error sending audio to Whisper:', err);
+      Alert.alert('Error', 'Failed to process voice recording');
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">
@@ -437,6 +562,41 @@ const AddProductScreen = () => {
             <Text className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               {t('addProduct.basicInformation') || 'Basic Information'}
             </Text>
+
+            {/* Voice Input Button */}
+            <View className="mb-4">
+              <Text className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                Describe your product by voice to auto-fill the form
+              </Text>
+              <TouchableOpacity
+                onPress={isRecording ? stopRecording : startRecording}
+                disabled={isProcessingVoice}
+                className={`flex-row items-center justify-center py-4 px-6 rounded-xl ${
+                  isRecording 
+                    ? 'bg-red-500' 
+                    : isProcessingVoice 
+                      ? 'bg-gray-400' 
+                      : 'bg-primary'
+                }`}
+              >
+                {isProcessingVoice ? (
+                  <>
+                    <ActivityIndicator size="small" color="white" />
+                    <Text className="text-white font-semibold ml-2">Processing...</Text>
+                  </>
+                ) : isRecording ? (
+                  <>
+                    <MicOff size={24} color="white" />
+                    <Text className="text-white font-semibold ml-2">Stop Recording</Text>
+                  </>
+                ) : (
+                  <>
+                    <Mic size={24} color="white" />
+                    <Text className="text-white font-semibold ml-2">Record Voice</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
             
             <View className="mb-4">
               <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

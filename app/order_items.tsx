@@ -58,18 +58,21 @@ async function fetchOrder(orderId: string) {
   return { order, details }
 }
 
-async function submitOrder(orderId: string, deliveryAddress: string, paymentMethod: string) {
+async function submitOrder(
+  orderId: string, 
+  delivery: { longitude: number; latitude: number; address: string; cityId: string }
+) {
   const token = await AsyncStorage.getItem('auth_token')
   if (!token) throw new Error('Not authenticated')
   const res = await fetch(`${config.baseUrl}/api/buyer/orders/${orderId}/submit`, {
-    method: 'POST',
+    method: 'PATCH',
     headers: { 
       Authorization: `Bearer ${token}`, 
       'Content-Type': 'application/json',
       Accept: 'application/json' 
     },
     body: JSON.stringify({
-      paymentMethod: paymentMethod,
+      delivery,
     }),
   })
   if (!res.ok) throw new Error(`Failed ${res.status}`)
@@ -77,7 +80,10 @@ async function submitOrder(orderId: string, deliveryAddress: string, paymentMeth
 }
 
 
-const mySubmitOrder = async (orderId: string) => {
+const mySubmitOrder = async (
+  orderId: string,
+  delivery: { longitude: number; latitude: number; address: string; cityId: string }
+) => {
   const token = await AsyncStorage.getItem('auth_token')
   if (!token) throw new Error('Not authenticated')
   const res = await fetch(`${config.baseUrl}/api/buyer/orders/${orderId}/submit`, {
@@ -87,6 +93,7 @@ const mySubmitOrder = async (orderId: string) => {
       'Content-Type': 'application/json',
       Accept: 'application/json' 
     },
+    body: JSON.stringify({ delivery }),
   })
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}))
@@ -106,6 +113,7 @@ export default function OrderCheckoutScreen() {
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [selectedPayment, setSelectedPayment] = useState<'card' | 'cash'>('card')
   const [selectedLocation, setSelectedLocation] = useState<{ latitude: number; longitude: number } | null>(null)
+  const [cityId, setCityId] = useState(Math.random() > 0.5 ? 'bousaada' : 'bouainan') // مثال على تعيين معرف المدينة
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['orders:items', orderId],
@@ -115,7 +123,16 @@ export default function OrderCheckoutScreen() {
   })
 
   const submitMutation = useMutation({
-    mutationFn: () => submitOrder(orderId, deliveryAddress, selectedPayment),
+    mutationFn: () => {
+      if (!selectedLocation) throw new Error('Please select a delivery location on the map')
+      if (!cityId) throw new Error('Please provide a city ID')
+      return submitOrder(orderId, {
+        longitude: selectedLocation.longitude,
+        latitude: selectedLocation.latitude,
+        address: deliveryAddress,
+        cityId,
+      })
+    },
     onSuccess: () => {
       Alert.alert(
         'Order Placed Successfully!',
@@ -222,7 +239,7 @@ export default function OrderCheckoutScreen() {
               onPress={(e) => {
                 const { latitude, longitude } = e.nativeEvent.coordinate
                 setSelectedLocation({ latitude, longitude })
-                setDeliveryAddress(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`)
+               
               }}
             >
               <Marker 
@@ -440,22 +457,31 @@ export default function OrderCheckoutScreen() {
         }}
       >
         <TouchableOpacity
-          onPress={()=>mySubmitOrder(orderId)}
-          disabled={submitMutation.isPending}
-          className={`py-4 rounded-xl flex-row items-center justify-center ${
-            submitMutation.isPending ? 'bg-gray-400' : 'bg-primary'
-          }`}
+          onPress={async () => {
+            if (!selectedLocation) {
+              Alert.alert('Error', 'Please select a delivery location on the map')
+              return
+            }
+            try {
+              await mySubmitOrder(orderId, {
+                longitude: selectedLocation.longitude,
+                latitude: selectedLocation.latitude,
+                address: deliveryAddress,
+                cityId: cityId || 'default-city',
+              })
+              Alert.alert('Order Placed Successfully!', `Your order #${orderId.slice(0, 8)} has been submitted.`, [
+                { text: 'OK', onPress: () => router.back() }
+              ])
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Failed to submit order')
+            }
+          }}
+          className="py-4 rounded-xl flex-row items-center justify-center bg-primary"
         >
-          {submitMutation.isPending ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <>
-              <Text className="text-white text-base font-semibold mr-2">
-                Place Order • ${total.toFixed(2)}
-              </Text>
-              <Text className="text-white text-lg">→</Text>
-            </>
-          )}
+          <Text className="text-white text-base font-semibold mr-2">
+            Place Order • ${total.toFixed(2)}
+          </Text>
+          <Text className="text-white text-lg">→</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

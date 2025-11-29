@@ -1,6 +1,5 @@
 import { useColorScheme } from '@/hooks/useColorScheme';
 import i18n, { initializeI18n } from '@/lib/i18n';
-import { NavigationContainer } from '@react-navigation/native';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
@@ -127,6 +126,13 @@ export default function RootLayout() {
                 options={{ 
                   headerShown: false,
                   animation: 'slide_from_bottom'
+                }} 
+              />
+              <Stack.Screen 
+                name="farm_fork" 
+                options={{ 
+                  headerShown: false,
+                  animation: 'slide_from_right'
                 }} 
               />
               

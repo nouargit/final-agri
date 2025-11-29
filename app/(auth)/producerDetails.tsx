@@ -80,11 +80,12 @@ export default function ProducerDetails() {
   };
 
   const filteredCities = cities.filter(city => {
-    if (!city || !city.name) return false;
-    const cityName = city.name || '';
-    const cityArName = city.ar_name || '';
+    if (!city) return false;
+    const cityName = String(city.name || '');
+    const cityArName = String(city.ar_name || '');
     const searchLower = citySearchQuery.toLowerCase();
-    const matchesSearch = cityName.toLowerCase().includes(searchLower) ||
+    const matchesSearch = !citySearchQuery || 
+                         cityName.toLowerCase().includes(searchLower) ||
                          cityArName.includes(citySearchQuery);
     const matchesWilaya = !selectedWilayaId || city.wilaya_id === selectedWilayaId;
     return matchesSearch && matchesWilaya;
