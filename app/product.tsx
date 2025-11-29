@@ -2,12 +2,13 @@ import { config } from '@/config';
 import { useLocationStore } from '@/stors/locationStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from "@react-navigation/native";
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Award, ChevronLeft, ChevronRight, Clock, Heart, MapPin, Minus, Plus, QrCode, ShoppingCart, Star } from 'lucide-react-native';
-import { useCallback, useState } from 'react';
+import { ArrowLeft, Award, ChevronLeft, ChevronRight, Clock, Heart, MapPin, Minus, Plus, QrCode, ShoppingCart, Star, Trash2 } from 'lucide-react-native';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Alert,
   Dimensions,
   Image,
   Modal,
@@ -126,16 +127,94 @@ const ProductScreen = () => {
   const [selectedSize, setSelectedSize] = useState('Medium');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showQRCode, setShowQRCode] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const navigation = useNavigation();
   const { id } = useLocalSearchParams();
   const { t } = useTranslation();
   const { selectedLocation } = useLocationStore();
+  const queryClient = useQueryClient();
   
   // Ensure id is a string, handle array case
   const productId = Array.isArray(id) ? id[0] : id;
   
   const handleBack = () => {
     navigation.goBack();
+  };
+
+  // Get current user ID on mount
+  useEffect(() => {
+    const getUserId = async () => {
+      try {
+        const userData = await AsyncStorage.getItem('user_data');
+        console.log('Raw user_data from storage:', userData);
+        if (userData) {
+          const user = JSON.parse(userData);
+          console.log('Parsed user object:', user);
+          // Try multiple possible ID fields based on session structure
+          const userId = user.userWithInfo?.producer?.id || 
+                        user.producer?.id || 
+                        user.producerId || 
+                        user.id || 
+                        null;
+          console.log('Extracted user ID for ownership check:', userId);
+          setCurrentUserId(userId);
+        }
+      } catch (error) {
+        console.error('Error getting user data:', error);
+      }
+    };
+    getUserId();
+  }, []);
+
+  // Delete product mutation
+  const deleteProductMutation = useMutation({
+    mutationFn: async () => {
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) throw new Error('Not authenticated');
+
+      const response = await fetch(
+        `${config.baseUrl}${config.producerProductDeleteUrl(productId)}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.message || `Failed to delete product: ${response.status}`);
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['producer:products'] });
+      Alert.alert('Success', 'Product deleted successfully', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
+    },
+    onError: (error: Error) => {
+      Alert.alert('Error', error.message || 'Failed to delete product');
+    },
+  });
+
+  const handleDeleteProduct = () => {
+    Alert.alert(
+      'Delete Product',
+      'Are you sure you want to delete this product? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => deleteProductMutation.mutate(),
+        },
+      ]
+    );
   };
 
   const getProducts = useCallback(async () => {
@@ -227,7 +306,7 @@ const processImages = (images: any) => {
 
 const product = {
     id: productTemp?.id || '1',
-    producerId: productTemp?.producerId || '',
+    producerId: productTemp?.producerId || productTemp?.producer?.id || '',
     name: productTemp?.name || 'Product',
     description: productTemp?.description || 'No description provided',
     pricePerKg: productTemp?.pricePerKg ?? 0,
@@ -242,6 +321,17 @@ const product = {
     reviews: 124,
     allergens: ["vegetarian", "organic"],
   };
+
+  console.log('Product producerId:', product.producerId, 'from productTemp:', productTemp?.producerId, productTemp?.producer?.id);
+
+  // Check if current user is the product owner
+  const isOwner = Boolean(
+    currentUserId && 
+    product.producerId && 
+    (currentUserId === product.producerId || String(currentUserId) === String(product.producerId))
+  );
+  
+  console.log('Ownership check:', { currentUserId, producerId: product.producerId, isOwner });
 
   const seller = {
     name: productTemp?.producer?.user?.fullname || 'Producer',
@@ -293,48 +383,116 @@ const product = {
   const addProductToCart = async () => {
     try {
       const token = await AsyncStorage.getItem('auth_token');
-      const user_data = await AsyncStorage.getItem('user_data');
-      const user_id = user_data ? JSON.parse(user_data).id : null;
-      //console.log('User ID:', user_id);
       if (!token) {
         throw new Error('No authentication token found. Please login first.');
       }
 
-      // Use Buyer endpoint: submit order with single item and current delivery
-      const delivery = selectedLocation ? {
-        longitude: selectedLocation.longitude,
-        latitude: selectedLocation.latitude,
-        address: 'Selected Location',
-      } : {
-        longitude: 0,
-        latitude: 0,
-        address: 'Unknown address',
-      };
-
-      const buyerRes = await fetch(`${config.baseUrl}${config.buyerOrdersUrl}`, {
-        method: 'POST',
+      // Step 1: Check for existing cart (order with not_submitted status)
+      const ordersRes = await fetch(`${config.baseUrl}${config.buyerOrdersUrl}`, {
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          items: [{ productId: String(product.id), quantityKg: Number(quantity) }],
-         
-        }),
       });
-      if (!buyerRes.ok) {
-        const text = await buyerRes.text();
-        throw new Error(`Buyer order failed: ${buyerRes.status} - ${text}`);
-      }
-      await buyerRes.json();
 
-      alert('Order placed successfully!');
+      let existingCart = null;
+      if (ordersRes.ok) {
+        const ordersData = await ordersRes.json();
+        const orders = ordersData.data || ordersData.orders || ordersData || [];
+        console.log('All orders:', orders.map((o: any) => ({ id: o.id, status: o.status })));
+        
+        // Find an existing cart (only not_submitted orders are modifiable)
+        existingCart = orders.find((order: any) => order.status === 'not_submitted');
+        console.log('Found existing cart:', existingCart ? { id: existingCart.id, status: existingCart.status } : 'none');
+      }
+
+      if (existingCart) {
+        // Step 2: Update existing cart with new item using PATCH
+        // Get existing items and add the new one
+        const existingItems = existingCart.orderDetails || existingCart.items || [];
+        
+        // Check if product already exists in cart
+        const existingItemIndex = existingItems.findIndex((item: any) => 
+          String(item.productId) === String(product.id) || 
+          String(item.product?.id) === String(product.id)
+        );
+
+        let updatedItems;
+        if (existingItemIndex >= 0) {
+          // Update quantity of existing item
+          updatedItems = existingItems.map((item: any, index: number) => {
+            if (index === existingItemIndex) {
+              return {
+                productId: String(item.productId || item.product?.id),
+                quantityKg: Number(item.quantityKg || item.quantity || 0) + Number(quantity),
+              };
+            }
+            return {
+              productId: String(item.productId || item.product?.id),
+              quantityKg: Number(item.quantityKg || item.quantity),
+            };
+          });
+        } else {
+          // Add new item to cart
+          updatedItems = [
+            ...existingItems.map((item: any) => ({
+              productId: String(item.productId || item.product?.id),
+              quantityKg: Number(item.quantityKg || item.quantity),
+            })),
+            { productId: String(product.id), quantityKg: Number(quantity) },
+          ];
+        }
+
+        // PATCH to update cart items
+                Alert.alert('Info', JSON.stringify({ items: updatedItems }, null, 2));
+
+        const updateRes = await fetch(
+          `${config.baseUrl}${config.buyerOrderItemsUrl(existingCart.id)}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ items: updatedItems }),
+          }
+        );
+
+        if (!updateRes.ok) {
+          const errorText = await updateRes.text();
+          throw new Error(`Failed to update cart: ${updateRes.status} - ${errorText}`);
+        }
+
+        alert('Item added to cart successfully!');
+      } else {
+        // Step 3: No existing cart, create a new order
+        const body={
+            items: [{ productId: String(product.id), quantityKg: Number(quantity) }],
+          }
+          console.log("body",body)
+        const buyerRes = await fetch(`${config.baseUrl}${config.buyerOrdersUrl}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (!buyerRes.ok) {
+          const text = await buyerRes.text();
+          throw new Error(`Failed to create cart: ${buyerRes.status} - ${text}`);
+        }
+
+        alert('Item added to cart successfully!');
+      }
 
     } catch (error) {
-      console.error('Add to order error:', error);
-      alert(`Failed to add item to order. Please try again.`);
-      
+      console.error('Add to cart error:', error);
+      alert(`Failed to add item to cart. Please try again.`);
     }
   };
 
@@ -386,6 +544,15 @@ const product = {
           </TouchableOpacity>
           <Text className="text-2xl font-gilroy-bold text-neutral-900 dark:text-white">{t('product.productDetails')}</Text>
           <View className="flex-row items-center gap-2">
+            {isOwner && (
+              <TouchableOpacity
+                className="p-2 rounded-full bg-red-100 dark:bg-red-900/30"
+                onPress={handleDeleteProduct}
+                disabled={deleteProductMutation.isPending}
+              >
+                <Trash2 size={20} color="#EF4444" />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               className="p-2 rounded-full bg-gray-100 dark:bg-neutral-800"
               onPress={() => setShowQRCode(true)}

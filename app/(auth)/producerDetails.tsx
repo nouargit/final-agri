@@ -8,18 +8,36 @@ import { useEffect, useState } from "react";
 import { Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
+interface CityName {
+  latin: string;
+  ar: string;
+}
+
 interface City {
   id: string;
-  name: string;
-  ar_name: string;
+  name: string | CityName;
+  ar_name?: string;
   wilaya_id: string;
 }
 
 interface Wilaya {
   id: string;
-  name: string;
-  ar_name: string;
+  name: string | CityName;
+  ar_name?: string;
 }
+
+// Helper function to extract display name from city/wilaya
+const getDisplayName = (name: string | CityName | undefined): string => {
+  if (!name) return '';
+  if (typeof name === 'string') return name;
+  return name.latin || name.ar || '';
+};
+
+const getArabicName = (item: City | Wilaya): string => {
+  if (item.ar_name) return item.ar_name;
+  if (typeof item.name === 'object' && item.name.ar) return item.name.ar;
+  return '';
+};
 
 export default function ProducerDetails() {
   const params = useLocalSearchParams();
@@ -74,15 +92,17 @@ export default function ProducerDetails() {
     const city = cities.find(c => c.id === selectedCityId);
     if (city) {
       const wilaya = wilayas.find(w => w.id === city.wilaya_id);
-      return `${city.name}${wilaya ? ` (${wilaya.name})` : ''}`;
+      const cityName = getDisplayName(city.name);
+      const wilayaName = wilaya ? getDisplayName(wilaya.name) : '';
+      return `${cityName}${wilayaName ? ` (${wilayaName})` : ''}`;
     }
     return "Select City";
   };
 
   const filteredCities = cities.filter(city => {
     if (!city) return false;
-    const cityName = String(city.name || '');
-    const cityArName = String(city.ar_name || '');
+    const cityName = getDisplayName(city.name);
+    const cityArName = getArabicName(city);
     const searchLower = citySearchQuery.toLowerCase();
     const matchesSearch = !citySearchQuery || 
                          cityName.toLowerCase().includes(searchLower) ||
@@ -220,15 +240,17 @@ export default function ProducerDetails() {
                 longitudeDelta: 0.1,
               }}
               onPress={(e) => setSelectedLocation(e.nativeEvent.coordinate)}
-              scrollEnabled={false}
-              zoomEnabled={false}
-              pitchEnabled={false}
-              rotateEnabled={false}
+              scrollEnabled={true}
+              zoomEnabled={true}
+              pitchEnabled={true}
+              rotateEnabled={true}
             >
               <Marker
                 coordinate={selectedLocation}
                 title="Farm Location"
                 description={`Lat: ${selectedLocation.latitude.toFixed(6)}, Lng: ${selectedLocation.longitude.toFixed(6)}`}
+                draggable
+                onDragEnd={(e) => setSelectedLocation(e.nativeEvent.coordinate)}
               />
             </MapView>
             
@@ -238,7 +260,7 @@ export default function ProducerDetails() {
               className="absolute bottom-4 right-4 bg-primary px-4 py-3 rounded-xl shadow-lg flex-row items-center"
             >
               <Map size={20} color="white" />
-              <Text className="text-white font-gilroy-bold ml-2">Open Map</Text>
+              <Text className="text-white font-gilroy-bold ml-2">Full Screen</Text>
             </TouchableOpacity>
           </View>
 
@@ -456,7 +478,7 @@ export default function ProducerDetails() {
                   className={`px-4 py-2 rounded-full mr-2 ${selectedWilayaId === wilaya.id ? 'bg-primary' : 'bg-gray-200'}`}
                 >
                   <Text className={selectedWilayaId === wilaya.id ? 'text-white font-gilroy-semibold' : 'text-gray-700'}>
-                    {wilaya.name}
+                    {getDisplayName(wilaya.name)}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -467,6 +489,9 @@ export default function ProducerDetails() {
           <ScrollView className="flex-1 px-6 py-4">
             {filteredCities.slice(0, 50).map(city => {
               const wilaya = wilayas.find(w => w.id === city.wilaya_id);
+              const cityName = getDisplayName(city.name);
+              const cityArName = getArabicName(city);
+              const wilayaName = wilaya ? getDisplayName(wilaya.name) : '';
               return (
                 <TouchableOpacity
                   key={city.id}
@@ -478,10 +503,10 @@ export default function ProducerDetails() {
                   className={`p-4 border-b border-gray-100 ${selectedCityId === city.id ? 'bg-primary/10' : ''}`}
                 >
                   <Text className="text-base font-gilroy-semibold text-gray-900">
-                    {city.name}
+                    {cityName}
                   </Text>
                   <Text className="text-sm text-gray-500">
-                    {city.ar_name} {wilaya ? `• ${wilaya.name}` : ''}
+                    {cityArName} {wilayaName ? `• ${wilayaName}` : ''}
                   </Text>
                 </TouchableOpacity>
               );

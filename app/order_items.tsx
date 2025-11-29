@@ -1,6 +1,6 @@
 import { config } from '@/config'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
 import {
@@ -18,9 +18,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 interface OrderDetailItem {
   id?: string | number
+  productId?: string | number
   quantity?: number
   price?: number
   product?: {
+    id?: string | number
     name?: string
     images?: Array<{ url?: string; id?: string }>
   }
@@ -107,6 +109,7 @@ const mySubmitOrder = async (
 export default function OrderCheckoutScreen() {
   const params = useLocalSearchParams()
   const router = useRouter()
+  const queryClient = useQueryClient()
   const orderId = String(params.id || '')
 
   const [showMap, setShowMap] = useState(false)
@@ -144,6 +147,97 @@ export default function OrderCheckoutScreen() {
       Alert.alert('Error', err.message || 'Failed to submit order')
     }
   })
+
+  // Remove item mutation
+  const removeItemMutation = useMutation({
+    mutationFn: async (itemToRemove: OrderDetailItem) => {
+      const token = await AsyncStorage.getItem('auth_token')
+      if (!token) throw new Error('Not authenticated')
+
+      // Get current items and filter out the one to remove
+      const currentItems = data?.details ?? []
+      const updatedItems = currentItems
+        .filter((item) => {
+          // Match by id or productId
+          const itemId = item.id || item.productId
+          const removeId = itemToRemove.id || itemToRemove.productId
+          return itemId !== removeId
+        })
+        .map((item) => ({
+          productId: String(item.productId || item.product?.id || item.id),
+          quantityKg: Number(item.quantity || 0),
+        }))
+
+      // If no items left, delete the entire order
+      if (updatedItems.length === 0) {
+        const deleteRes = await fetch(
+          `${config.baseUrl}${config.buyerOrderDeleteUrl(orderId)}`,
+          {
+            method: 'DELETE',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: 'application/json',
+            },
+          }
+        )
+        if (!deleteRes.ok) {
+          const errorText = await deleteRes.text()
+          throw new Error(`Failed to delete order: ${deleteRes.status} - ${errorText}`)
+        }
+        return { deleted: true }
+      }
+
+      // PATCH to update order items (removing the item)
+      const res = await fetch(
+        `${config.baseUrl}${config.buyerOrderItemsUrl(orderId)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ items: updatedItems }),
+        }
+      )
+
+      if (!res.ok) {
+        const errorText = await res.text()
+        throw new Error(`Failed to remove item: ${res.status} - ${errorText}`)
+      }
+
+      return res.json()
+    },
+    onSuccess: (result) => {
+      if (result?.deleted) {
+        Alert.alert('Cart Empty', 'Your cart is now empty.', [
+          { text: 'OK', onPress: () => router.back() },
+        ])
+      } else {
+        // Refresh the order data
+        queryClient.invalidateQueries({ queryKey: ['orders:items', orderId] })
+        Alert.alert('Item Removed', 'The item has been removed from your order.')
+      }
+    },
+    onError: (err: Error) => {
+      Alert.alert('Error', err.message || 'Failed to remove item')
+    },
+  })
+
+  const handleRemoveItem = (item: OrderDetailItem) => {
+    Alert.alert(
+      'Remove Item',
+      `Remove ${item.product?.name || 'this item'} from order?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => removeItemMutation.mutate(item),
+        },
+      ]
+    )
+  }
 
   const order: OrderPayload | undefined = data?.order
   const items: OrderDetailItem[] = data?.details ?? []
@@ -331,16 +425,8 @@ export default function OrderCheckoutScreen() {
               {/* Delete Button */}
               <TouchableOpacity 
                 className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 items-center justify-center ml-3"
-                onPress={() => {
-                  Alert.alert(
-                    'Remove Item',
-                    `Remove ${item.product?.name || 'this item'} from order?`,
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      { text: 'Remove', style: 'destructive' }
-                    ]
-                  )
-                }}
+                onPress={() => handleRemoveItem(item)}
+                disabled={removeItemMutation.isPending}
               >
                 <Text style={{ fontSize: 20 }}>🗑️</Text>
               </TouchableOpacity>

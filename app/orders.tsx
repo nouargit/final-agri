@@ -16,15 +16,16 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
-  Search,
-  RotateCw,
-  ShoppingBag,
   AlertTriangle,
   CheckCircle,
-  Clock,
-  XCircle,
   ChevronRight,
+  Clock,
   Package,
+  RotateCw,
+  Search,
+  ShoppingBag,
+  Truck,
+  XCircle,
 } from 'lucide-react-native';
 
 const orders = () => {
@@ -221,7 +222,9 @@ const orders = () => {
           renderItem={({ item }) => {
             const status = getStatusStyle(item.status);
             const StatusIcon = status.icon;
-
+            const statusLower = String(item.status || 'pending').toLowerCase();
+            const isGreenStatus = statusLower === 'completed' || statusLower === 'delivered' || statusLower === 'accepted' || statusLower === 'ready';
+const isBlueStatus = statusLower === 'processing' || statusLower === 'confirmed';
             return (
               <TouchableOpacity
                 activeOpacity={0.85}
@@ -243,13 +246,32 @@ const orders = () => {
                     </View>
 
                     {/* Status Badge */}
-                    <View
-                      className={`flex-row items-center gap-2 px-3 py-2 rounded-full ${status.bg} border ${status.border}`}
-                    >
-                      <StatusIcon size={16} color={status.iconColor} />
-                      <Text className={`text-xs font-bold uppercase ${status.text}`}>
-                        {item.status || 'Pending'}
-                      </Text>
+                    <View className="items-end">
+                      <View
+                        className={`flex-row items-center gap-2 px-3 py-2 rounded-full ${status.bg} border ${status.border}`}
+                      >
+                        <StatusIcon size={16} color={status.iconColor} />
+                        <Text className={`text-xs font-bold uppercase ${status.text}`}>
+                          {item.status || 'Pending'}
+                        </Text>
+                      </View>
+                      
+                      {/* Ask for Delivery Button - only for green status */}
+                      {isBlueStatus && (
+                        <TouchableOpacity
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            router.push({ pathname: '/deleveryMap', params: { orderId: String(item.id) } });
+                          }}
+                          className="flex-row items-center gap-1 mt-2 px-3 py-2 rounded-full"
+                          style={{ backgroundColor: '#22C55E' }}
+                        >
+                          <Truck size={14} color="white" />
+                          <Text className="text-xs font-bold text-white">
+                            Ask for Delivery
+                          </Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   </View>
 
